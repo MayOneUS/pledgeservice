@@ -1,0 +1,22 @@
+{
+  "name": "mayone",
+  "version": "0.1.0",
+  "devDependencies": {
+    "grunt": "~0.4.2"
+  },
+  "dependencies": {
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-cli": "~0.1.13",
+    "grunt": "0.4.x",
+    "grunt-autoprefixer": "0.2.x",
+    "grunt-contrib-clean": "0.5.x",
+    "grunt-contrib-copy": "0.4.x",
+    "grunt-contrib-jade": "0.8.x",
+    "grunt-contrib-sass": "0.7.x",
+    "grunt-contrib-watch": "0.5.x",
+    "grunt-shell-spawn": "0.3.x"
+  },
+  "scripts": {
+    "start": "grunt dev"
+  }
+}
