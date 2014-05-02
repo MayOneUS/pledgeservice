@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 import webapp2
+import urllib2
+proxy_support = urllib2.ProxyHandler({})
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
