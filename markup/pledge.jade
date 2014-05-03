@@ -1,0 +1,56 @@
+doctype html
+html
+  head
+    script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
+    script.
+      var myApp = angular.module('mayOne',[]);
+
+      myApp.controller('PledgeController',
+                       ['$scope', '$http', function($scope, $http) {
+        $scope.ctrl = {
+          amount: 15,
+          result: '',
+          cents: function() {
+            return Math.floor($scope.ctrl.amount * 100);
+          },
+          pledge: function() {
+            var cents = $scope.ctrl.cents();
+            stripeHandler.open({
+              name: 'MayOne.US',
+              description: 'Pledging $' + (cents / 100),
+              amount: cents,
+            });
+          },
+          onTokenRecv: function(token, args) {
+            console.log(token);
+            $http.get('/pledge.do', {
+              params: {
+                token: token.id,
+                email: token.email,
+                amount: $scope.ctrl.cents(),
+              }
+            }).success(function() {
+              $scope.ctrl.result = 'Success!';
+            }).error(function() {
+              $scope.ctrl.result = 'Oops, something went wrong...';
+            })
+          },
+        };
+        window.mayOneController = $scope.ctrl;
+      }]);
+
+  body(ng-app="mayOne", ng-controller="PledgeController") Gimme some candy
+    form(ng-submit="ctrl.pledge()")
+      {{ctrl.result}}
+      input(type="number", min="1", ng-model="ctrl.amount")
+      input(type="submit", value="Purchase")
+    script(src="https://checkout.stripe.com/checkout.js")
+    script.
+      window.stripeHandler = StripeCheckout.configure({
+        key: 'pk_test_dyZCnQ7cB97ouDFyclAOWOXK',
+        billingAddress: true,
+        image: '/static/flag.jpg',
+        token: function(token, args) {
+          window.mayOneController.onTokenRecv(token, args);
+        }
+      });
