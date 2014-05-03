@@ -1,6 +1,7 @@
 doctype html
 html
   head
+    include includes/head
     script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
     script.
       var myApp = angular.module('mayOne',[]);
@@ -9,6 +10,8 @@ html
                        ['$scope', '$http', function($scope, $http) {
         $scope.ctrl = {
           amount: 15,
+          occupation: '',
+          employer: '',
           result: '',
           cents: function() {
             return Math.floor($scope.ctrl.amount * 100);
@@ -25,9 +28,12 @@ html
             console.log(token);
             $http.get('/pledge.do', {
               params: {
-                token: token.id,
                 email: token.email,
+                occupation: $scope.ctrl.occupation,
+                employer: $scope.ctrl.employer,
+                token: token.id,
                 amount: $scope.ctrl.cents(),
+
               }
             }).success(function() {
               $scope.ctrl.result = 'Success!';
@@ -42,6 +48,19 @@ html
   body(ng-app="mayOne", ng-controller="PledgeController") Gimme some candy
     form(ng-submit="ctrl.pledge()")
       {{ctrl.result}}
+
+      label(for="occupation") Occupation
+      input#occupation(type="text", required,
+        placeholder="Gardner, Railroad Worker, etc",
+        name="occupation",
+        ng-model="ctrl.occupation")
+
+      label(for="employer") Employer
+      input#occupation(type="text", required,
+        placeholder="Nintendo, UPS, Self, etc"
+        name="employer",
+        ng-model="ctrl.employer")
+
       input(type="number", min="1", ng-model="ctrl.amount")
       input(type="submit", value="Purchase")
     script(src="https://checkout.stripe.com/checkout.js")
