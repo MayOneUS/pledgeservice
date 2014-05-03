@@ -12,7 +12,7 @@ html
           amount: 15,
           occupation: '',
           employer: '',
-          result: '',
+          error: '',
           cents: function() {
             return Math.floor($scope.ctrl.amount * 100);
           },
@@ -36,9 +36,9 @@ html
 
               }
             }).success(function() {
-              $scope.ctrl.result = 'Success!';
             }).error(function() {
-              $scope.ctrl.result = 'Oops, something went wrong...';
+              $scope.ctrl.error =
+                'Oops, something went wrong. Try again in a few minutes';
             })
           },
         };
@@ -61,6 +61,8 @@ html
     .container
       .page-header
         h1 Pledge Your Support
+      .butterbar.row(ng-show="ctrl.error")
+        .alert.alert-danger {{ctrl.error}}
       #content.row
         form(ng-submit="ctrl.pledge()").col-md-8
           label Occupation
@@ -97,6 +99,6 @@ html
             li I am not a foreign national, federal contractor, national bank, or corporation chartered by an act of Congress
           p MayDay PAC must use its best efforts to obtain and report the name, address, occupation, and employer of individual contributors.
           p Contributions are not tax deductible.
-          p Our Privacy Policy
+          p <a href="/privacy">Our Privacy Policy</a>
       .row.spacing
     include includes/footer

@@ -12,6 +12,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 p, div {
     font-family: "Lato", arial, sans-serif;
+    font-size: 17px;
+}
+
+.spacing {
+    height: 200px;
 }
 
 #wrapper {
@@ -162,7 +167,6 @@ footer {
 }
 
 #pledge {
-    background: #e0e0e0;
     form {
         .input-group {
             width: 100%;
@@ -170,11 +174,7 @@ footer {
     }
 
     #rules {
-        background: white;
+        background: #E0E0E0;
         padding: 10px 30px;
-    }
-
-    .spacing {
-        height: 200px;
     }
 }

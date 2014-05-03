@@ -33,7 +33,8 @@ module.exports = function(grunt) {
                 },
                 files: {
                     "build/static/index.html": "markup/index.jade",
-                    "build/static/pledge.html": "markup/pledge.jade"
+                    "build/static/pledge.html": "markup/pledge.jade",
+                    "build/static/privacy.html": "markup/privacy.jade"
                 }
             }
         },
