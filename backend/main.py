@@ -22,6 +22,8 @@ from google.appengine.api import mail
 from google.appengine.ext import db, deferred
 import json
 import stripe
+from google.appengine.api import memcache
+
 
 # Test account secret key.
 stripe.api_key = "sk_test_W9JDlj3jnfWkaEg8OHpVjVcX"
@@ -63,6 +65,26 @@ def send_thank_you(email, pledge_id):
   message.send()
 
 
+class GetTotalHandler(webapp2.RequestHandler):
+  TOTAL_KEY = 'total'
+  def get(self):
+    data = memcache.get(GetTotalHandler.TOTAL_KEY)
+    if data is not None:
+      self.response.write(data)
+      return
+
+    total = 0
+    for pledge in Pledge.all():
+      total += pledge.amountCents
+    memcache.add(GetTotalHandler.TOTAL_KEY, total, 60)
+    self.response.write(total)
+
+
+class FakeCustomer(object):
+  def __init__(self):
+    self.id = "1234"
+
+
 class PledgeHandler(webapp2.RequestHandler):
   def post(self):
     try:
@@ -97,7 +119,7 @@ class PledgeHandler(webapp2.RequestHandler):
     # NOTE: This line fails in dev_appserver due to SSL nonsense. It
     # seems to work in prod.
     customer = stripe.Customer.create(card=token)
-
+    # customer = FakeCustomer()
     pledge = Pledge(email=email,
                     occupation=occupation,
                     employer=employer,
@@ -114,6 +136,7 @@ class PledgeHandler(webapp2.RequestHandler):
 
 
 app = webapp2.WSGIApplication([
+  ('/total', GetTotalHandler),
   ('/pledge.do', PledgeHandler),
   ('/', MainHandler)
 ], debug=True)
