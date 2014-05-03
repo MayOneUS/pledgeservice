@@ -18,7 +18,7 @@ import datetime
 import webapp2
 import urllib2
 from google.appengine.api import mail
-from google.appengine.ext import db
+from google.appengine.ext import db, deferred
 
 import stripe
 
@@ -43,6 +43,23 @@ class Pledge(db.Model):
 class MainHandler(webapp2.RequestHandler):
   def get(self):
     self.response.write('Hello world!')
+
+
+def send_thank_you(email, pledge_id):
+  """ Deferred email task """
+
+  sender = 'MayOne no-reply <noreply@pure-spring-568.appspotmail.com>'
+  subject = 'Thank you for your pledge'
+  message = mail.EmailMessage(sender=sender, subject=subject)
+  message.to = email
+  format_kwargs = {
+    'name': email,
+    # TODO: Softcode the receipt link
+    'receipt_link': 'http://localhost:8080/pledge/%s' % pledge_id
+  }
+  message.body = open('email/thank-you.txt').read().format(**format_kwargs)
+  message.html = open('email/thank-you.html').read().format(**format_kwargs)
+  message.send()
 
 
 class PledgeHandler(webapp2.RequestHandler):
@@ -70,12 +87,6 @@ class PledgeHandler(webapp2.RequestHandler):
       self.response.write('Invalid request')
       return
 
-    # TODO: Add mail task to a queue
-    from_email = 'noreply@pure-spring-568.appspotmail.com'
-    subject = 'Thank you'
-    body = 'Thank you yadda yadda'
-    mail.send_mail(from_email, email, subject, body)
-
     # NOTE: This line fails in dev_appserver due to SSL nonsense. It
     # seems to work in prod.
     customer = stripe.Customer.create(card=token)
@@ -88,6 +99,10 @@ class PledgeHandler(webapp2.RequestHandler):
                     note=self.request.get('note'),
                     fundraisingRound="1")
     pledge.save()
+
+    # Add thank you email to a task queue
+    deferred.defer(send_thank_you, email, pledge.key().id(), _queue="mail")
+
     self.response.write('Ok.')
 
 

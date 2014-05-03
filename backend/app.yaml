@@ -4,6 +4,9 @@ runtime: python27
 api_version: 1
 threadsafe: yes
 
+builtins:
+- deferred: on
+
 handlers:
 - url: /favicon\.ico
   static_files: static/favicon.ico
