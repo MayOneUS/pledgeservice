@@ -17,6 +17,7 @@
 import datetime
 import webapp2
 import urllib2
+from google.appengine.api import mail
 from google.appengine.ext import db
 
 import stripe
@@ -63,6 +64,17 @@ class PledgeHandler(webapp2.RequestHandler):
       self.error(400)
       self.response.write('Invalid request')
       return
+
+    if not mail.is_email_valid(email):
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+
+    # TODO: Add mail task to a queue
+    from_email = 'noreply@pure-spring-568.appspotmail.com'
+    subject = 'Thank you'
+    body = 'Thank you yadda yadda'
+    mail.send_mail(from_email, email, subject, body)
 
     # NOTE: This line fails in dev_appserver due to SSL nonsense. It
     # seems to work in prod.
