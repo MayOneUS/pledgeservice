@@ -31,6 +31,6 @@ The backend will be very simple with two endpoints
 
 Hacking
 -------
-To run the server, you need to have the Python App Engine SDK installed, as well as npm (which we use for the build system).
+To run the server, you need to have the Python App Engine SDK installed, as well as npm (which we use for the build system), and sass for compiling the stylesheets.
 
 After checking out the code, run `npm install`. To start the server, rung `npm start` and go to http://localhost:8080. That's it!
