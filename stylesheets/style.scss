@@ -7,6 +7,13 @@ html, body {
     box-sizing: border-box;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Oswald", arial, sans-serif;
+}
+p, div {
+    font-family: "Lato", arial, sans-serif;
+}
+
 #wrapper {
 
 
@@ -112,6 +119,9 @@ section h3 {
 
 header {
     background: linear-gradient(to bottom, #000000 0%,#646373 100%);
+    .logo img {
+        padding: 20px 0;
+    }
 }
 
 footer {
@@ -148,5 +158,23 @@ footer {
 	    padding: 5px;
 	    margin-bottom: 10px;
 	}
+    }
+}
+
+#pledge {
+    background: #e0e0e0;
+    form {
+        .input-group {
+            width: 100%;
+        }
+    }
+
+    #rules {
+        background: white;
+        padding: 10px 30px;
+    }
+
+    .spacing {
+        height: 200px;
     }
 }
