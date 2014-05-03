@@ -48,7 +48,7 @@ class MainHandler(webapp2.RequestHandler):
     self.response.write('Hello world!')
 
 
-def send_thank_you(email, pledge_id):
+def send_thank_you(email, host_url, pledge_id):
   """ Deferred email task """
 
   sender = 'MayOne no-reply <noreply@pure-spring-568.appspotmail.com>'
@@ -56,9 +56,10 @@ def send_thank_you(email, pledge_id):
   message = mail.EmailMessage(sender=sender, subject=subject)
   message.to = email
   format_kwargs = {
+    # TODO: Use the person's actual name
     'name': email,
-    # TODO: Softcode the receipt link
-    'receipt_link': 'http://localhost:8080/pledge/%s' % pledge_id
+    # TODO: write a handler for this
+    'receipt_link': '{0}/pledge/{1}'.format(host_url, pledge_id)
   }
   message.body = open('email/thank-you.txt').read().format(**format_kwargs)
   message.html = open('email/thank-you.html').read().format(**format_kwargs)
@@ -130,7 +131,10 @@ class PledgeHandler(webapp2.RequestHandler):
     pledge.save()
 
     # Add thank you email to a task queue
-    deferred.defer(send_thank_you, email, pledge.key().id(), _queue="mail")
+    deferred.defer(send_thank_you, email,
+                   self.request.host_url,
+                   pledge.key().id(),
+                   _queue="mail")
 
     self.response.write('Ok.')
 
