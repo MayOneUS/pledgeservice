@@ -103,6 +103,9 @@ p, div {
 	.progress-bar {
 	    height: 28px;
 	    line-height: 28px;
+            span {
+                color: black;
+            }
 	}
     }
 

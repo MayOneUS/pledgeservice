@@ -72,7 +72,7 @@ class GetTotalHandler(webapp2.RequestHandler):
     if data is not None:
       self.response.write(data)
       return
-
+    logging.info('Total cache miss')
     total = 0
     for pledge in Pledge.all():
       total += pledge.amountCents

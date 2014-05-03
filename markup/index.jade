@@ -2,7 +2,42 @@ doctype html
 html
   head
     include includes/head
-  body#index
+    script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
+    script.
+      var myApp = angular.module('mayOne',[]);
+
+      function addCommas(nStr) {
+        nStr += '';
+        x = nStr.split('.');
+        x1 = x[0];
+        x2 = x.length > 1 ? '.' + x[1] : '';
+        var rgx = /(\d+)(\d{3})/;
+        while (rgx.test(x1)) {
+           x1 = x1.replace(rgx, '$1' + ',' + '$2');
+        }
+        return x1 + x2;
+      }
+
+      myApp.controller('IndexController',
+                       ['$scope', '$http', function($scope, $http) {
+        $scope.ctrl = {
+          totalCents: 0,
+          init: function() {
+            $http.get('/total').success(function(data) {
+              $scope.ctrl.totalCents = parseInt(data);
+            });
+          },
+          moneyString: function() {
+            return '$' + addCommas(Math.floor($scope.ctrl.totalCents / 100));
+          },
+          percent: function() {
+            // Times 100 divided by 100
+            return Math.floor($scope.ctrl.totalCents / 1000000);
+          }
+        };
+      }]);
+
+  body(ng-app="mayOne", ng-controller="IndexController",ng-init="ctrl.init()")#index
     include includes/header
     #primary
       #images
@@ -22,10 +57,12 @@ html
         }, 3000);
       .overlay
         .slogan Help <span class="u">U</span>.<span class="s">S</span>. kickstart fundamental reform.
-        .progress.progress-lg.progress-striped.active
-          .progress-bar.progress-bar-danger(role="progressbar", aria-valuenow="45",
-            aria-valuemin="0", aria-valuemax="100", style="width: 45%")
-            span $450,000
+        .progress.progress-lg.progress-striped.active(ng-show="ctrl.totalCents != 0")
+          .progress-bar.progress-bar-danger(role="progressbar",
+            aria-valuenow="ctrl.percent()",
+            aria-valuemin="0", aria-valuemax="100",
+            ng-style="{width: ctrl.percent() + '%'}")
+            span {{ctrl.moneyString()}}
         include includes/pledge
         .share-row
           .share
@@ -38,8 +75,8 @@ html
                 span.entypo-social.facebook
               a(href="https://plus.google.com/share?url=https://mayone.us/campaigns/may-one/content=Only+30+days+to+left+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F", target="_blank", onclick="javascript:window.open('https://plus.google.com/share?url=https://mayone.us/campaigns/may-one/content=Only+30+days+to+left+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F','','menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600'); return false;")
                 span.entypo-social.gplus
-              a.fancybox(href="#share-widget", target="_blank")
-                span.entypo.code
+              // a.fancybox(href="#share-widget", target="_blank")
+              // span.entypo.code
 
     section#moonshot
       .container
