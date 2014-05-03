@@ -19,13 +19,17 @@ import webapp2
 import urllib2
 from google.appengine.ext import db
 
+import stripe
+
+stripe.api_key = "sk_test_W9JDlj3jnfWkaEg8OHpVjVcX"
+
 
 
 class Pledge(db.Model):
   donationTime = db.DateTimeProperty(auto_now_add=True)
   email = db.EmailProperty(required=True)
   amountCents = db.IntegerProperty(required=True)
-  stripeToken = db.StringProperty(required=True)
+  stripeCustomer = db.StringProperty(required=True)
   note = db.TextProperty(required=False)
 
   fundraisingRound = db.StringProperty(required=True)
@@ -38,12 +42,8 @@ class MainHandler(webapp2.RequestHandler):
 
 class PledgeHandler(webapp2.RequestHandler):
   def get(self):
-    if not (self.request.get('token')
-            and self.request.get('amount')
-            and self.request.get('email')):
-      self.error(400)
-      self.response.write('Invalid request')
-      return
+    token = self.request.get('token')
+    email = self.request.get('email')
 
     try:
       amount = int(self.request.get('amount'))
@@ -52,9 +52,16 @@ class PledgeHandler(webapp2.RequestHandler):
       self.response.write('Invalid request')
       return
 
-    pledge = Pledge(email=self.request.get('email'),
+    if not (token and email and amount):
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+
+    customer = stripe.Customer.create(card=token)
+
+    pledge = Pledge(email=email,
                     amountCents=amount,
-                    stripeToken=self.request.get('token'),
+                    stripeCustomer=customer.id,
                     note=self.request.get('note'),
                     fundraisingRound="1")
     pledge.save()

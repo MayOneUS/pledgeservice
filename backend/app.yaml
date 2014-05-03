@@ -27,3 +27,6 @@ handlers:
 
 # REMOVE BEFORE DEPLOYING
 default_expiration: "1m"
+libraries:
+- name: ssl
+  version: latest
