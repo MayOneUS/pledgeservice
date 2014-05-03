@@ -16,10 +16,11 @@
 #
 import datetime
 import webapp2
+import logging
 import urllib2
 from google.appengine.api import mail
 from google.appengine.ext import db, deferred
-
+import json
 import stripe
 
 # Test account secret key.
@@ -63,15 +64,21 @@ def send_thank_you(email, pledge_id):
 
 
 class PledgeHandler(webapp2.RequestHandler):
-  def get(self):
-    email = self.request.get('email')
-    occupation = self.request.get('occupation')
-    employer = self.request.get('employer')
-
-    token = self.request.get('token')
+  def post(self):
+    try:
+      data = json.loads(self.request.body)
+    except:
+      logging.Warning("Bad JSON request")
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+    email = data.get('email')
+    occupation = data.get('occupation')
+    employer = data.get('employer')
+    token = data.get('token')
 
     try:
-      amount = int(self.request.get('amount'))
+      amount = int(data.get('amount', '0'))
     except ValueError:
       self.error(400)
       self.response.write('Invalid request')
@@ -79,12 +86,12 @@ class PledgeHandler(webapp2.RequestHandler):
 
     if not (email and occupation and employer and token and amount):
       self.error(400)
-      self.response.write('Invalid request')
+      self.response.write('Invalid request: missing field')
       return
 
     if not mail.is_email_valid(email):
       self.error(400)
-      self.response.write('Invalid request')
+      self.response.write('Invalid request: Bad email address')
       return
 
     # NOTE: This line fails in dev_appserver due to SSL nonsense. It

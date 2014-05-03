@@ -26,15 +26,12 @@ html
           },
           onTokenRecv: function(token, args) {
             console.log(token);
-            $http.get('/pledge.do', {
-              params: {
+            $http.post('/pledge.do', {
                 email: token.email,
                 occupation: $scope.ctrl.occupation,
                 employer: $scope.ctrl.employer,
                 token: token.id,
                 amount: $scope.ctrl.cents(),
-
-              }
             }).success(function() {
               location.href = '/thankyou';
             }).error(function() {
