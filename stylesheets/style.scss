@@ -1,6 +1,16 @@
-body {
+@import "_entypo";
+
+html, body {
     font-family: "Oswald", arial, sans-serif;
     margin: 0;
+    -webkit-font-smoothing: antialiased;
+    box-sizing: border-box;
+}
+
+#wrapper {
+
+
+
 }
 
 #primary {
@@ -49,8 +59,36 @@ body {
     }
 
     .progress {
-	width: 300px;
+	width: 400px;
+	height: 28px;
 	margin: auto;
+	.progress-bar {
+	    height: 28px;
+	    line-height: 28px;
+	}
+    }
+
+    .share-row {
+	text-align: center;
+    }
+    .share {
+	color: #fff9fb;
+	font: 400 22px/30px 'Oswald', sans-serif;
+	background-color: rgba(0,0,0,0.4);
+	padding: 5px;
+	display: inline-block;
+
+	.text {
+	    font-style: italic;
+	    margin-right: 10px;
+	}
+	a {
+	    color: #fff9fb;
+	    margin: 5px;
+	}
+	a:hover {
+	    text-decoration: none;
+	}
     }
 }
 
@@ -72,7 +110,39 @@ section h3 {
     font: normal 45px/normal 'Oswald', sans-serif;
 }
 
+footer {
+    font-family: "Oswald", arial, sans-serif;
+    text-align: center;
+    color: #adadad;
+    .social {
+	background: rgb(60, 60, 60);
+	height: 110px;
 
-.u {
+	span.entypo-social {
+	    margin: 0 15px;
+	    font-size: 50pt;
+	    line-height: 110px;
+	    color: yellow;
+	}
+	a:hover {
+	    text-decoration: none;
+	}
+    }
 
+    .notices {
+	padding: 10px;
+	background: rgb(43, 43, 43);
+
+	.pac_disclaimer {
+	    width: 600px;
+	    margin: auto;
+	    border: 1px solid white;
+	    color: white;
+	    font-variant: small-caps;
+	    font-size: 22px;
+	    line-height: 22px;
+	    padding: 5px;
+	    margin-bottom: 10px;
+	}
+    }
 }

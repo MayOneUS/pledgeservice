@@ -6,103 +6,116 @@ html
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" id="googlefonts-css" href="https://fonts.googleapis.com/css?family=Oswald:300,400,700|Lato:400,700&amp;subset=latin" type="text/css" media="all">
   body
-    include includes/header
-    section#primary
-      #images
-        img.active(src="/static/12-bridge.jpg")
-        img(src="/static/05-midwest.jpg")
-        img(src="/static/06-cement.jpg")
-        img(src="/static/07-arizona.jpg")
-        img(src="/static/02-decay1.jpg")
-        img(src="/static/11-goldengate.jpg")
-      script.
-        window.mayOneSelectedImg = 0;
-        window.setInterval(function() {
-          console.log("FOO " + (typeof window.mayOneSelectedImg));
-          var imgs = document.getElementById("images");
-            console.log(          imgs.children[window.mayOneSelectedImg]);
-          imgs.children[window.mayOneSelectedImg].className = "";
-          window.mayOneSelectedImg = (window.mayOneSelectedImg + 1) % 6;
-          imgs.children[window.mayOneSelectedImg].className = "active";
-        }, 3000);
-      .overlay
-        .slogan Help <span class="u">U</span>.<span class="s">S</span>. kickstart fundamental reform.
-        .progress.progress-striped.active
-          .progress-bar.progress-bar-danger(role="progressbar", aria-valuenow="45",
-            aria-valuemin="0", aria-valuemax="100", style="width: 45%")
-            span $450,000
+    #wrapper
+      include includes/header
+      section#primary
+        #images
+          img.active(src="/static/12-bridge.jpg")
+          img(src="/static/05-midwest.jpg")
+          img(src="/static/06-cement.jpg")
+          img(src="/static/07-arizona.jpg")
+          img(src="/static/02-decay1.jpg")
+          img(src="/static/11-goldengate.jpg")
+        script.
+          window.mayOneSelectedImg = 0;
+          window.setInterval(function() {
+            var imgs = document.getElementById("images");
+            imgs.children[window.mayOneSelectedImg].className = "";
+            window.mayOneSelectedImg = (window.mayOneSelectedImg + 1) % 6;
+            imgs.children[window.mayOneSelectedImg].className = "active";
+          }, 3000);
+        .overlay
+          .slogan Help <span class="u">U</span>.<span class="s">S</span>. kickstart fundamental reform.
+          .progress.progress-lg.progress-striped.active
+            .progress-bar.progress-bar-danger(role="progressbar", aria-valuenow="45",
+              aria-valuemin="0", aria-valuemax="100", style="width: 45%")
+              span $450,000
+          include includes/pledge
+          .share-row
+            .share
+              span.text Spread the Word:
+              span.buttons
+                a(href="https://twitter.com/intent/tweet?text=Only+30+days+to+left+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F",
+                  target="_blank", onclick="javascript:window.open('https://twitter.com/intent/tweet?text=Only+30+days+to+left+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F','','menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600'); return false;")
+                  span.entypo-social.twitter
+                a(href="http://www.facebook.com/sharer.php?u=http%3A%2F%2Fwww.mayone.us%2F", target="_blank", onclick="javascript:window.open('http://www.facebook.com/sharer.php?u=http%3A%2F%2Fwww.mayone.us%2F','','menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600'); return false;")
+                  span.entypo-social.facebook
+                a(href="https://plus.google.com/share?url=https://mayone.us/campaigns/may-one/content=Only+30+days+to+left+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F", target="_blank", onclick="javascript:window.open('https://plus.google.com/share?url=https://mayone.us/campaigns/may-one/content=Only+30+days+to+left+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F','','menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600'); return false;")
+                  span.entypo-social.gplus
+                a.fancybox(href="#share-widget", target="_blank")
+                  span.entypo.code
+
+      section
+      section
+        h3 "...a moonshot."
+        .video
+          <iframe src="//player.vimeo.com/video/93299391" width="900" height="506" frameborder="0" title="Mayday PAC Launch" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen=""></iframe>
+      section
+        h3 the Idea
+        .text
+          p.
+            Government has failed us. More than 90% of Americans link that
+            failure to the influence of money in politics.
+
+          p Yet the politicians ignore this influence. While America founders, they spend endless time with their funders.
+
+          p These funders hold our democracy hostage. <u>We want to pay the ransom, and get it back.</u>
+
+          p
+           em
+            strong We're going to kickstart a SuperPAC big enough to make it possible to win a Congress committed to fundamental reform by 2016.
+
+          p Or at least we're going to try.
+
         include includes/pledge
-    section
-    section
-      h3 "...a moonshot."
-      .video
-        <iframe src="//player.vimeo.com/video/93299391" width="900" height="506" frameborder="0" title="Mayday PAC Launch" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen=""></iframe>
-    section
-      h3 the Idea
-      .text
-        p.
-          Government has failed us. More than 90% of Americans link that
-          failure to the influence of money in politics.
 
-        p Yet the politicians ignore this influence. While America founders, they spend endless time with their funders.
+      section
+        h3 to "kickstart"
+        .text
+          p This Citizens' SuperPAC will be funded through a series of contingent pledges:
 
-        p These funders hold our democracy hostage. <u>We want to pay the ransom, and get it back.</u>
+          p.indented We will set funding goals.
 
-        p
-         em
-          strong We're going to kickstart a SuperPAC big enough to make it possible to win a Congress committed to fundamental reform by 2016.
+          p.indented We will only collect if we hit our goals.
 
-        p Or at least we're going to try.
+          p The idea is simple: Unless there’s enough to make a difference, you don’t pay.
+        include includes/pledge
 
-      include includes/pledge
+      section
+        h3 2014
+        .text
+          p In 2014, we want to make fundamental reform the issue in 5 congressional races.
 
-    section
-      h3 to "kickstart"
-      .text
-        p This Citizens' SuperPAC will be funded through a series of contingent pledges:
+          p From that, we'll have a better sense of what victory in 2016 will take. And we'll put Congress on notice that in 2016, we'll be back.
 
-        p.indented We will set funding goals.
+          p So for 2014, we have two fundraising targets:
 
-        p.indented We will only collect if we hit our goals.
+          p.indented.strong The first is $1 million by the end of May. If we meet that goal, that $1 million will be matched, and we'll move to the second target.
 
-        p The idea is simple: Unless there’s enough to make a difference, you don’t pay.
-      include includes/pledge
+          p.indented.strong That second target is $5 million by the end of June. If we meet that goal, that $5 million will also be matched, and our fundraising for 2014 will end.
 
-    section
-      h3 2014
-      .text
-        p In 2014, we want to make fundamental reform the issue in 5 congressional races.
+          p We will then have the funds we need to hire the best campaign shops we can to use 100% of these kickstarted funds to win in these 5 districts.
+        include includes/pledge
 
-        p From that, we'll have a better sense of what victory in 2016 will take. And we'll put Congress on notice that in 2016, we'll be back.
+      section
+        h3 2016
+        .text
+          p Over the past year, we have been calculating what it would cost to win a Congress committed to fundamental reform by 2016. We have a good sense of the range, and of which seats would need to change.
 
-        p So for 2014, we have two fundraising targets:
+          p Our experience in 2014 will give us a better sense. And based on what we learn, we will decide whether this moonshot is feasible.
 
-        p.indented.strong The first is $1 million by the end of May. If we meet that goal, that $1 million will be matched, and we'll move to the second target.
+          p If it is, in January 2015, we will launch the second round of the Mayday PAC, crowdfunding small-dollar contributions again from citizens up, and larger contributions from wealthy citizens down.
 
-        p.indented.strong That second target is $5 million by the end of June. If we meet that goal, that $5 million will also be matched, and our fundraising for 2014 will end.
+          p Based on what we know now, we believe this <a href="http://billmoyers.com/2014/04/25/lawrence-lessig-has-a-moonshot-plan-to-halt-our-slide-toward-plutocracy/">moonshot</a> is possible. Based on what we achieve in 2014, others will believe it as well.
 
-        p We will then have the funds we need to hire the best campaign shops we can to use 100% of these kickstarted funds to win in these 5 districts.
-      include includes/pledge
+      section.mayday
+        h3 MAYDAY.
+        .text
+          p Will you answer the call?
 
-    section
-      h3 2016
-      .text
-        p Over the past year, we have been calculating what it would cost to win a Congress committed to fundamental reform by 2016. We have a good sense of the range, and of which seats would need to change.
+          p Please pledge if you can.
 
-        p Our experience in 2014 will give us a better sense. And based on what we learn, we will decide whether this moonshot is feasible.
-
-        p If it is, in January 2015, we will launch the second round of the Mayday PAC, crowdfunding small-dollar contributions again from citizens up, and larger contributions from wealthy citizens down.
-
-        p Based on what we know now, we believe this <a href="http://billmoyers.com/2014/04/25/lawrence-lessig-has-a-moonshot-plan-to-halt-our-slide-toward-plutocracy/">moonshot</a> is possible. Based on what we achieve in 2014, others will believe it as well.
-
-    section.mayday
-      h3 MAYDAY.
-      .text
-        p Will you answer the call?
-
-        p Please pledge if you can.
-
-        p Please share this site with everyone you can.
+          p Please share this site with everyone you can.
 
         p And please know this:
 
@@ -117,4 +130,4 @@ html
 
 
 
-    include includes/footer
+      include includes/footer
