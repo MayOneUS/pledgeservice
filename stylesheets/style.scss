@@ -1,7 +1,73 @@
 body {
     font-family: "Oswald", arial, sans-serif;
+    margin: 0;
 }
 
+#primary {
+    position: relative;
+    #images {
+	img {
+	    width: 100%;
+	    opacity: 0;
+	    transition: 600ms opacity;
+	}
+
+	img:not(:first-child) {
+	    position: absolute;
+	    top: 0;
+	    left: 0;
+	}
+
+	img.active {
+	    opacity: 1;
+	}
+    }
+
+    .overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+    }
+
+    .slogan {
+	width: 600px;
+	text-align: center;
+	margin: 100px auto 20px auto;
+
+	font: 400 50px/58px 'Oswald', sans-serif;
+	text-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+
+	color: #fff9fb;
+	.u {
+	    color: #f99;
+	}
+	.s {
+	    color: #9999e6;
+	}
+    }
+
+    .progress {
+	width: 300px;
+	margin: auto;
+    }
+}
+
+.pledge {
+    margin: 20px auto;
+    text-align: center;
+    .pledge-button {
+	font: bold 22px 'Oswald', sans-serif;
+	text-align: center;
+	text-transform: uppercase;
+	padding: 20px 40px 22px;
+	display: inline-block;
+	border-radius: 4px;
+	color: yellow;
+	background-color: #b50000;
+    }
+}
 section h3 {
     font: normal 45px/normal 'Oswald', sans-serif;
 }

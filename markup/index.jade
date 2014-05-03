@@ -3,11 +3,35 @@ html
   head
     title Foo
     link(rel="stylesheet", href="/static/style.css")
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" id="googlefonts-css" href="https://fonts.googleapis.com/css?family=Oswald:300,400,700|Lato:400,700&amp;subset=latin" type="text/css" media="all">
   body
-    header Header
-
-    section Help <span class="u">U</span>.<span class="s">S</span>. kickstart fundamental reform.
+    include includes/header
+    section#primary
+      #images
+        img.active(src="/static/12-bridge.jpg")
+        img(src="/static/05-midwest.jpg")
+        img(src="/static/06-cement.jpg")
+        img(src="/static/07-arizona.jpg")
+        img(src="/static/02-decay1.jpg")
+        img(src="/static/11-goldengate.jpg")
+      script.
+        window.mayOneSelectedImg = 0;
+        window.setInterval(function() {
+          console.log("FOO " + (typeof window.mayOneSelectedImg));
+          var imgs = document.getElementById("images");
+            console.log(          imgs.children[window.mayOneSelectedImg]);
+          imgs.children[window.mayOneSelectedImg].className = "";
+          window.mayOneSelectedImg = (window.mayOneSelectedImg + 1) % 6;
+          imgs.children[window.mayOneSelectedImg].className = "active";
+        }, 3000);
+      .overlay
+        .slogan Help <span class="u">U</span>.<span class="s">S</span>. kickstart fundamental reform.
+        .progress.progress-striped.active
+          .progress-bar.progress-bar-danger(role="progressbar", aria-valuenow="45",
+            aria-valuemin="0", aria-valuemax="100", style="width: 45%")
+            span $450,000
+        include includes/pledge
     section
     section
       h3 "...a moonshot."
@@ -93,4 +117,4 @@ html
 
 
 
-    footer Footer
+    include includes/footer
