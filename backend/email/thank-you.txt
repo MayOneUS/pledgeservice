@@ -6,7 +6,7 @@ Please share our campaign through social media, tell your friends, family, co-wo
 
 We'll be working on ways to help spread the message as well, and we would love for you to share your ideas about how to do so with us through the #MayOne hashtag, our Facebook Page[1], or @MayOneUS[2] on Twitter.  
 
-If you need to track your pledge, you can {receipt_link} 
+If you need to track your pledge, you can go here[3].
 
 Thanks again, 
 
@@ -15,6 +15,7 @@ lessig@mayone.us
 
 [1] https://www.facebook.com/mayonedotus
 [2] https://twitter.com/MayOneUS
+[3] {receipt_link}
 
 ----------------------
 Paid for by MayDay PAC
