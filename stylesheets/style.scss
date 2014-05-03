@@ -19,13 +19,39 @@ p, div {
     height: 200px;
 }
 
-#wrapper {
+#index {
+    a { color: yellow; }
 
-
-
+    section {
+        padding-bottom: 40px;
+        h3 {
+            font: normal 45px/normal 'Oswald', sans-serif;
+            text-align: center;
+            margin: 40px;
+            color: white;
+        }
+        .text {
+            p {
+                font-size: 20px;
+                margin: 25px 0;
+            }
+            p.indented {
+                margin-left: 50px;
+            }
+            p.strong {
+                font-weight: bold;
+                font-style: italic;
+            }
+            color: white;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 80%;
+        }
+    }
 }
 
-#primary {
+
+#index #primary {
     position: relative;
     #images {
 	img {
@@ -83,6 +109,7 @@ p, div {
     .share-row {
 	text-align: center;
     }
+
     .share {
 	color: #fff9fb;
 	font: 400 22px/30px 'Oswald', sans-serif;
@@ -104,6 +131,46 @@ p, div {
     }
 }
 
+
+#index #moonshot {
+    color: white;
+    text-align: center;
+    background: #171723;
+}
+
+#index #idea {
+    background: rgb(34, 31, 42);
+}
+
+#index #kickstart {
+    background: #2b232f;
+}
+
+#index #s2014 {
+    background: #3a2e38;
+}
+
+#index #s2016 {
+    background: #4b3c43;
+}
+
+#index #mayday {
+    background: #380101;
+    text-align: center;
+    h3 {
+        color: yellow;
+        font-size: 45px;
+        line-height: 67px;
+    }
+    .text {
+        p {
+            color: yellow;
+            font-size: 32px;
+            line-height: 48px;
+        }
+    }
+}
+
 .pledge {
     margin: 20px auto;
     text-align: center;
@@ -117,9 +184,6 @@ p, div {
 	color: yellow;
 	background-color: #b50000;
     }
-}
-section h3 {
-    font: normal 45px/normal 'Oswald', sans-serif;
 }
 
 header {
