@@ -1,0 +1,4 @@
+queue:
+- name: mail
+  # Max email rate for a paid account
+  rate: 4900/m
