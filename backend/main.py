@@ -68,6 +68,14 @@ class GetTotalHandler(webapp2.RequestHandler):
     self.response.write(total)
 
 
+class EmbedHandler(webapp2.RequestHandler):
+  def get(self):
+    if self.request.get("widget") == "1":
+        self.redirect("/embed.html")
+    else:
+        self.redirect("/")
+
+
 class FakeCustomer(object):
   def __init__(self):
     self.id = "1234"
@@ -147,5 +155,7 @@ class PledgeHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
-  ('/pledge.do', PledgeHandler)
+  ('/pledge.do', PledgeHandler),
+  ('/campaigns/may-one', EmbedHandler),
+  ('/campaigns/may-one/', EmbedHandler)
 ], debug=True)

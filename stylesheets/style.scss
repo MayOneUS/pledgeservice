@@ -50,6 +50,61 @@ p, div {
     }
 }
 
+#embed {
+    width: 260px;
+    height: 260px;
+
+    .slogan {
+        text-align: center;
+        margin: 20px auto 20px auto;
+
+        font: 200 25px/29px 'Oswald', sans-serif;
+        text-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+
+        color: #fff9fb;
+        .u {
+            color: #f99;
+        }
+        .s {
+            color: #9999e6;
+        }
+    }
+
+    .progress {
+        width: 200px;
+        height: 20px;
+        margin: 0px auto 20px auto;
+        background: grey;
+        position: relative;
+        border-bottom-left-radius: 26px;
+        border-bottom-right-radius: 26px;
+        border-top-left-radius: 26px;
+        border-top-right-radius: 26px;
+        .progress-bar {
+            height: 20px;
+            line-height: 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-bottom-left-radius: 26px;
+            border-bottom-right-radius: 26px;
+            border-top-left-radius: 26px;
+            border-top-right-radius: 26px;
+        }
+    }
+
+    .progress-text {
+        margin: 7px auto 7px auto;
+        text-align: center;
+        color: #fff9fb;
+        text-transform: uppercase;
+        font-size: 14px;
+        span {
+          margin: 0px 7px;
+        }
+    }
+}
+
 
 #index #primary {
     position: relative;
@@ -136,13 +191,6 @@ p, div {
         }
     }
 
-    .days-left {
-        text-align: center;
-        font-weight: bold;
-        color: yellow;
-        margin-top: 15px;
-    }
-
     .share-row {
         text-align: center;
     }
@@ -223,6 +271,22 @@ p, div {
     }
 }
 
+.embed-pledge {
+    margin: 20px auto;
+    text-align: center;
+    .pledge-button {
+        font: bold 22px 'Oswald', sans-serif;
+        text-align: center;
+        text-transform: uppercase;
+        padding: 10px 20px 11px;
+        display: inline-block;
+        border-radius: 4px;
+        color: yellow;
+        background-color: #b50000;
+    }
+}
+
+
 header {
     background: linear-gradient(to bottom, #000000 0%,#646373 100%);
     height: 120px;
@@ -292,4 +356,8 @@ footer {
 .headshot {
   float: left;
   padding: 10px 30px 10px 0px;
+}
+
+body#embed {
+  background-color: #2f3238;
 }

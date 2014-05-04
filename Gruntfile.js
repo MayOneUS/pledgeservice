@@ -41,7 +41,8 @@ module.exports = function(grunt) {
                     "build/static/distribution.html": "markup/distribution.jade",
                     "build/static/learnmore.html": "markup/learnmore.jade",
                     "build/static/aboutus.html": "markup/aboutus.jade",
-                    "build/static/faq.html": "markup/faq.jade"
+                    "build/static/faq.html": "markup/faq.jade",
+                    "build/static/embed.html": "markup/embed.jade"
                 }
             }
         },
