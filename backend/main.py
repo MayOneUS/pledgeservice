@@ -212,7 +212,7 @@ class PledgeHandler(webapp2.RequestHandler):
       self.response.write('Invalid request: Bad email address')
       return
 
-    customer = stripe.Customer.create(card=card_token)
+    customer = stripe.Customer.create(card=token)
 
     pledge = addPledge(
             email=email, stripe_customer_id=customer.id, amount_cents=amount,
