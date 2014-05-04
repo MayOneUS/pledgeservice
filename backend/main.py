@@ -1,35 +1,116 @@
 import datetime
-import webapp2
-import logging
-import urllib2
-from google.appengine.api import mail
-from google.appengine.ext import db, deferred
 import json
+import logging
+import os
+import urllib2
+import webapp2
+
+from google.appengine.api import mail, memcache
+from google.appengine.ext import db, deferred
+
 import stripe
-from google.appengine.api import memcache
+
 import config_NOCOMMIT
 
-# Test account secret key.
 stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 
 # This gets added to every pledge calculation
 BASE_TOTAL = 38672900
 
 
-class Pledge(db.Model):
-  donationTime = db.DateTimeProperty(auto_now_add=True)
-  fundraisingRound = db.StringProperty(required=True)
-
+class User(db.Model):
+  # a user's email is also the model key
   email = db.EmailProperty(required=True)
-  occupation = db.StringProperty(required=True)
-  employer = db.StringProperty(required=True)
-  phone = db.StringProperty()
-  target = db.StringProperty()
 
-  amountCents = db.IntegerProperty(required=True)
+  # occupation and employer are logically required for all new users, but we
+  # don't have this data for everyone. so from a data model perspective, they
+  # aren't required.
+  occupation = db.StringProperty(required=False)
+  employer = db.StringProperty(required=False)
+
+  phone = db.StringProperty(required=False)
+
+  # whether or not the pledge was donated specifically for a particular
+  # political affiliation
+  target = db.StringProperty(required=False)
+
+  # this is the nonce for what we'll put in a url to send to people when we ask
+  # them to update their information. it's kind of like their password for the
+  # user-management part of the site.
+  url_nonce = db.StringProperty(required=True)
+
+  @staticmethod
+  @db.transactional
+  def createOrUpdate(email, occupation=None, employer=None, phone=None,
+                     target=None):
+    user = User.get_by_key_name(email)
+    if user is None:
+      user = User(key_name=email,
+                  email=email,
+                  url_nonce=os.urandom(32).encode("hex"))
+    user.occupation = occupation
+    user.employer = employer
+    user.phone = phone
+    user.target = target
+    user.put()
+    return user
+
+
+class Pledge(db.Model):
+  # a user's email is also the User model key
+  email = db.EmailProperty(required=True)
+
+  # this is the string id for the stripe api to access the customer. we are
+  # doing a whole stripe customer per pledge.
   stripeCustomer = db.StringProperty(required=True)
 
+  # when the donation occurred
+  donationTime = db.DateTimeProperty(auto_now_add=True)
+
+  # we plan to have multiple fundraising rounds. right now we're in round "1"
+  fundraisingRound = db.StringProperty(required=True)
+
+  # what the user is pledging for
+  amountCents = db.IntegerProperty(required=True)
+
   note = db.TextProperty(required=False)
+
+  # it's possible we'll want to let people change just their pledge. i can't
+  # imagine a bunch of people pledging with the same email address and then
+  # getting access to change a bunch of other people's credit card info, but
+  # maybe we should support users only changing information relating to a
+  # specific pledge. if so, this is their site-management password.
+  url_nonce = db.StringProperty(required=True)
+
+  @staticmethod
+  def create(email, card_token, amount_cents, fundraisingRound="1", note=None):
+    customer = stripe.Customer.create(card=card_token)
+    pledge = Pledge(email=email,
+                    stripeCustomer=customer.id,
+                    fundraisingRound=fundraisingRound,
+                    amountCents=amount_cents,
+                    note=note,
+                    url_nonce=os.urandom(32).encode("hex"))
+    pledge.put()
+    return pledge
+
+
+def addPledge(email, card_token, amount_cents, occupation=None, employer=None,
+              phone=None, fundraisingRound="1", target=None, note=None):
+  """Creates a User model if one doesn't exist, finding one if one already
+  does, using the email as a user key. Then adds a Pledge to the User with
+  the given card token as a new credit card.
+
+  @return: the pledge
+  """
+  # first, let's find the user by email
+  User.createOrUpdate(
+          email=email, occupation=occupation, employer=employer, phone=phone,
+          target=target)
+
+  return Pledge.create(
+          email=email, card_token=card_token, amount_cents=amount_cents,
+          fundraisingRound=fundraisingRound, note=note)
 
 
 def send_thank_you(email, pledge_id, amount_cents):
@@ -40,7 +121,6 @@ def send_thank_you(email, pledge_id, amount_cents):
   message = mail.EmailMessage(sender=sender, subject=subject)
   message.to = email
 
-
   format_kwargs = {
     # TODO: Use the person's actual name
     'name': email,
@@ -48,6 +128,7 @@ def send_thank_you(email, pledge_id, amount_cents):
     'tx_id': pledge_id,
     'total': '$%d' % int(amount_cents/100)
   }
+
   message.body = open('email/thank-you.txt').read().format(**format_kwargs)
   message.html = open('email/thank-you.html').read().format(**format_kwargs)
   message.send()
@@ -129,25 +210,13 @@ class PledgeHandler(webapp2.RequestHandler):
       self.response.write('Invalid request: Bad email address')
       return
 
-    # NOTE: This line fails in dev_appserver due to SSL nonsense. It
-    # seems to work in prod.
-    customer = stripe.Customer.create(card=token)
-    # customer = FakeCustomer()
-    pledge = Pledge(email=email,
-                    occupation=occupation,
-                    employer=employer,
-                    phone=phone,
-                    target=target,
-                    amountCents=amount,
-                    stripeCustomer=customer.id,
-                    note=self.request.get('note'),
-                    fundraisingRound="1")
-    pledge.save()
+    pledge = addPledge(
+            email=email, card_token=token, amount_cents=amount,
+            occupation=occupation, employer=employer, phone=phone,
+            target=target, note=self.request.get("note"))
 
     # Add thank you email to a task queue
-    deferred.defer(send_thank_you, email,
-                   pledge.key().id(),
-                   amount,
+    deferred.defer(send_thank_you, email, pledge.key().id(), amount,
                    _queue="mail")
 
     self.response.write('Ok.')
@@ -158,4 +227,4 @@ app = webapp2.WSGIApplication([
   ('/pledge.do', PledgeHandler),
   ('/campaigns/may-one', EmbedHandler),
   ('/campaigns/may-one/', EmbedHandler)
-], debug=True)
+], debug=False)
