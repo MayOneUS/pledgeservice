@@ -80,7 +80,7 @@ class GetTotalHandler(webapp2.RequestHandler):
     total = 0
     for pledge in Pledge.all():
       total += pledge.amountCents
-    memcache.add(GetTotalHandler.TOTAL_KEY, total, 60)
+    memcache.add(GetTotalHandler.TOTAL_KEY, total, 300)
     self.response.write(total)
 
 
