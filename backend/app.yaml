@@ -1,4 +1,4 @@
-application: pure-spring-568
+application: mayday-pac
 version: 1
 runtime: python27
 api_version: 1
@@ -16,16 +16,24 @@ handlers:
   static_files: static/index.html
   upload: static/*
 
-- url: /pledge
+- url: /pledge/?
   static_files: static/pledge.html
   upload: static/*
 
-- url: /privacy
+- url: /privacy/?
   static_files: static/privacy.html
   upload: static/*
 
-- url: /thankyou
+- url: /thankyou/?
   static_files: static/thankyou.html
+  upload: static/*
+
+- url: /contact/?
+  static_files: static/contact.html
+  upload: static/*
+
+- url: /faq/?
+  static_files: static/faq.html
   upload: static/*
 
 - url: /static/
