@@ -5,10 +5,8 @@ header
         a(href="/")
           img(src="/static/logo_inverted31-e1398893630874.png", alt="Logo")
       .col-lg-10.links
-        a(href="/") Home
-        a(href="/faq") FAQ
-        a(href="/distribution-plan") Distribution Plan
-        a(href="/more-ways-to-help") More Ways to Help
-        a(href="/learn-more") Learn More
-        a(href="/about-us") About Us
-        a(href="/contact") Contact
+        include header-links
+  input(type="checkbox", id="primary-menu-toggle")
+  label(for="primary-menu-toggle")
+  .mobile-links
+    include header-links

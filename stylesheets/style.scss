@@ -289,16 +289,71 @@ p, div {
 
 header {
     background: linear-gradient(to bottom, #000000 0%,#646373 100%);
-    height: 120px;
+    height: auto;
+    overflow: hidden;
     line-height: 120px;
-    .logo img {
-        padding: 20px 0;
+    .logo {
+        display: inline-block;
+        img {
+            padding: 20px 0;
+        }
     }
     .links {
         text-align: right;
         a {
             color: white;
             margin-left: 30px;
+        }
+    }
+    #primary-menu-toggle {
+        display: none;
+        & + label {
+            position: absolute;
+            top: 2px;
+            right: 40px;
+            float: right;
+            display: none;
+            &:hover {
+                cursor: pointer;
+            }
+            &:before {
+                font-size: 80px;
+                font-family: 'EntypoRegular';
+                font-style: normal;
+                font-weight: normal;
+                color: white;
+                content: '\2630';
+            }
+            & + .mobile-links {
+                max-height: 0px;
+                transition: max-height 1.5s;
+                -moz-transition: max-height 1.5s; // Firefox
+                -webkit-transition: max-height 1.5s; // Safari and Chrome
+                -o-transition: max-height 1.5s; // Opera
+                background: black;
+
+                a {
+                    color: white;
+                    clear: both;
+                    display: block;
+                    text-align: center;
+                    font-weight: bold;
+                    line-height: normal;
+                    height: 50px;
+                    &:first-child {
+                        border-top: solid 20px white;
+                        padding-top: 20px;
+                        height: 90px;
+                    }
+                    &:last-child {
+                        border-bottom: solid 20px white;
+                        height: 70px;
+                    }
+                }
+            }
+        }
+        &:checked + label + .mobile-links {
+            max-height: 500px;
         }
     }
 }
@@ -361,3 +416,5 @@ footer {
 body#embed {
   background-color: #2f3238;
 }
+
+@import "responsive";

@@ -1,0 +1,10 @@
+@media (max-width:1199px) {
+    header {
+        .links {
+            display: none;
+        }
+        #primary-menu-toggle + label {
+            display: inline-block;
+        }
+    }
+}
