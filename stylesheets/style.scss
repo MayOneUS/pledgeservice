@@ -54,59 +54,84 @@ p, div {
 #index #primary {
     position: relative;
     #images {
-	img {
-	    width: 100%;
-	    opacity: 0;
-	    transition: 600ms opacity;
-	}
+        img {
+            width: 100%;
+            opacity: 0;
+            transition: 600ms opacity;
+        }
 
-	img:not(:first-child) {
-	    position: absolute;
-	    top: 0;
-	    left: 0;
-	}
+        img:not(:first-child) {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
 
-	img.active {
-	    opacity: 1;
-	}
+        img.active {
+            opacity: 1;
+        }
     }
 
     .overlay {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
     }
 
     .slogan {
-	width: 600px;
-	text-align: center;
-	margin: 100px auto 20px auto;
+        width: 600px;
+        text-align: center;
+        margin: 100px auto 20px auto;
 
-	font: 400 50px/58px 'Oswald', sans-serif;
-	text-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+        font: 400 50px/58px 'Oswald', sans-serif;
+        text-shadow: 0px 0px 10px rgba(0,0,0,0.5);
 
-	color: #fff9fb;
-	.u {
-	    color: #f99;
-	}
-	.s {
-	    color: #9999e6;
-	}
+        color: #fff9fb;
+        .u {
+            color: #f99;
+        }
+        .s {
+            color: #9999e6;
+        }
     }
 
     .progress {
-	width: 400px;
-	height: 28px;
-	margin: auto;
-	.progress-bar {
-	    height: 28px;
-	    line-height: 28px;
-            span {
-                color: black;
+        width: 500px;
+        height: 28px;
+        margin: auto;
+        background: grey;
+        position: relative;
+        border-bottom-left-radius: 26px;
+        border-bottom-right-radius: 26px;
+        border-top-left-radius: 26px;
+        border-top-right-radius: 26px;
+        .progress-bar {
+            height: 28px;
+            line-height: 28px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-bottom-left-radius: 26px;
+            border-bottom-right-radius: 26px;
+            border-top-left-radius: 26px;
+            border-top-right-radius: 26px;
+        }
+        .progress-text {
+            height: 28px;
+            line-height: 28px;
+            position: absolute;
+            top: 0;
+            left: 30px;
+            z-index: 10;
+            width: 470px;
+            div {
+                white-space: nowrap;
+                color: white;
+                font-size: 14px;
+                text-transform: uppercase;
             }
-	}
+        }
     }
 
     .days-left {
@@ -117,27 +142,27 @@ p, div {
     }
 
     .share-row {
-	text-align: center;
+        text-align: center;
     }
 
     .share {
-	color: #fff9fb;
-	font: 400 22px/30px 'Oswald', sans-serif;
-	background-color: rgba(0,0,0,0.4);
-	padding: 5px;
-	display: inline-block;
+        color: #fff9fb;
+        font: 400 22px/30px 'Oswald', sans-serif;
+        background-color: rgba(0,0,0,0.4);
+        padding: 5px;
+        display: inline-block;
 
-	.text {
-	    font-style: italic;
-	    margin-right: 10px;
-	}
-	a {
-	    color: #fff9fb;
-	    margin: 5px;
-	}
-	a:hover {
-	    text-decoration: none;
-	}
+        .text {
+            font-style: italic;
+            margin-right: 10px;
+        }
+        a {
+            color: #fff9fb;
+            margin: 5px;
+        }
+        a:hover {
+            text-decoration: none;
+        }
     }
 }
 
@@ -185,14 +210,14 @@ p, div {
     margin: 20px auto;
     text-align: center;
     .pledge-button {
-	font: bold 22px 'Oswald', sans-serif;
-	text-align: center;
-	text-transform: uppercase;
-	padding: 20px 40px 22px;
-	display: inline-block;
-	border-radius: 4px;
-	color: yellow;
-	background-color: #b50000;
+        font: bold 22px 'Oswald', sans-serif;
+        text-align: center;
+        text-transform: uppercase;
+        padding: 20px 40px 22px;
+        display: inline-block;
+        border-radius: 4px;
+        color: yellow;
+        background-color: #b50000;
     }
 }
 
@@ -206,7 +231,7 @@ header {
     .links {
         text-align: right;
         a {
-	    color: white;
+            color: white;
             margin-left: 30px;
         }
     }
@@ -217,35 +242,35 @@ footer {
     text-align: center;
     color: #adadad;
     .social {
-	background: rgb(60, 60, 60);
-	height: 110px;
+        background: rgb(60, 60, 60);
+        height: 110px;
 
-	span.entypo-social {
-	    margin: 0 15px;
-	    font-size: 50pt;
-	    line-height: 110px;
-	    color: yellow;
-	}
-	a:hover {
-	    text-decoration: none;
-	}
+        span.entypo-social {
+            margin: 0 15px;
+            font-size: 50pt;
+            line-height: 110px;
+            color: yellow;
+        }
+        a:hover {
+            text-decoration: none;
+        }
     }
 
     .notices {
-	padding: 10px;
-	background: rgb(43, 43, 43);
+        padding: 10px;
+        background: rgb(43, 43, 43);
 
-	.pac_disclaimer {
-	    width: 600px;
-	    margin: auto;
-	    border: 1px solid white;
-	    color: white;
-	    font-variant: small-caps;
-	    font-size: 22px;
-	    line-height: 22px;
-	    padding: 5px;
-	    margin-bottom: 10px;
-	}
+        .pac_disclaimer {
+            width: 600px;
+            margin: auto;
+            border: 1px solid white;
+            color: white;
+            font-variant: small-caps;
+            font-size: 22px;
+            line-height: 22px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
     }
 }
 

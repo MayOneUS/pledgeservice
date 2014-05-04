@@ -39,7 +39,11 @@ html
             });
           },
           moneyString: function() {
-            return '$' + addCommas(Math.floor($scope.ctrl.totalCents / 100));
+            return '$' + addCommas(Math.floor($scope.ctrl.totalCents / 100)) +
+                " raised";
+          },
+          percentFunded: function() {
+            return '' + $scope.ctrl.percent() + '% funded';
           },
           percent: function() {
             // Times 100 divided by 100
@@ -72,9 +76,12 @@ html
           .progress-bar.progress-bar-danger(role="progressbar",
             aria-valuenow="ctrl.percent()",
             aria-valuemin="0", aria-valuemax="100",
-            ng-style="{width: ctrl.percent() + '%'}")
-            span {{ctrl.moneyString()}}
-        .days-left {{ctrl.daysLeftMsg}}
+            ng-style="{width: ctrl.percent() + '%'}",
+            style="position:absolute;top:0;left:0;")
+          .progress-text.row
+            div.col-md-4(style="text-align:left;") {{ctrl.percentFunded()}}
+            div.col-md-4(style="text-align:center;") {{ctrl.moneyString()}}
+            div.col-md-4(style="text-align:right;") {{ctrl.daysLeftMsg}}
         include includes/pledge
         .share-row
           .share

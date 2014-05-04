@@ -12,6 +12,9 @@ import config_NOCOMMIT
 # Test account secret key.
 stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 
+# This gets added to every pledge calculation
+BASE_TOTAL = 38672900
+
 
 class Pledge(db.Model):
   donationTime = db.DateTimeProperty(auto_now_add=True)
@@ -58,7 +61,7 @@ class GetTotalHandler(webapp2.RequestHandler):
       self.response.write(data)
       return
     logging.info('Total cache miss')
-    total = 0
+    total = BASE_TOTAL
     for pledge in Pledge.all():
       total += pledge.amountCents
     memcache.add(GetTotalHandler.TOTAL_KEY, total, 300)
