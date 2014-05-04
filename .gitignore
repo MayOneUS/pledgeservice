@@ -4,3 +4,4 @@ node_modules/
 npm-debug.log
 *.pyc
 *~
+config_NOCOMMIT.py

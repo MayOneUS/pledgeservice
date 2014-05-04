@@ -23,10 +23,10 @@ from google.appengine.ext import db, deferred
 import json
 import stripe
 from google.appengine.api import memcache
-
+import config_NOCOMMIT
 
 # Test account secret key.
-stripe.api_key = "sk_test_W9JDlj3jnfWkaEg8OHpVjVcX"
+stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 
 
 class Pledge(db.Model):
