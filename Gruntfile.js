@@ -39,6 +39,8 @@ module.exports = function(grunt) {
                     "build/static/thankyou.html": "markup/thankyou.jade",
                     "build/static/contact.html": "markup/contact.jade",
                     "build/static/distribution.html": "markup/distribution.jade",
+                    "build/static/learnmore.html": "markup/learnmore.jade",
+                    "build/static/aboutus.html": "markup/aboutus.jade",
                     "build/static/faq.html": "markup/faq.jade"
                 }
             }
@@ -55,7 +57,7 @@ module.exports = function(grunt) {
 
         shell: {
             devserver: {
-                command: 'dev_appserver.py build/',
+                command: 'dev_appserver.py --host 0.0.0.0 build/',
                 options: {
                     async: true,
                 },
