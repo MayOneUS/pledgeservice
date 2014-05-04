@@ -10,8 +10,12 @@ html
                        ['$scope', '$http', function($scope, $http) {
         $scope.ctrl = {
           amount: 15,
-          occupation: '',
-          employer: '',
+          userinfo: {
+            occupation: '',
+            employer: '',
+            phone: '',
+            target: 'Whatever Helps',
+          },
           error: '',
           cents: function() {
             return Math.floor($scope.ctrl.amount * 100);
@@ -25,13 +29,11 @@ html
             });
           },
           onTokenRecv: function(token, args) {
-            console.log(token);
             $http.post('/pledge.do', {
                 email: token.email,
-                occupation: $scope.ctrl.occupation,
-                employer: $scope.ctrl.employer,
                 token: token.id,
                 amount: $scope.ctrl.cents(),
+                userinfo: $scope.ctrl.userinfo,
             }).success(function() {
               location.href = '/thankyou';
             }).error(function() {
@@ -50,7 +52,7 @@ html
       var STRIPE_PROD_PUBLIC_KEY = "pk_live_oWeicEuu46k9O6OIkyuvEsjN";
       var STRIPE_TEST_PUBLIC_KEY = "pk_test_g7UBToGvPpJ1xJa8OVsfV7zf";
       window.stripeHandler = StripeCheckout.configure({
-        key: STRIPE_PROD_PUBLIC_KEY,
+        key: STRIPE_TEST_PUBLIC_KEY,
         billingAddress: true,
         image: '/static/flag.jpg',
         token: function(token, args) {
@@ -65,26 +67,42 @@ html
         .alert.alert-danger {{ctrl.error}}
       #content.row
         form(ng-submit="ctrl.pledge()").col-md-8
-          label Occupation
-          .input-group.input-group-lg
-            input.form-control(type="text", required,
-              placeholder="Gardner, Railroad Worker, etc",
-              name="occupation",
-              ng-model="ctrl.occupation")
-
-          label Employer
-          .input-group.input-group-lg
-            input.form-control(type="text", required,
-              placeholder="Nintendo, UPS, Self, etc"
-              name="employer",
-              ng-model="ctrl.employer")
-
-          label Amount
-          .input-group.input-group-lg
-            span.input-group-addon $
-            input.form-control(type="number", min="1", ng-model="ctrl.amount")
-            span.input-group-btn
-              button.btn.btn-default(type="submit") Pledge
+          .row
+            .col-md-12
+              label Occupation
+              .input-group.input-group-lg
+                input.form-control(type="text", required,
+                  placeholder="Gardner, Railroad Worker, etc",
+                  ng-model="ctrl.userinfo.occupation")
+          .row
+            .col-md-12
+              label Employer
+              .input-group.input-group-lg
+                input.form-control(type="text", required,
+                  placeholder="Nintendo, UPS, Self, etc"
+                  ng-model="ctrl.userinfo.employer")
+          .row
+            .col-md-6
+              label Phone Number (optional)
+              .input-group.input-group-lg
+                input.form-control(type="tel",
+                  placeholder="(212) 867-5309"
+                  ng-model="ctrl.userinfo.phone")
+            .col-md-6
+              label Who to Fund?
+              .input-group.input-group-lg
+                select.form-control(ng-model="ctrl.userinfo.target")
+                  option Whatever Helps
+                  option Democrats Only
+                  option Republicans Only
+          .row
+            .col-md-12
+              label Amount
+              .input-group.input-group-lg
+                span.input-group-addon $
+                input.form-control(type="number", min="1", ng-model="ctrl.amount")
+                span.input-group-btn
+                  button.btn.btn-default(type="submit") Pledge
 
 
         #rules.col-md-4

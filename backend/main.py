@@ -36,16 +36,13 @@ class Pledge(db.Model):
   email = db.EmailProperty(required=True)
   occupation = db.StringProperty(required=True)
   employer = db.StringProperty(required=True)
+  phone = db.StringProperty()
+  target = db.StringProperty()
 
   amountCents = db.IntegerProperty(required=True)
   stripeCustomer = db.StringProperty(required=True)
 
   note = db.TextProperty(required=False)
-
-
-class MainHandler(webapp2.RequestHandler):
-  def get(self):
-    self.response.write('Hello world!')
 
 
 def send_thank_you(email, pledge_id, amount_cents):
@@ -98,19 +95,36 @@ class PledgeHandler(webapp2.RequestHandler):
       self.error(400)
       self.response.write('Invalid request')
       return
-    email = data.get('email')
-    occupation = data.get('occupation')
-    employer = data.get('employer')
-    token = data.get('token')
+
+    # ugh, consider using validictory?
+    if ('email' not in data or
+        'token' not in data or
+        'amount' not in data or
+        'userinfo' not in data or
+        'occupation' not in data['userinfo'] or
+        'employer' not in data['userinfo'] or
+        'phone' not in data['userinfo'] or
+        'target' not in data['userinfo']):
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+    email = data['email']
+    token = data['token']
+    amount = data['amount']
+
+    occupation = data['userinfo']['occupation']
+    employer = data['userinfo']['employer']
+    phone = data['userinfo']['phone']
+    target = data['userinfo']['target']
 
     try:
-      amount = int(data.get('amount', '0'))
+      amount = int(amount)
     except ValueError:
       self.error(400)
       self.response.write('Invalid request')
       return
 
-    if not (email and occupation and employer and token and amount):
+    if not (email and token and amount and occupation and employer and target):
       self.error(400)
       self.response.write('Invalid request: missing field')
       return
@@ -127,6 +141,8 @@ class PledgeHandler(webapp2.RequestHandler):
     pledge = Pledge(email=email,
                     occupation=occupation,
                     employer=employer,
+                    phone=phone,
+                    target=target,
                     amountCents=amount,
                     stripeCustomer=customer.id,
                     note=self.request.get('note'),
@@ -144,6 +160,5 @@ class PledgeHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
-  ('/pledge.do', PledgeHandler),
-  ('/', MainHandler)
+  ('/pledge.do', PledgeHandler)
 ], debug=True)
