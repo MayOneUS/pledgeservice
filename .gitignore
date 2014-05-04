@@ -5,3 +5,4 @@ npm-debug.log
 *.pyc
 *~
 config_NOCOMMIT.py
+/backend/config_NOCOMMIT
