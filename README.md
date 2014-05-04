@@ -33,3 +33,8 @@ Hacking
 To run the server, you need to have the Python App Engine SDK installed, as well as npm (which we use for the build system), and sass for compiling the stylesheets.
 
 After checking out the code, run `npm install`. To start the server, rung `npm start` and go to http://localhost:8080. That's it!
+
+If you want to rapidly set up a development environment that already has npm and
+dependencies installed using docker, try running
+
+  docker run -t -i -v /path/to/repo:/development jtolds/mayone-gae /bin/bash
