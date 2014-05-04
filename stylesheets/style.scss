@@ -326,10 +326,10 @@ header {
             }
             & + .mobile-links {
                 max-height: 0px;
-                transition: max-height 1.5s;
-                -moz-transition: max-height 1.5s; // Firefox
-                -webkit-transition: max-height 1.5s; // Safari and Chrome
-                -o-transition: max-height 1.5s; // Opera
+                transition: max-height 1s;
+                -moz-transition: max-height 1s; // Firefox
+                -webkit-transition: max-height 1s; // Safari and Chrome
+                -o-transition: max-height 1s; // Opera
                 background: black;
 
                 a {
