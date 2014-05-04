@@ -6,9 +6,7 @@ Please share our campaign through social media, tell your friends, family, co-wo
 
 We'll be working on ways to help spread the message as well, and we would love for you to share your ideas about how to do so with us through the #MayOne hashtag, our Facebook Page[1], or @MayOneUS[2] on Twitter.
 
-For your records:
-Transaction ID: {tx_id}
-Amount pledged: {total}
+This email serves as your receipt for your pledge of: {total}
 
 Thanks again,
 
