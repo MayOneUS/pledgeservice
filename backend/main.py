@@ -15,7 +15,7 @@ import config_NOCOMMIT
 stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 
 # This gets added to every pledge calculation
-BASE_TOTAL = 38672900
+BASE_TOTAL = 41280900
 
 
 class User(db.Model):
@@ -148,7 +148,7 @@ def importPledge(wp_post_id, email, stripe_customer_id, amount_cents,
           fundraisingRound=fundraisingRound, note=note)
 
 
-def send_thank_you(email, pledge_id, amount_cents):
+def send_thank_you(name, email, url_nonce, amount_cents):
   """ Deferred email task """
 
   sender = 'MayOne no-reply <noreply@mayday-pac.appspotmail.com>'
@@ -158,9 +158,9 @@ def send_thank_you(email, pledge_id, amount_cents):
 
   format_kwargs = {
     # TODO: Use the person's actual name
-    'name': email,
+    'name': name,
     # TODO: write a handler for this
-    'tx_id': pledge_id,
+    'url_nonce': url_nonce,
     'total': '$%d' % int(amount_cents/100)
   }
 
@@ -173,15 +173,15 @@ class GetTotalHandler(webapp2.RequestHandler):
   TOTAL_KEY = 'total'
   def get(self):
     data = memcache.get(GetTotalHandler.TOTAL_KEY)
-    if data is not None:
-      self.response.write(data)
-      return
-    logging.info('Total cache miss')
-    total = BASE_TOTAL
-    for pledge in Pledge.all():
-      total += pledge.amountCents
-    memcache.add(GetTotalHandler.TOTAL_KEY, total, 300)
-    self.response.write(total)
+    if data is None:
+      logging.info('Total cache miss')
+      total = BASE_TOTAL
+      for pledge in Pledge.all():
+        total += pledge.amountCents
+      data = str(total)
+      memcache.add(GetTotalHandler.TOTAL_KEY, data, 300)
+    self.response.headers['Content-Type'] = 'application/javascript'
+    self.response.write('%s(%s)' % (self.request.get('callback'), data))
 
 
 class EmbedHandler(webapp2.RequestHandler):
@@ -195,6 +195,7 @@ class EmbedHandler(webapp2.RequestHandler):
 class FakeCustomer(object):
   def __init__(self):
     self.id = "1234"
+    self.cards = [{'name': 'Harry Potter'}]
 
 
 class PledgeHandler(webapp2.RequestHandler):
@@ -253,8 +254,8 @@ class PledgeHandler(webapp2.RequestHandler):
             target=target, note=self.request.get("note"))
 
     # Add thank you email to a task queue
-    deferred.defer(send_thank_you, email, pledge.key().id(), amount,
-                   _queue="mail")
+    deferred.defer(send_thank_you, customer.cards[0].name, email,
+                   pledge.url_nonce, amount, _queue="mail")
 
     self.response.write('Ok.')
 

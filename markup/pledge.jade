@@ -9,7 +9,7 @@ html
       myApp.controller('PledgeController',
                        ['$scope', '$http', function($scope, $http) {
         $scope.ctrl = {
-          amount: 15,
+          amount: 0,
           userinfo: {
             occupation: '',
             employer: '',
@@ -52,7 +52,7 @@ html
       var STRIPE_PROD_PUBLIC_KEY = "pk_live_oWeicEuu46k9O6OIkyuvEsjN";
       var STRIPE_TEST_PUBLIC_KEY = "pk_test_g7UBToGvPpJ1xJa8OVsfV7zf";
       window.stripeHandler = StripeCheckout.configure({
-        key: STRIPE_TEST_PUBLIC_KEY,
+        key: STRIPE_PROD_PUBLIC_KEY,
         billingAddress: true,
         image: '/static/flag.jpg',
         token: function(token, args) {
@@ -102,7 +102,7 @@ html
                 span.input-group-addon $
                 input.form-control(type="number", min="1", ng-model="ctrl.amount")
                 span.input-group-btn
-                  button.btn.btn-default(type="submit") Pledge
+                  button.btn.btn-danger(type="submit") Pledge
 
 
         #rules.col-md-4

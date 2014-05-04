@@ -34,7 +34,7 @@ html
           daysLeftMsg: days_left_message,
           totalCents: 0,
           init: function() {
-            $http.get('/total').success(function(data) {
+            $http.jsonp('/total?callback=JSON_CALLBACK').success(function(data) {
               $scope.ctrl.totalCents = parseInt(data);
             });
           },
