@@ -3,6 +3,8 @@ MayOne.us RELOADED
 
 We're trying a different architecture on GAE.
 
+This project is licensed under the Apache License, version 2.
+
 CODERS NEEDED!
 --------------
 If you can contribute and know python, or html/CSS, contact yt@hjfreyer.com, or file a bug, or go to Freenode IRC #mayone and volunteer.
