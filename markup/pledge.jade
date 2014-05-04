@@ -50,7 +50,7 @@ html
       var STRIPE_PROD_PUBLIC_KEY = "pk_live_oWeicEuu46k9O6OIkyuvEsjN";
       var STRIPE_TEST_PUBLIC_KEY = "pk_test_g7UBToGvPpJ1xJa8OVsfV7zf";
       window.stripeHandler = StripeCheckout.configure({
-        key: STRIPE_TEST_PUBLIC_KEY,
+        key: STRIPE_PROD_PUBLIC_KEY,
         billingAddress: true,
         image: '/static/flag.jpg',
         token: function(token, args) {
