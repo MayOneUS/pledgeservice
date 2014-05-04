@@ -148,7 +148,7 @@ def importPledge(wp_post_id, email, stripe_customer_id, amount_cents,
           fundraisingRound=fundraisingRound, note=note)
 
 
-def send_thank_you(email, pledge_id, amount_cents):
+def send_thank_you(email, url_nonce, amount_cents):
   """ Deferred email task """
 
   sender = 'MayOne no-reply <noreply@mayday-pac.appspotmail.com>'
@@ -160,7 +160,7 @@ def send_thank_you(email, pledge_id, amount_cents):
     # TODO: Use the person's actual name
     'name': email,
     # TODO: write a handler for this
-    'tx_id': pledge_id,
+    'url_nonce': url_nonce,
     'total': '$%d' % int(amount_cents/100)
   }
 
@@ -253,7 +253,7 @@ class PledgeHandler(webapp2.RequestHandler):
             target=target, note=self.request.get("note"))
 
     # Add thank you email to a task queue
-    deferred.defer(send_thank_you, email, pledge.key().id(), amount,
+    deferred.defer(send_thank_you, email, pledge.url_nonce, amount,
                    _queue="mail")
 
     self.response.write('Ok.')
