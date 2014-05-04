@@ -15,7 +15,7 @@ import config_NOCOMMIT
 stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 
 # This gets added to every pledge calculation
-BASE_TOTAL = 38672900
+BASE_TOTAL = 41280900
 
 
 class User(db.Model):
@@ -173,15 +173,15 @@ class GetTotalHandler(webapp2.RequestHandler):
   TOTAL_KEY = 'total'
   def get(self):
     data = memcache.get(GetTotalHandler.TOTAL_KEY)
-    if data is not None:
-      self.response.write(data)
-      return
-    logging.info('Total cache miss')
-    total = BASE_TOTAL
-    for pledge in Pledge.all():
-      total += pledge.amountCents
-    memcache.add(GetTotalHandler.TOTAL_KEY, total, 300)
-    self.response.write(total)
+    if data is None:
+      logging.info('Total cache miss')
+      total = BASE_TOTAL
+      for pledge in Pledge.all():
+        total += pledge.amountCents
+      data = str(total)
+      memcache.add(GetTotalHandler.TOTAL_KEY, data, 300)
+    self.response.headers['Content-Type'] = 'application/javascript'
+    self.response.write('%s(%s)' % (self.request.get('callback'), data))
 
 
 class EmbedHandler(webapp2.RequestHandler):
