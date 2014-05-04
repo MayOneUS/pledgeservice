@@ -21,7 +21,7 @@ p, div {
 
 #index {
     a { color: yellow; }
-
+    header a { color: white; }
     section {
         padding-bottom: 40px;
         h3 {
@@ -107,6 +107,13 @@ p, div {
                 color: black;
             }
 	}
+    }
+
+    .days-left {
+        text-align: center;
+        font-weight: bold;
+        color: yellow;
+        margin-top: 15px;
     }
 
     .share-row {

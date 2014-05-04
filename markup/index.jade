@@ -20,7 +20,18 @@ html
 
       myApp.controller('IndexController',
                        ['$scope', '$http', function($scope, $http) {
+
+        // javascript is so awesome. this is how you write June 1st. Cause June is the
+        // 5th month, indexed by zero. thanks javascript!
+        var date_its_over = Date.UTC(2014,05,01,10,00,00,00);
+        var days_left = Math.floor((date_its_over - Date.now())/(1000*24*60*60));
+        var days_left_message = '' + days_left + ' days left';
+        if (days_left == 1) {
+          days_left_message = '' + days_left + ' day left';
+        }
+
         $scope.ctrl = {
+          daysLeftMsg: days_left_message,
           totalCents: 0,
           init: function() {
             $http.get('/total').success(function(data) {
@@ -63,17 +74,18 @@ html
             aria-valuemin="0", aria-valuemax="100",
             ng-style="{width: ctrl.percent() + '%'}")
             span {{ctrl.moneyString()}}
+        .days-left {{ctrl.daysLeftMsg}}
         include includes/pledge
         .share-row
           .share
             span.text Spread the Word:
             span.buttons
-              a(href="https://twitter.com/intent/tweet?text=Only+30+days+to+left+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F",
-                target="_blank", onclick="javascript:window.open('https://twitter.com/intent/tweet?text=Only+30+days+to+left+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F','','menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600'); return false;")
+              a(ng-href="https://twitter.com/intent/tweet?text=Only+{{ctrl.daysLeftMsg}}+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us",
+                target="_blank")
                 span.entypo-social.twitter
               a(href="http://www.facebook.com/sharer.php?u=http%3A%2F%2Fwww.mayone.us%2F", target="_blank", onclick="javascript:window.open('http://www.facebook.com/sharer.php?u=http%3A%2F%2Fwww.mayone.us%2F','','menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600'); return false;")
                 span.entypo-social.facebook
-              a(href="https://plus.google.com/share?url=https://mayone.us/campaigns/may-one/content=Only+30+days+to+left+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F", target="_blank", onclick="javascript:window.open('https://plus.google.com/share?url=https://mayone.us/campaigns/may-one/content=Only+30+days+to+left+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F','','menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600'); return false;")
+              a(ng-href="https://plus.google.com/share?url=https://mayone.us/campaigns/may-one/&comment=Only+{{ctrl.daysLeftMsg}}+to+support+MayOne.us%3A+Mayday+for+the+Republic+https%3A%2F%2Fmayone.us%2Fcampaigns%2Fmay-one%2F", target="_blank")
                 span.entypo-social.gplus
               // a.fancybox(href="#share-widget", target="_blank")
               // span.entypo.code
