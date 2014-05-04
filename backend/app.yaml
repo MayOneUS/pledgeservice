@@ -15,59 +15,74 @@ handlers:
 - url: /
   static_files: static/index.html
   upload: static/*
+  secure: always
 
 - url: /pledge/?
   static_files: static/pledge.html
   upload: static/*
+  secure: always
 
 - url: /privacy/?
   static_files: static/privacy.html
   upload: static/*
+  secure: always
 
 - url: /privacy-policy/?
   static_files: static/privacy.html
   upload: static/*
+  secure: always
 
 - url: /thankyou/?
   static_files: static/thankyou.html
   upload: static/*
+  secure: always
 
 - url: /contact/?
   static_files: static/contact.html
   upload: static/*
+  secure: always
 
 - url: /more-ways-to-help/?
   static_files: static/more.html
   upload: static/*
+  secure: always
 
 - url: /distribution-plan/?
   static_files: static/distribution.html
   upload: static/*
+  secure: always
 
 - url: /about-us/?
   static_files: static/aboutus.html
   upload: static/*
+  secure: always
 
 - url: /learn-more/?
   static_files: static/learnmore.html
   upload: static/*
+  secure: always
 
 - url: /faq/?
   static_files: static/faq.html
   upload: static/*
+  secure: always
 
 - url: /static/
   static_dir: static/
+  secure: always
 
 - url: /embed.html
   static_files: static/embed.html
   upload: static/*
+  secure: always
 
 - url: .*
   script: main.app
+  secure: always
 
-# REMOVE BEFORE DEPLOYING
-default_expiration: "1m"
 libraries:
 - name: ssl
   version: latest
+
+# REMOVE BEFORE DEPLOYING
+default_expiration: "1m"
