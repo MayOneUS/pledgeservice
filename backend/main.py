@@ -75,6 +75,8 @@ class Pledge(db.Model):
 
   note = db.TextProperty(required=False)
 
+  imported_wp_post_id = db.IntegerProperty(required=False)
+
   # it's possible we'll want to let people change just their pledge. i can't
   # imagine a bunch of people pledging with the same email address and then
   # getting access to change a bunch of other people's credit card info, but
@@ -91,6 +93,25 @@ class Pledge(db.Model):
                     amountCents=amount_cents,
                     note=note,
                     url_nonce=os.urandom(32).encode("hex"))
+    pledge.put()
+    return pledge
+
+  @staticmethod
+  @db.transactional
+  def importOrUpdate(wp_post_id, email, stripe_customer_id, amount_cents,
+                     fundraisingRound="1", note=None):
+    pledges = Pledge.all().filter("imported_wp_post_id =", wp_post_id).run(
+        limit=1)
+    if not pledges:
+        pledge = Pledge(url_nonce=os.urandom(32).encode("hex"),
+                        imported_wp_post_id=wp_post_id)
+    else:
+        pledge = pledges[0]
+    pledge.email = email
+    pledge.stripeCustomer = stripe_customer_id
+    pledge.fundraisingRound = fundraisingRound
+    pledge.amountCents = amount_cents
+    pledge.note = note
     pledge.put()
     return pledge
 
@@ -113,6 +134,18 @@ def addPledge(email, stripe_customer_id, amount_cents, occupation=None,
           email=email, stripe_customer_id=stripe_customer_id,
           amount_cents=amount_cents, fundraisingRound=fundraisingRound,
           note=note)
+
+
+def importPledge(wp_post_id, email, stripe_customer_id, amount_cents,
+                 occupation=None, employer=None, phone=None,
+                 fundraisingRound="1", target=None, note=None):
+  User.createOrUpdate(
+          email=email, occupation=occupation, employer=employer, phone=phone,
+          target=target)
+  return Pledge.importOrUpdate(
+          wp_post_id=wp_post_id, email=email,
+          stripe_customer_id=stripe_customer_id, amount_cents=amount_cents,
+          fundraisingRound=fundraisingRound, note=note)
 
 
 def send_thank_you(email, pledge_id, amount_cents):
