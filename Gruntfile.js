@@ -39,6 +39,8 @@ module.exports = function(grunt) {
                     "build/static/thankyou.html": "markup/thankyou.jade",
                     "build/static/contact.html": "markup/contact.jade",
                     "build/static/distribution.html": "markup/distribution.jade",
+                    "build/static/learnmore.html": "markup/learnmore.jade",
+                    "build/static/aboutus.html": "markup/aboutus.jade",
                     "build/static/faq.html": "markup/faq.jade"
                 }
             }

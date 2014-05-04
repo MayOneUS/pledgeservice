@@ -24,6 +24,10 @@ handlers:
   static_files: static/privacy.html
   upload: static/*
 
+- url: /privacy-policy/?
+  static_files: static/privacy.html
+  upload: static/*
+
 - url: /thankyou/?
   static_files: static/thankyou.html
   upload: static/*
@@ -38,6 +42,14 @@ handlers:
 
 - url: /distribution-plan/?
   static_files: static/distribution.html
+  upload: static/*
+
+- url: /about-us/?
+  static_files: static/aboutus.html
+  upload: static/*
+
+- url: /learn-more/?
+  static_files: static/learnmore.html
   upload: static/*
 
 - url: /faq/?
