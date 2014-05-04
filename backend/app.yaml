@@ -32,6 +32,10 @@ handlers:
   static_files: static/contact.html
   upload: static/*
 
+- url: /distribution-plan/?
+  static_files: static/distribution.html
+  upload: static/*
+
 - url: /faq/?
   static_files: static/faq.html
   upload: static/*

@@ -192,10 +192,17 @@ p, div {
 header {
     background: linear-gradient(to bottom, #000000 0%,#646373 100%);
     height: 120px;
+    line-height: 120px;
     .logo img {
         padding: 20px 0;
     }
-    line-height: 120px;
+    .links {
+        text-align: right;
+        a {
+	    color: white;
+            margin-left: 30px;
+        }
+    }
 }
 
 footer {
