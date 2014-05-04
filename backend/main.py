@@ -83,10 +83,10 @@ class Pledge(db.Model):
   url_nonce = db.StringProperty(required=True)
 
   @staticmethod
-  def create(email, card_token, amount_cents, fundraisingRound="1", note=None):
-    customer = stripe.Customer.create(card=card_token)
+  def create(email, stripe_customer_id, amount_cents, fundraisingRound="1",
+             note=None):
     pledge = Pledge(email=email,
-                    stripeCustomer=customer.id,
+                    stripeCustomer=stripe_customer_id,
                     fundraisingRound=fundraisingRound,
                     amountCents=amount_cents,
                     note=note,
@@ -95,8 +95,9 @@ class Pledge(db.Model):
     return pledge
 
 
-def addPledge(email, card_token, amount_cents, occupation=None, employer=None,
-              phone=None, fundraisingRound="1", target=None, note=None):
+def addPledge(email, stripe_customer_id, amount_cents, occupation=None,
+              employer=None, phone=None, fundraisingRound="1", target=None,
+              note=None):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
@@ -109,8 +110,9 @@ def addPledge(email, card_token, amount_cents, occupation=None, employer=None,
           target=target)
 
   return Pledge.create(
-          email=email, card_token=card_token, amount_cents=amount_cents,
-          fundraisingRound=fundraisingRound, note=note)
+          email=email, stripe_customer_id=stripe_customer_id,
+          amount_cents=amount_cents, fundraisingRound=fundraisingRound,
+          note=note)
 
 
 def send_thank_you(email, pledge_id, amount_cents):
@@ -210,8 +212,10 @@ class PledgeHandler(webapp2.RequestHandler):
       self.response.write('Invalid request: Bad email address')
       return
 
+    customer = stripe.Customer.create(card=card_token)
+
     pledge = addPledge(
-            email=email, card_token=token, amount_cents=amount,
+            email=email, stripe_customer_id=customer.id, amount_cents=amount,
             occupation=occupation, employer=employer, phone=phone,
             target=target, note=self.request.get("note"))
 
