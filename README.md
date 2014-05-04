@@ -1,10 +1,7 @@
 MayOne.us RELOADED
 ==================
 
-WordPress has failed us. More than 90% of programmers link that
-failure to the influence of PHP on the web.
-
-Yadda yadda yadda, we're trying again on nice and scalable App Engine.
+We're trying a different architecture on GAE.
 
 CODERS NEEDED!
 --------------
