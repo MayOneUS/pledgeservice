@@ -15,7 +15,7 @@ import config_NOCOMMIT
 stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 
 # This gets added to every pledge calculation
-BASE_TOTAL = 41280900
+BASE_TOTAL = 42373368
 
 
 class User(db.Model):
@@ -177,7 +177,8 @@ class GetTotalHandler(webapp2.RequestHandler):
       logging.info('Total cache miss')
       total = BASE_TOTAL
       for pledge in Pledge.all():
-        total += pledge.amountCents
+        if pledge.imported_wp_post_id is None:
+          total += pledge.amountCents
       data = str(total)
       memcache.add(GetTotalHandler.TOTAL_KEY, data, 300)
     self.response.headers['Content-Type'] = 'application/javascript'
@@ -223,6 +224,7 @@ class PledgeHandler(webapp2.RequestHandler):
     email = data['email']
     token = data['token']
     amount = data['amount']
+    name = data.get('name', '')
 
     occupation = data['userinfo']['occupation']
     employer = data['userinfo']['employer']
@@ -254,7 +256,7 @@ class PledgeHandler(webapp2.RequestHandler):
             target=target, note=self.request.get("note"))
 
     # Add thank you email to a task queue
-    deferred.defer(send_thank_you, customer.cards[0].name, email,
+    deferred.defer(send_thank_you, name or email, email,
                    pledge.url_nonce, amount, _queue="mail")
 
     self.response.write('Ok.')
