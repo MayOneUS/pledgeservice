@@ -34,6 +34,7 @@ html
                 token: token.id,
                 amount: $scope.ctrl.cents(),
                 userinfo: $scope.ctrl.userinfo,
+                name: args.billing_name,
             }).success(function() {
               location.href = '/thankyou';
             }).error(function() {
