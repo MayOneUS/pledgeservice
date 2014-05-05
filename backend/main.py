@@ -15,7 +15,7 @@ import config_NOCOMMIT
 stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 
 # This gets added to every pledge calculation
-BASE_TOTAL = 42373368
+BASE_TOTAL = 42209668
 
 
 class User(db.Model):
