@@ -15,7 +15,7 @@ import config_NOCOMMIT
 stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 
 # This gets added to every pledge calculation
-BASE_TOTAL = 41301100
+BASE_TOTAL = 42373368
 
 
 class User(db.Model):
@@ -177,7 +177,8 @@ class GetTotalHandler(webapp2.RequestHandler):
       logging.info('Total cache miss')
       total = BASE_TOTAL
       for pledge in Pledge.all():
-        total += pledge.amountCents
+        if pledge.imported_wp_post_id is None:
+          total += pledge.amountCents
       data = str(total)
       memcache.add(GetTotalHandler.TOTAL_KEY, data, 300)
     self.response.headers['Content-Type'] = 'application/javascript'
