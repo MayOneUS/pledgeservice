@@ -101,7 +101,8 @@ html
               label Amount
               .input-group.input-group-lg
                 span.input-group-addon $
-                input.form-control(type="number", min="1", ng-model="ctrl.amount")
+                input.form-control(type="number", required, min="1",
+                  ng-model="ctrl.amount")
                 span.input-group-btn
                   button.btn.btn-danger(type="submit") Pledge
 
