@@ -38,7 +38,7 @@ html
                 input.form-control(type="text", required,
                   placeholder="Gardner, Railroad Worker, etc",
                   name="occupation",
-                  value="{{ user.occupation }}")
+                  value="{{ user.occupation if user.occupation != None }}")
           .row
             .col-md-12
               label Employer
@@ -46,7 +46,7 @@ html
                 input.form-control(type="text", required,
                   placeholder="Nintendo, UPS, Self, etc",
                   name="employer",
-                  value="{{ user.employer }}")
+                  value="{{ user.employer if user.employer != None }}")
           .row
             .col-md-6
               label Phone Number (optional)
@@ -54,7 +54,7 @@ html
                 input.form-control(type="tel",
                   placeholder="(212) 867-5309",
                   name="phone",
-                  value="{{ user.phone }}")
+                  value="{{ user.phone if user.phone != None }}")
             .col-md-6
               label Who to Fund?
               .input-group.input-group-lg
