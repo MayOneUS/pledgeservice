@@ -1,11 +1,12 @@
 application: mayday-pac
-version: 1
+version: staging
 runtime: python27
 api_version: 1
 threadsafe: yes
 
 builtins:
 - deferred: on
+- remote_api: on
 
 handlers:
 - url: /favicon\.ico

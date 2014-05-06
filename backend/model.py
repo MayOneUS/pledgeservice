@@ -1,7 +1,55 @@
 import logging
 import os
 
+from collections import namedtuple
+
 from google.appengine.ext import db
+
+class Error(Exception): pass
+
+
+# Config singleton. Loaded once per instance and never modified. It's
+# okay if try to load it multiple times, so no worries about race
+# conditions.
+class Config(object):
+  ConfigType = namedtuple('ConfigType',
+                          ['stripe_public_key', 'stripe_private_key'])
+  _instance = None
+
+  @staticmethod
+  def get():
+    if Config._instance:
+      return Config._instance
+
+    s = Secrets.get()
+    Config._instance = Config.ConfigType(
+      # If the secrets haven't been loaded yet, omit them.
+      stripe_public_key=s.stripe_public_key if s else None,
+      stripe_private_key=s.stripe_private_key if s else None)
+    return Config._instance
+
+
+# Secrets to store in the DB, rather than git.
+class Secrets(db.Model):
+  # We include the public key so they're never out of sync.
+  stripe_public_key = db.StringProperty(required=True)
+  stripe_private_key = db.StringProperty(required=True)
+
+  @staticmethod
+  def get():
+    s = list(Secrets.all())
+    if len(s) > 1:
+      raise Error('Have multiple secrets in the database somehow. This '
+                  "shouldn't happen.")
+    return s[0] if s else None
+
+  @staticmethod
+  def update(stripe_public_key, stripe_private_key):
+    if list(Secrets.all()):
+      raise Error('DB already contains secrets. Delete them first')
+    s = Secrets(stripe_public_key=stripe_public_key,
+                stripe_private_key=stripe_private_key)
+    s.put()
 
 
 class User(db.Model):

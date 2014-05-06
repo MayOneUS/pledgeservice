@@ -15,6 +15,8 @@ stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 # This gets added to every pledge calculation
 BASE_TOTAL = 42209668
 
+class Error(Exception): pass
+
 
 def send_thank_you(name, email, url_nonce, amount_cents):
   """ Deferred email task """
@@ -51,6 +53,13 @@ class GetTotalHandler(webapp2.RequestHandler):
       memcache.add(GetTotalHandler.TOTAL_KEY, data, 300)
     self.response.headers['Content-Type'] = 'application/javascript'
     self.response.write('%s(%s)' % (self.request.get('callback'), data))
+
+
+class GetStripePublicKeyHandler(webapp2.RequestHandler):
+  def get(self):
+    if not model.Config.get().stripe_public_key:
+      raise Error('No public key in DB')
+    self.response.write(model.Config.get().stripe_public_key)
 
 
 class EmbedHandler(webapp2.RequestHandler):
@@ -132,6 +141,7 @@ class PledgeHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
+  ('/stripe_public_key', GetStripePublicKeyHandler),
   ('/pledge.do', PledgeHandler),
   ('/campaigns/may-one', EmbedHandler),
   ('/campaigns/may-one/', EmbedHandler)
