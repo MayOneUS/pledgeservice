@@ -3,3 +3,5 @@
 
 # Test account secret key
 STRIPE_SECRET_KEY = "sk_test_W9JDlj3jnfWkaEg8OHpVjVcX"
+
+IMPORT_SECRET_KEY = "a39fcae2aa8cc05b4e62fce813313861"
