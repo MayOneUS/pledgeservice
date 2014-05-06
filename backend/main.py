@@ -140,27 +140,47 @@ class PledgeHandler(webapp2.RequestHandler):
     # Add thank you email to a task queue
     deferred.defer(send_thank_you, name or email, email,
                    pledge.url_nonce, amount, _queue="mail")
-
     self.response.write('Ok.')
 
 
-class PledgeUpdateHandler(webapp2.RequestHandler):
+class UserUpdateHandler(webapp2.RequestHandler):
     def get(self, url_nonce):
-        user = model.User.gql("WHERE url_nonce = :1", url_nonce).get()
+        user = model.User.all().filter("url_nonce =", url_nonce).get()
         if user is None:
             self.error(404)
             self.response.write('This page was not found')
             return
 
-        template = JINJA_ENVIRONMENT.get_template('pledge-update.html')
+        template = JINJA_ENVIRONMENT.get_template('user-update.html')
         self.response.write(template.render({'user': user}))
+
+    def post(self, url_nonce):
+        try:
+            user = model.User.all().filter("url_nonce =", url_nonce).get()
+            if user is None:
+                self.error(404)
+                self.response.write('This page was not found')
+                return
+
+            user.occupation = self.request.get('occupation')
+            user.employer = self.request.get('employer')
+            user.phone = self.request.get('phone')
+            user.target = self.request.get('target')
+            user.put()
+            template = JINJA_ENVIRONMENT.get_template('user-update.html')
+            ctx = {'user': user, 'success': True}
+            self.response.write(template.render(ctx))
+        except:
+            self.error(400)
+            self.response.write('There was a problem submitting the form')
+            return
 
 
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
   ('/stripe_public_key', GetStripePublicKeyHandler),
   ('/pledge.do', PledgeHandler),
-  ('/pledge-update/(.+)', PledgeUpdateHandler),
+  ('/user-update/(.+)', UserUpdateHandler),
   ('/campaigns/may-one', EmbedHandler),
   ('/campaigns/may-one/', EmbedHandler)
 ], debug=False)

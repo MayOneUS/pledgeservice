@@ -2,69 +2,68 @@ doctype html
 html
   head
     include includes/head
-    script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
     script.
-      var myApp = angular.module('mayOne',[]);
-
-      myApp.controller('PledgeUpdateController',
-                       ['$scope', '$http', function($scope, $http) {
-        $scope.ctrl = {
-          userinfo: {
-            occupation: '',
-            employer: '',
-            phone: '',
-            target: 'Whatever Helps',
-          },
-          error: '',
-          updatePledge: function() {
+      // For older browsers without HTML5
+      $(function() {
+        $('#update-form').submit(function(event) {
+          $('.butterbar .alert-success').addClass('hide');
+          if( ! $('input[name="occupation"]).val() || ! $('input[name="employer"]')) {
+            $('.butterbar .alert-danger').removeClass('hide').html(
+              'Both occupation and employer are required.');
+            event.preventDefault();
           }
-        };
-        window.mayOneController = $scope.ctrl;
-      }]);
+        });
+      });
 
-  body#pledge-update(ng-app="mayOne", ng-controller="PledgeController")
+  body#user-update
     include includes/header
 
     .container
       .page-header
-        h1 Update Your Pledge Information
-      .butterbar.ng-hide.row(ng-show="ctrl.error")
-        .alert.alert-danger {{ '{{' }}ctrl.error{{ '}}' }}
+        h1 Update Your Information
+      .butterbar.row
+        .alert.alert-danger.hide
+      .butterbar.row
+        div(class="alert alert-success{% if not success %} hide{% endif %}").
+          {% if success %}
+          You have updated your information successfully
+          {% endif %}
+
       #content.row
-        form(ng-submit="ctrl.updatePledge()").col-md-8
+        form(id="update-form", method="POST", action="./{{ user.url_nonce }}").col-md-8
           .row
             .col-md-12
               label Occupation
               .input-group.input-group-lg
                 input.form-control(type="text", required,
                   placeholder="Gardner, Railroad Worker, etc",
-                  ng-model="ctrl.userinfo.occupation",
+                  name="occupation",
                   value="{{ user.occupation }}")
           .row
             .col-md-12
               label Employer
               .input-group.input-group-lg
                 input.form-control(type="text", required,
-                  placeholder="Nintendo, UPS, Self, etc"
-                  ng-model="ctrl.userinfo.employer",
+                  placeholder="Nintendo, UPS, Self, etc",
+                  name="employer",
                   value="{{ user.employer }}")
           .row
             .col-md-6
               label Phone Number (optional)
               .input-group.input-group-lg
                 input.form-control(type="tel",
-                  placeholder="(212) 867-5309"
-                  ng-model="ctrl.userinfo.phone",
+                  placeholder="(212) 867-5309",
+                  name="phone",
                   value="{{ user.phone }}")
             .col-md-6
               label Who to Fund?
               .input-group.input-group-lg
-                select.form-control(ng-model="ctrl.userinfo.target")
+                select.form-control(name="target")
                   {% for target in ['Whatever Helps', 'Democrats Only', 'Republicans Only'] %}
                   {% if user.target == target %}
-                  option(selected) {{ target }}
+                  option(value="{{ target }}", selected) {{ target }}
                   {% else %}
-                  option {{ target }}
+                  option(value="{{ target }}") {{ target }}
                   {% endif %}
                   {% endfor %}
           .row

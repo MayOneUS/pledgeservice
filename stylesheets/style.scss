@@ -396,21 +396,23 @@ footer {
 }
 
 #pledge {
-    form {
-        .input-group {
-            width: 100%;
-        }
-    }
-
     #rules {
         background: #E0E0E0;
         padding: 10px 30px;
     }
 }
 
-#pledge-update {
+#user-update {
     form button {
         margin-top: 20px;
+    }
+}
+
+#pledge, #user-update {
+    form {
+        .input-group {
+            width: 100%;
+        }
     }
 }
 
