@@ -180,7 +180,7 @@ app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
   ('/stripe_public_key', GetStripePublicKeyHandler),
   ('/pledge.do', PledgeHandler),
-  ('/user-update/(.+)', UserUpdateHandler),
+  ('/user-update/(\w+)', UserUpdateHandler),
   ('/campaigns/may-one', EmbedHandler),
   ('/campaigns/may-one/', EmbedHandler)
 ], debug=False)
