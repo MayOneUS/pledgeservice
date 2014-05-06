@@ -95,6 +95,14 @@ class Pledge(db.Model):
                     url_nonce=os.urandom(32).encode("hex"))
     pledge.put()
     return pledge
+    
+  @staticmethod
+  def getAllPledges():
+    qry = Pledge.query()
+    pledges = []
+    for pledge in qry.iter():            
+        pledges = pledges + [pledge]
+    return pledges
 
   @staticmethod
   @db.transactional
@@ -146,6 +154,7 @@ def importPledge(wp_post_id, email, stripe_customer_id, amount_cents,
           wp_post_id=wp_post_id, email=email,
           stripe_customer_id=stripe_customer_id, amount_cents=amount_cents,
           fundraisingRound=fundraisingRound, note=note)
+
 
 
 def send_thank_you(name, email, url_nonce, amount_cents):
