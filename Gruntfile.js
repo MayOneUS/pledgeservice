@@ -32,6 +32,8 @@ module.exports = function(grunt) {
           }
         },
         files: [
+          {cwd: 'markup/', src: '*.jade.j2', dest: 'build/templates/',
+           expand: true, ext: '.html'},
           {cwd: 'markup/', src: '*.jade', dest: 'build/static/', expand: true,
            ext: '.html'},
         ]

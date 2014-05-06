@@ -1,0 +1,77 @@
+doctype html
+html
+  head
+    include includes/head
+    script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
+    script.
+      var myApp = angular.module('mayOne',[]);
+
+      myApp.controller('PledgeUpdateController',
+                       ['$scope', '$http', function($scope, $http) {
+        $scope.ctrl = {
+          userinfo: {
+            occupation: '',
+            employer: '',
+            phone: '',
+            target: 'Whatever Helps',
+          },
+          error: '',
+          updatePledge: function() {
+          }
+        };
+        window.mayOneController = $scope.ctrl;
+      }]);
+
+  body#pledge-update(ng-app="mayOne", ng-controller="PledgeController")
+    include includes/header
+
+    .container
+      .page-header
+        h1 Update Your Pledge Information
+      .butterbar.ng-hide.row(ng-show="ctrl.error")
+        .alert.alert-danger {{ '{{' }}ctrl.error{{ '}}' }}
+      #content.row
+        form(ng-submit="ctrl.updatePledge()").col-md-8
+          .row
+            .col-md-12
+              label Occupation
+              .input-group.input-group-lg
+                input.form-control(type="text", required,
+                  placeholder="Gardner, Railroad Worker, etc",
+                  ng-model="ctrl.userinfo.occupation",
+                  value="{{ user.occupation }}")
+          .row
+            .col-md-12
+              label Employer
+              .input-group.input-group-lg
+                input.form-control(type="text", required,
+                  placeholder="Nintendo, UPS, Self, etc"
+                  ng-model="ctrl.userinfo.employer",
+                  value="{{ user.employer }}")
+          .row
+            .col-md-6
+              label Phone Number (optional)
+              .input-group.input-group-lg
+                input.form-control(type="tel",
+                  placeholder="(212) 867-5309"
+                  ng-model="ctrl.userinfo.phone",
+                  value="{{ user.phone }}")
+            .col-md-6
+              label Who to Fund?
+              .input-group.input-group-lg
+                select.form-control(ng-model="ctrl.userinfo.target")
+                  {% for target in ['Whatever Helps', 'Democrats Only', 'Republicans Only'] %}
+                  {% if user.target == target %}
+                  option(selected) {{ target }}
+                  {% else %}
+                  option {{ target }}
+                  {% endif %}
+                  {% endfor %}
+          .row
+            .col-md-12
+              span.input-group-btn
+                button.btn.btn-danger(type="submit") Pledge
+
+
+      .row.spacing
+    include includes/footer

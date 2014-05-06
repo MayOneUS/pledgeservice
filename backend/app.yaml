@@ -89,6 +89,8 @@ handlers:
 libraries:
 - name: ssl
   version: latest
+- name: jinja2
+  version: latest
 
 # REMOVE BEFORE DEPLOYING
 default_expiration: "1m"

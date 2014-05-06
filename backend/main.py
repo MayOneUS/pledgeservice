@@ -1,3 +1,4 @@
+import jinja2
 import json
 import logging
 import webapp2
@@ -16,6 +17,11 @@ stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 BASE_TOTAL = 42209600
 
 class Error(Exception): pass
+
+JINJA_ENVIRONMENT = jinja2.Environment(
+    loader=jinja2.FileSystemLoader('templates/'),
+    extensions=['jinja2.ext.autoescape'],
+    autoescape=True)
 
 
 def send_thank_you(name, email, url_nonce, amount_cents):
@@ -73,7 +79,6 @@ class EmbedHandler(webapp2.RequestHandler):
 class FakeCustomer(object):
   def __init__(self):
     self.id = "1234"
-    self.cards = [{'name': 'Harry Potter'}]
 
 
 class PledgeHandler(webapp2.RequestHandler):
@@ -139,10 +144,23 @@ class PledgeHandler(webapp2.RequestHandler):
     self.response.write('Ok.')
 
 
+class PledgeUpdateHandler(webapp2.RequestHandler):
+    def get(self, url_nonce):
+        user = model.User.gql("WHERE url_nonce = :1", url_nonce).get()
+        if user is None:
+            self.error(404)
+            self.response.write('This page was not found')
+            return
+
+        template = JINJA_ENVIRONMENT.get_template('pledge-update.html')
+        self.response.write(template.render({'user': user}))
+
+
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
   ('/stripe_public_key', GetStripePublicKeyHandler),
   ('/pledge.do', PledgeHandler),
+  ('/pledge-update/(.+)', PledgeUpdateHandler),
   ('/campaigns/may-one', EmbedHandler),
   ('/campaigns/may-one/', EmbedHandler)
 ], debug=False)
