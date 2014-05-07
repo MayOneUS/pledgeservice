@@ -4,7 +4,7 @@ import logging
 import webapp2
 
 from google.appengine.api import mail, memcache
-from google.appengine.ext import deferred
+from google.appengine.ext import db, deferred
 
 import stripe
 import model, wp_import
@@ -52,7 +52,7 @@ class GetTotalHandler(webapp2.RequestHandler):
     if data is None:
       logging.info('Total cache miss')
       total = BASE_TOTAL
-      for pledge in model.Pledge.all():
+      for pledge in db.Query(model.Pledge, projection=('amountCents',)):
         total += pledge.amountCents
       data = str(total)
       memcache.add(GetTotalHandler.TOTAL_KEY, data, 300)
