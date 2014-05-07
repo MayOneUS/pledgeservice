@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -13,7 +14,8 @@ class Error(Exception): pass
 # conditions.
 class Config(object):
   ConfigType = namedtuple('ConfigType',
-                          ['stripe_public_key', 'stripe_private_key'])
+                          ['app_name',
+                           'stripe_public_key', 'stripe_private_key'])
   _instance = None
 
   @staticmethod
@@ -22,7 +24,9 @@ class Config(object):
       return Config._instance
 
     s = Secrets.get()
+    j = json.load(open('config.json'))
     Config._instance = Config.ConfigType(
+      app_name = j['appName'],
       # If the secrets haven't been loaded yet, omit them.
       stripe_public_key=s.stripe_public_key if s else None,
       stripe_private_key=s.stripe_private_key if s else None)

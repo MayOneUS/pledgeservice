@@ -27,7 +27,8 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 def send_thank_you(name, email, url_nonce, amount_cents):
   """ Deferred email task """
 
-  sender = 'MayOne no-reply <noreply@mayday-pac.appspotmail.com>'
+  sender = ('MayOne no-reply <noreply@%s.appspotmail.com>' %
+            model.Config.get().app_name)
   subject = 'Thank you for your pledge'
   message = mail.EmailMessage(sender=sender, subject=subject)
   message.to = email

@@ -1,6 +1,48 @@
+var LOCAL_CONFIG = {
+  appName: 'local',
+  appVersion: '1',
+};
+
+var DEV_CONFIG = {
+  appName: 'pure-spring-568',
+  appVersion: '1',
+};
+
+var STAGING_CONFIG = {
+  appName: 'mayday-pac',
+  appVersion: 'staging',
+};
+
+var PROD_CONFIG = {
+  appName: 'mayday-pac',
+  appVersion: '1',
+};
+
+var preprocessAppYaml = function(config) {
+  return {
+    src : [ 'build/app.yaml' ],
+    options: { inline : true, context : config }
+  };
+};
+
+var createConfigFile = function(config) {
+  return {
+    "build/config.json": function(fs, fd, done) {
+      fs.writeSync(fd, JSON.stringify(config));
+      done();
+    }
+  };
+};
+
 module.exports = function(grunt) {
   // configure the tasks
   grunt.initConfig({
+    clean: {
+      main: {
+        src: [ 'build' ],
+      },
+    },
+
     copy: {
       main: {
         files: [
@@ -10,10 +52,11 @@ module.exports = function(grunt) {
       },
     },
 
-    clean: {
-      main: {
-        src: [ 'build' ],
-      },
+    preprocess: {
+      local : preprocessAppYaml(LOCAL_CONFIG),
+      dev: preprocessAppYaml(DEV_CONFIG),
+      staging: preprocessAppYaml(STAGING_CONFIG),
+      prod: preprocessAppYaml(PROD_CONFIG),
     },
 
     sass: {
@@ -58,6 +101,13 @@ module.exports = function(grunt) {
       },
     },
 
+    "file-creator": {
+      local: createConfigFile(LOCAL_CONFIG),
+      dev: createConfigFile(DEV_CONFIG),
+      staging: createConfigFile(STAGING_CONFIG),
+      prod: createConfigFile(PROD_CONFIG),
+    },
+
     watch: {
       stylesheets: {
         files: 'stylesheets/**',
@@ -69,7 +119,7 @@ module.exports = function(grunt) {
       },
       copy: {
         files: [ '{js/src,resources,assets,templates,backend}/**' ],
-        tasks: [ 'copy' ]
+        tasks: [ 'copy', 'preprocess:local' ]
       }
     },
   });
@@ -78,9 +128,11 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-autoprefixer');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-contrib-jade');
   grunt.loadNpmTasks('grunt-contrib-sass');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-contrib-jade');
+  grunt.loadNpmTasks('grunt-file-creator');
+  grunt.loadNpmTasks('grunt-preprocess');
   grunt.loadNpmTasks('grunt-shell-spawn');
 
   // define the tasks
@@ -94,8 +146,15 @@ module.exports = function(grunt) {
     [ 'clean', 'copy', 'css', 'jade']
   );
   grunt.registerTask(
-    'dev',
-    'Builds, runs the dev server, and watches for updates.',
-    [ 'build', 'shell:devserver', 'watch']
+    'local',
+    'Builds, runs the local dev server, and watches for updates.',
+    [ 'build', 'preprocess:local', 'file-creator:local',
+      'shell:devserver', 'watch']
   );
+  grunt.registerTask('dev', 'Builds for the DEV appengine environment.',
+                     [ 'build', 'preprocess:dev', 'file-creator:dev' ]);
+  grunt.registerTask('staging', 'Builds for the STAGING appengine environment.',
+                     [ 'build', 'preprocess:staging', 'file-creator:staging' ]);
+  grunt.registerTask('prod', 'Builds for the PROD appengine environment.',
+                     [ 'build', 'preprocess:prod', 'file-creator:prod' ]);
 };
