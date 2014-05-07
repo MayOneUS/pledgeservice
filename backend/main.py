@@ -11,7 +11,7 @@ import model, wp_import
 
 
 # This gets added to every pledge calculation
-BASE_TOTAL = 42368700
+BASE_TOTAL = 42368768
 
 class Error(Exception): pass
 
@@ -52,6 +52,7 @@ class GetTotalHandler(webapp2.RequestHandler):
       total = BASE_TOTAL
       for pledge in db.Query(model.Pledge, projection=('amountCents',)):
         total += pledge.amountCents
+      total = int(total/100) * 100
       data = str(total)
       memcache.add(GetTotalHandler.TOTAL_KEY, data, 300)
     self.response.headers['Content-Type'] = 'application/javascript'
