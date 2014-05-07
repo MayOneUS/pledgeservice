@@ -9,6 +9,8 @@ html
       myApp.controller('PledgeController',
                        ['$scope', '$http', function($scope, $http) {
         $scope.ctrl = {
+          stripeHandler: null,
+
           amount: 0,
           userinfo: {
             occupation: '',
@@ -22,7 +24,7 @@ html
           },
           pledge: function() {
             var cents = $scope.ctrl.cents();
-            stripeHandler.open({
+            $scope.ctrl.stripeHandler.open({
               name: 'MayOne.US',
               description: 'Pledging $' + (cents / 100),
               amount: cents,
@@ -43,24 +45,22 @@ html
             })
           },
         };
-        window.mayOneController = $scope.ctrl;
+
+        $http.get('/stripe_public_key').success(function(key) {
+          $scope.ctrl.stripeHandler = StripeCheckout.configure({
+            key: key,
+            billingAddress: true,
+            image: '/static/flag.jpg',
+            token: function(token, args) {
+              $scope.ctrl.onTokenRecv(token, args);
+            }
+          });
+        });
       }]);
 
   body#pledge(ng-app="mayOne", ng-controller="PledgeController")
     include includes/header
     script(src="https://checkout.stripe.com/checkout.js")
-    script.
-      var STRIPE_PROD_PUBLIC_KEY = "pk_live_oWeicEuu46k9O6OIkyuvEsjN";
-      var STRIPE_TEST_PUBLIC_KEY = "pk_test_g7UBToGvPpJ1xJa8OVsfV7zf";
-      window.stripeHandler = StripeCheckout.configure({
-        key: STRIPE_TEST_PUBLIC_KEY,
-        billingAddress: true,
-        image: '/static/flag.jpg',
-        token: function(token, args) {
-          window.mayOneController.onTokenRecv(token, args);
-        }
-      });
-
     .container
       .page-header
         h1 Pledge Your Support

@@ -11,7 +11,6 @@ import model, wp_import
 
 import config_NOCOMMIT
 
-stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
 
 # This gets added to every pledge calculation
 BASE_TOTAL = 42368700
@@ -130,6 +129,7 @@ class PledgeHandler(webapp2.RequestHandler):
       self.response.write('Invalid request: Bad email address')
       return
 
+    stripe.api_key = model.Config.get().stripe_private_key
     customer = stripe.Customer.create(card=token, email=email)
 
     pledge = model.addPledge(

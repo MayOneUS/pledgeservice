@@ -23,13 +23,23 @@ class Config(object):
     if Config._instance:
       return Config._instance
 
-    s = Secrets.get()
     j = json.load(open('config.json'))
+    s = Secrets.get()
+
+    if 'hardCodeStripe' in j:
+      stripe_public_key = j['stripePublicKey']
+      stripe_private_key = j['stripePrivateKey']
+    elif s:
+      stripe_public_key = s.stripe_public_key
+      stripe_private_key = s.stripe_private_key
+    else:      # If the secrets haven't been loaded yet, omit them.
+      stripe_public_key = None
+      stripe_private_key = None
+
     Config._instance = Config.ConfigType(
       app_name = j['appName'],
-      # If the secrets haven't been loaded yet, omit them.
-      stripe_public_key=s.stripe_public_key if s else None,
-      stripe_private_key=s.stripe_private_key if s else None)
+      stripe_public_key=stripe_public_key,
+      stripe_private_key=stripe_private_key)
     return Config._instance
 
 

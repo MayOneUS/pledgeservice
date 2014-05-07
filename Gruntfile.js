@@ -1,6 +1,9 @@
 var LOCAL_CONFIG = {
   appName: 'local',
   appVersion: '1',
+  hardCodeStripe: true,
+  stripePublicKey: 'pk_test_g7UBToGvPpJ1xJa8OVsfV7zf',
+  stripePrivateKey: 'sk_test_sm4iLzUFCeEE4l8uKe4KNDU7',
 };
 
 var DEV_CONFIG = {
