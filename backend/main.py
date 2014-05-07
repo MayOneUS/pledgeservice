@@ -53,8 +53,7 @@ class GetTotalHandler(webapp2.RequestHandler):
       logging.info('Total cache miss')
       total = BASE_TOTAL
       for pledge in model.Pledge.all():
-        if pledge.imported_wp_post_id is None:
-          total += pledge.amountCents
+        total += pledge.amountCents
       data = str(total)
       memcache.add(GetTotalHandler.TOTAL_KEY, data, 300)
     self.response.headers['Content-Type'] = 'application/javascript'
