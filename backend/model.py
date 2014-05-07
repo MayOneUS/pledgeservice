@@ -12,6 +12,9 @@ class Error(Exception): pass
 # Config singleton. Loaded once per instance and never modified. It's
 # okay if try to load it multiple times, so no worries about race
 # conditions.
+#
+# Note that this isn't really a "model", it's built up from config.json
+# and the "Secrets" model.
 class Config(object):
   ConfigType = namedtuple('ConfigType',
                           ['app_name',
