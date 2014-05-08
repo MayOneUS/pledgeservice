@@ -7,7 +7,7 @@ USAGE = """%prog SDK_PATH TEST_PATH
 Run unit tests for App Engine apps."""
 
 SDK_PATH_manual = '/usr/local/google_appengine'
-TEST_PATH_manual = ''
+TEST_PATH_manual = 'unittests'
 
 
 def main(sdk_path, test_path):
