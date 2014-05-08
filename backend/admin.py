@@ -1,4 +1,5 @@
-import datetime
+import calendar
+import csv
 import json
 import logging
 import os
@@ -32,6 +33,17 @@ class SetSecretsHandler(webapp2.RequestHandler):
       stripe_private_key=self.request.get('stripe_private_key'))
 
 
+class PledgesCsvHandler(webapp2.RequestHandler):
+  def get(self):
+    self.response.headers['Content-type'] = 'text/csv'
+    w = csv.writer(self.response)
+    w.writerow(['time', 'amount'])
+    for pledge in model.WpPledge.all():
+      w.writerow([str(pledge.donationTime), pledge.amountCents])
+    for pledge in model.Pledge.all():
+      w.writerow([str(pledge.donationTime), pledge.amountCents])
+
 app = webapp2.WSGIApplication([
   ('/admin/set_secrets', SetSecretsHandler),
+  ('/admin/pledges.csv', PledgesCsvHandler),
 ], debug=False)
