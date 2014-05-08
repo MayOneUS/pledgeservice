@@ -38,3 +38,7 @@ If you want to rapidly set up a development environment that already has npm and
 dependencies installed using docker, try running
 
   docker run -t -i -v /path/to/repo:/development jtolds/mayone-gae /bin/bash
+  
+Testing
+-------
+To run unit tests, run testrunner.py. Please add UnitTests as coverage is far from complete.
