@@ -43,7 +43,9 @@ Note that the first time you run `npm start` App Engine might ask you whether it
 If you want to rapidly set up a development environment that already has npm and
 dependencies installed using docker, try running
 
-  docker run -t -i -v /path/to/repo:/development jtolds/mayone-gae /bin/bash
+```
+docker run -t -i -v /path/to/repo:/development jtolds/mayone-gae /bin/bash
+```
 
 Deploying
 ---------
