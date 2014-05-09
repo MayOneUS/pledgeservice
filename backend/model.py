@@ -1,12 +1,24 @@
 import json
 import logging
 import os
+import random
 
 from collections import namedtuple
 
+from google.appengine.api import memcache
 from google.appengine.ext import db
 
 class Error(Exception): pass
+
+# Used to indicate which data objects were created in which version of
+# the app, in case we need to special-case some logic for objects
+# which came before a certain point.
+#
+# Versions:
+#   <missing>: Initial model.
+#   2: Implemented sharded counter for donation total. Objects before
+#      this version are not included in that counter.
+MODEL_VERSION = 2
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -119,6 +131,8 @@ class User(db.Model):
 
 
 class Pledge(db.Model):
+  model_version = db.IntegerProperty()
+
   # a user's email is also the User model key
   email = db.EmailProperty(required=True)
 
@@ -147,7 +161,8 @@ class Pledge(db.Model):
   @staticmethod
   def create(email, stripe_customer_id, amount_cents, fundraisingRound="1",
              note=None):
-    pledge = Pledge(email=email,
+    pledge = Pledge(model_version=MODEL_VERSION,
+                    email=email,
                     stripeCustomer=stripe_customer_id,
                     fundraisingRound=fundraisingRound,
                     amountCents=amount_cents,
@@ -192,3 +207,52 @@ class WpPledge(db.Model):
   target = db.StringProperty(required=False)
 
   url_nonce = db.StringProperty(required=True)
+
+
+SHARD_KEY_TEMPLATE = 'shard-{}-{:d}'
+SHARD_COUNT = 50
+
+class ShardedCounter(db.Model):
+  count = db.IntegerProperty(default=0)
+
+  @staticmethod
+  def get_count(name):
+    total = memcache.get(ShardedCounter._get_memcache_key(name))
+    if total is None:
+      total = 0
+      all_keys = ShardedCounter._get_keys_for(name)
+      for counter in db.get(all_keys):
+        if counter is not None:
+          total += counter.count
+      memcache.add(ShardedCounter._get_memcache_key(name), total, 60)
+    return total
+
+  @staticmethod
+  def _get_memcache_key(name):
+    return 'COUNTER-%s' % name
+
+  @staticmethod
+  def _get_keys_for(name):
+    shard_key_strings = [SHARD_KEY_TEMPLATE.format(name, index)
+                         for index in range(SHARD_COUNT)]
+    return [db.Key.from_path('ShardedCounter', shard_key_string)
+            for shard_key_string in shard_key_strings]
+
+  @staticmethod
+  @db.transactional
+  def increment(name, delta):
+    index = random.randint(0, SHARD_COUNT - 1)
+    shard_key_string = SHARD_KEY_TEMPLATE.format(name, index)
+    counter = ShardedCounter.get_by_key_name(shard_key_string)
+    if counter is None:
+      counter = ShardedCounter(key_name=shard_key_string)
+    counter.count += delta
+    counter.put()
+
+    # TODO(hjfreyer): Enable memcache increments.
+    #
+    # Memcache increment does nothing if the name is not a key in memcache
+    # memcache.incr(ShardedCounter._get_memcache_key(name), delta=delta)
+   
+def increment_donation_total(amount):
+  ShardedCounter.increment('TOTAL', amount)
