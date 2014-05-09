@@ -68,3 +68,7 @@ Some changes can go straight to prod. Some should go through dev first. Some thr
 before prod. App Engine even allows you do to traffic splitting, so we could theoretically send N% of 
 queries to staging if we're really paranoid about something. Use good judgement and run it by team memebers
 if you're unsure.
+
+If you're pushing to prod, please tag the commit you're pushing with the next available "v1,v2,v3,..." tag, 
+and remember to git push --tags. That way if we need to roll back we have a sense of what used to be in
+production.
