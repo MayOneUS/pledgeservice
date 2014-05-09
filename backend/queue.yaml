@@ -2,3 +2,6 @@ queue:
 - name: mail
   # Max email rate for a paid account
   rate: 4900/m
+
+- name: incrementTotal
+  rate: 60/s

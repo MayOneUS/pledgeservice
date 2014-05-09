@@ -50,6 +50,7 @@ class AdminDashboardHandler(webapp2.RequestHandler):
       'missingUsers': [dict(email=user.email, amount=amt/100)
                        for user, amt in users],
       'totalMissing': sum(v for _, v in users)/100,
+      'shardedCounterTotal': model.ShardedCounter.get_count('TOTAL')/100,
     }))
 
   # Gets all the users with missing employer/occupation data who gave at least

@@ -142,6 +142,10 @@ class PledgeHandler(webapp2.RequestHandler):
     # Add thank you email to a task queue
     deferred.defer(send_thank_you, name or email, email,
                    pledge.url_nonce, amount, _queue="mail")
+
+    # Add to the total asynchronously.
+    deferred.defer(model.increment_donation_total, amount, _queue="incrementTotal")
+
     self.response.write('Ok.')
 
 
