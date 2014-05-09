@@ -33,8 +33,11 @@ def send_thank_you(name, email, url_nonce, amount_cents):
   message.to = email
 
   format_kwargs = {
-    # TODO: Use the person's actual name
-    'name': name,
+    # TODO: Use the person's actual name.
+    # TODO: Figure out how to set the outgoing email content encoding.
+    #  once we can set the email content encoding to utf8, we can change this
+    #  to name.encode("utf-8") and not drop fancy characters. :(
+    'name': name.encode("ascii", errors="ignore"),
     # TODO: write a handler for this
     'url_nonce': url_nonce,
     'total': '$%d' % int(amount_cents/100)
