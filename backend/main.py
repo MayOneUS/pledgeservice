@@ -11,6 +11,7 @@ import model, wp_import
 
 
 # These get added to every pledge calculation
+PRE_SHARDING_TOTAL=27425754  # See model.ShardedCounter
 WP_PLEDGE_TOTAL = 42485868
 DEMOCRACY_DOT_COM_BALANCE = 1667500
 CHECKS_BALANCE = 0  # lol US government humor
@@ -47,19 +48,15 @@ def send_thank_you(name, email, url_nonce, amount_cents):
 
 
 class GetTotalHandler(webapp2.RequestHandler):
-  TOTAL_KEY = 'total'
   def get(self):
-    data = memcache.get(GetTotalHandler.TOTAL_KEY)
-    if data is None:
-      logging.info('Total cache miss')
-      total = WP_PLEDGE_TOTAL + DEMOCRACY_DOT_COM_BALANCE + CHECKS_BALANCE
-      for pledge in db.Query(model.Pledge, projection=('amountCents',)):
-        total += pledge.amountCents
-      total = int(total/100) * 100
-      data = str(total)
-      memcache.add(GetTotalHandler.TOTAL_KEY, data, 300)
+    total = (PRE_SHARDING_TOTAL +
+             WP_PLEDGE_TOTAL +
+             DEMOCRACY_DOT_COM_BALANCE +
+             CHECKS_BALANCE)
+    total += model.ShardedCounter.get_count('TOTAL')
+    total = int(total/100) * 100
     self.response.headers['Content-Type'] = 'application/javascript'
-    self.response.write('%s(%s)' % (self.request.get('callback'), data))
+    self.response.write('%s(%d)' % (self.request.get('callback'), total))
 
 
 class GetStripePublicKeyHandler(webapp2.RequestHandler):

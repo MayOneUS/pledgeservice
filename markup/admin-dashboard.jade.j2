@@ -25,5 +25,10 @@ html
               td {{user.amount}}
             {% endfor %}
         .col-md-4
-          h2 Sharded Counter Total
-          p ${{shardedCounterTotal}}
+          h2 Sharded Counters
+          label Calculated post-sharding total
+          p {{shardedCounterTotal}} cents
+          label Actual post-sharding total
+          p {{postShardedTotal}} cents
+          label Pre-sharding total
+          p {{preShardedTotal}} cents
