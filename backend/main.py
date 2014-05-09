@@ -10,8 +10,10 @@ import stripe
 import model, wp_import
 
 
-# This gets added to every pledge calculation
-BASE_TOTAL = 42368768
+# These get added to every pledge calculation
+WP_PLEDGE_TOTAL = 42368768
+DEMOCRACY_DOT_COM_BALANCE = 823500
+CHECKS_BALANCE = 0  # lol US government humor
 
 class Error(Exception): pass
 
@@ -49,7 +51,7 @@ class GetTotalHandler(webapp2.RequestHandler):
     data = memcache.get(GetTotalHandler.TOTAL_KEY)
     if data is None:
       logging.info('Total cache miss')
-      total = BASE_TOTAL
+      total = WP_PLEDGE_TOTAL + DEMOCRACY_DOT_COM_BALANCE + CHECKS_BALANCE
       for pledge in db.Query(model.Pledge, projection=('amountCents',)):
         total += pledge.amountCents
       total = int(total/100) * 100
