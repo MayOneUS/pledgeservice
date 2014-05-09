@@ -11,7 +11,7 @@ import model, wp_import
 
 
 # These get added to every pledge calculation
-WP_PLEDGE_TOTAL = 42368768
+WP_PLEDGE_TOTAL = 42485868
 DEMOCRACY_DOT_COM_BALANCE = 823500
 CHECKS_BALANCE = 0  # lol US government humor
 
