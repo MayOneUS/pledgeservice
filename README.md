@@ -38,8 +38,6 @@ Hacking
 -------
 After checking out the code, run `npm install`. To start the server, run `npm start` and go to http://localhost:8080. That's it!
 
-Note that the first time you run `npm start` App Engine might ask you whether it should auto-update. If it seems like nothing's happening when you run, try running `dev_appserver.py build`, and answering the prompt. After that, you should be good.
-
 If you want to rapidly set up a development environment that already has npm and
 dependencies installed using docker, try running
 
