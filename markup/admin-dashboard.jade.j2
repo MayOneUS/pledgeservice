@@ -1,0 +1,28 @@
+doctype html
+html
+  head
+    include includes/head
+
+  body#user-update
+    .container
+      .page-header
+        h1 Admin Dashboard
+
+      .row
+        .col-md-4
+          h2 Dump CSV
+          a(href="/admin/pledges.csv") Do it
+        .col-md-4
+          h2 Missing Employer/Occupation Data
+          p Missing data for {{missingUsers|length}} users totalling ${{totalMissing}}.
+          table.table
+            tr
+              th User
+              th Donation
+            {% for user in missingUsers %}
+            tr
+              td {{user.email}}
+              td {{user.amount}}
+            {% endfor %}
+        .col-md-4
+          h2 Something over here!
