@@ -77,7 +77,7 @@ handlers:
   upload: static/*
   secure: always
 
-- url: /admin.*
+- url: /admin/.*
   script: admin.app
   secure: always
   login: admin
