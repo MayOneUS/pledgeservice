@@ -65,4 +65,27 @@ class TestPledge(unittest.TestCase):
     def tearDown(self):
       self.testbed.deactivate()
      
-    
+    def test_create(self):
+      self.fail('TEST NOT IMPLEMENTED')
+
+    def test_importOrUpdate(self):
+      self.fail('TEST NOT IMPLEMENTED')
+
+class TestFunctions(unittest.TestCase):
+    def setUp(self):
+      # First, create an instance of the Testbed class.
+      self.testbed = testbed.Testbed()
+      # Then activate the testbed, which prepares the service stubs for use.
+      self.testbed.activate()
+      # Next, declare which service stubs you want to use.#self.testbed.init_datastore_v3_stub()
+      #self.testbed.init_memcache_stub()
+      #self.testbed.init_urlfetch_stub()
+
+    def tearDown(self):
+      self.testbed.deactivate()
+
+    def test_addPledge(self):
+      self.fail('TEST NOT IMPLEMENTED')
+
+    def test_importPledge(self):
+      self.fail('TEST NOT IMPLEMENTED')
