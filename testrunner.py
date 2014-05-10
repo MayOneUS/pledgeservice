@@ -18,6 +18,11 @@ def main(sdk_path, test_path):
   unittest.TextTestRunner(verbosity=2).run(suite)
 
 if __name__ == '__main__':
+  print('UNITTESTS FOR MAYONE APPENGINE')
   SDK_PATH = SDK_PATH_manual
   TEST_PATH = TEST_PATH_manual
+  SDK_PATH_override = raw_input('Enter SDK_PATH Override (Leave blank to use the default): ')
+  if SDK_PATH_override:
+      SDK_PATH = SDK_PATH_override
+  print('STARTING UNITTESTS...')
   main(SDK_PATH, TEST_PATH)
