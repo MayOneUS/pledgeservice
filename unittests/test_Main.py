@@ -15,7 +15,7 @@ class TestUser(unittest.TestCase):
     # Then activate the testbed, which prepares the service stubs for use.
     self.testbed.activate()
     # Next, declare which service stubs you want to use.#self.testbed.init_datastore_v3_stub()
-    #self.testbed.init_memcache_stub()
+    self.testbed.init_datastore_v3_stub()
     #self.testbed.init_urlfetch_stub()
 
   def tearDown(self):
@@ -32,8 +32,7 @@ class TestUser(unittest.TestCase):
     
     logging.info('Testing updating a user that does not exist...')
     
-    user0 = main.User()
-    user0.createOrUpdate(
+    user0 = main.User.createOrUpdate(
       email=fake_email, 
       occupation = fake_occupation, 
       employer = fake_employer, 
@@ -45,9 +44,8 @@ class TestUser(unittest.TestCase):
     self.assertEqual(user0.phone, fake_phone)
     
     logging.info('Test updating that user we just created...')
-    user1 = main.User()
-    user1.createOrUpdate(email=fake_email, fake_occupation='Regulator')
-    self.assertEqual(user1.fake_occupation, 'Regulator')
+    user1 = main.User.createOrUpdate(email=fake_email, occupation='Regulator')
+    self.assertEqual(user1.occupation, 'Regulator')
     
     #TODO: confirm storage in datastore.
     #TODO: see if we can store bad emails and other data
