@@ -1,5 +1,0 @@
-# To run the app, copy this file into config_NOCOMMIT.py. The file
-# itself isn't checked in to prevent actual secrets from leaking.
-
-# Test account secret key
-STRIPE_SECRET_KEY = "sk_test_W9JDlj3jnfWkaEg8OHpVjVcX"

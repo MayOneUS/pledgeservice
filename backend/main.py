@@ -1,165 +1,45 @@
-import datetime
+import jinja2
 import json
 import logging
-import os
-import urllib2
 import webapp2
 
-from google.appengine.api import mail, memcache
-from google.appengine.ext import db, deferred
+from google.appengine.api import mail
+from google.appengine.api import memcache
+from google.appengine.ext import db
+from google.appengine.ext import deferred
 
+import model
 import stripe
+import wp_import
 
-import config_NOCOMMIT
-
-stripe.api_key = config_NOCOMMIT.STRIPE_SECRET_KEY
-
-# This gets added to every pledge calculation
-BASE_TOTAL = 42209668
-
-
-class User(db.Model):
-  # a user's email is also the model key
-  email = db.EmailProperty(required=True)
-
-  # occupation and employer are logically required for all new users, but we
-  # don't have this data for everyone. so from a data model perspective, they
-  # aren't required.
-  occupation = db.StringProperty(required=False)
-  employer = db.StringProperty(required=False)
-
-  phone = db.StringProperty(required=False)
-
-  # whether or not the pledge was donated specifically for a particular
-  # political affiliation
-  target = db.StringProperty(required=False)
-
-  # this is the nonce for what we'll put in a url to send to people when we ask
-  # them to update their information. it's kind of like their password for the
-  # user-management part of the site.
-  url_nonce = db.StringProperty(required=True)
-
-  @staticmethod
-  @db.transactional
-  def createOrUpdate(email, occupation=None, employer=None, phone=None,
-                     target=None):
-    user = User.get_by_key_name(email)
-    if user is None:
-      user = User(key_name=email,
-                  email=email,
-                  url_nonce=os.urandom(32).encode("hex"))
-    user.occupation = occupation
-    user.employer = employer
-    user.phone = phone
-    user.target = target
-    user.put()
-    return user
+# These get added to every pledge calculation
+PRE_SHARDING_TOTAL = 27425754  # See model.ShardedCounter
+WP_PLEDGE_TOTAL = 42485868
+DEMOCRACY_DOT_COM_BALANCE = 3024600
+CHECKS_BALANCE = 0  # lol US government humor
 
 
-class Pledge(db.Model):
-  # a user's email is also the User model key
-  email = db.EmailProperty(required=True)
+class Error(Exception): pass
 
-  # this is the string id for the stripe api to access the customer. we are
-  # doing a whole stripe customer per pledge.
-  stripeCustomer = db.StringProperty(required=True)
-
-  # when the donation occurred
-  donationTime = db.DateTimeProperty(auto_now_add=True)
-
-  # we plan to have multiple fundraising rounds. right now we're in round "1"
-  fundraisingRound = db.StringProperty(required=True)
-
-  # what the user is pledging for
-  amountCents = db.IntegerProperty(required=True)
-
-  note = db.TextProperty(required=False)
-
-  imported_wp_post_id = db.IntegerProperty(required=False)
-
-  # it's possible we'll want to let people change just their pledge. i can't
-  # imagine a bunch of people pledging with the same email address and then
-  # getting access to change a bunch of other people's credit card info, but
-  # maybe we should support users only changing information relating to a
-  # specific pledge. if so, this is their site-management password.
-  url_nonce = db.StringProperty(required=True)
-
-  @staticmethod
-  def create(email, stripe_customer_id, amount_cents, fundraisingRound="1",
-             note=None):
-    pledge = Pledge(email=email,
-                    stripeCustomer=stripe_customer_id,
-                    fundraisingRound=fundraisingRound,
-                    amountCents=amount_cents,
-                    note=note,
-                    url_nonce=os.urandom(32).encode("hex"))
-    pledge.put()
-    return pledge
-
-  @staticmethod
-  @db.transactional
-  def importOrUpdate(wp_post_id, email, stripe_customer_id, amount_cents,
-                     fundraisingRound="1", note=None):
-    pledges = Pledge.all().filter("imported_wp_post_id =", wp_post_id).run(
-        limit=1)
-    if not pledges:
-        pledge = Pledge(url_nonce=os.urandom(32).encode("hex"),
-                        imported_wp_post_id=wp_post_id)
-    else:
-        pledge = pledges[0]
-    pledge.email = email
-    pledge.stripeCustomer = stripe_customer_id
-    pledge.fundraisingRound = fundraisingRound
-    pledge.amountCents = amount_cents
-    pledge.note = note
-    pledge.put()
-    return pledge
-
-
-def addPledge(email, stripe_customer_id, amount_cents, occupation=None,
-              employer=None, phone=None, fundraisingRound="1", target=None,
-              note=None):
-  """Creates a User model if one doesn't exist, finding one if one already
-  does, using the email as a user key. Then adds a Pledge to the User with
-  the given card token as a new credit card.
-
-  @return: the pledge
-  """
-  # first, let's find the user by email
-  User.createOrUpdate(
-          email=email, occupation=occupation, employer=employer, phone=phone,
-          target=target)
-
-  return Pledge.create(
-          email=email, stripe_customer_id=stripe_customer_id,
-          amount_cents=amount_cents, fundraisingRound=fundraisingRound,
-          note=note)
-
-
-def importPledge(wp_post_id, email, stripe_customer_id, amount_cents,
-                 occupation=None, employer=None, phone=None,
-                 fundraisingRound="1", target=None, note=None):
-  User.createOrUpdate(
-          email=email, occupation=occupation, employer=employer, phone=phone,
-          target=target)
-  return Pledge.importOrUpdate(
-          wp_post_id=wp_post_id, email=email,
-          stripe_customer_id=stripe_customer_id, amount_cents=amount_cents,
-          fundraisingRound=fundraisingRound, note=note)
+JINJA_ENVIRONMENT = jinja2.Environment(
+  loader=jinja2.FileSystemLoader('templates/'),
+  extensions=['jinja2.ext.autoescape'],
+  autoescape=True)
 
 
 def send_thank_you(name, email, url_nonce, amount_cents):
-  """ Deferred email task """
-
-  sender = 'MayOne no-reply <noreply@mayday-pac.appspotmail.com>'
+  """Deferred email task"""
+  sender = ('MayOne no-reply <noreply@%s.appspotmail.com>' %
+            model.Config.get().app_name)
   subject = 'Thank you for your pledge'
   message = mail.EmailMessage(sender=sender, subject=subject)
   message.to = email
 
   format_kwargs = {
-    # TODO: Use the person's actual name
-    'name': name,
-    # TODO: write a handler for this
+    # TODO: Figure out how to set the outgoing email content encoding.
+    #  once we can set the email content encoding to utf8, we can change this
+    #  to name.encode('utf-8') and not drop fancy characters. :(
+    'name': name.encode('ascii', errors='ignore'),
     'url_nonce': url_nonce,
     'total': '$%d' % int(amount_cents/100)
   }
@@ -170,33 +50,30 @@ def send_thank_you(name, email, url_nonce, amount_cents):
 
 
 class GetTotalHandler(webapp2.RequestHandler):
-  TOTAL_KEY = 'total'
   def get(self):
-    data = memcache.get(GetTotalHandler.TOTAL_KEY)
-    if data is None:
-      logging.info('Total cache miss')
-      total = BASE_TOTAL
-      for pledge in Pledge.all():
-        if pledge.imported_wp_post_id is None:
-          total += pledge.amountCents
-      data = str(total)
-      memcache.add(GetTotalHandler.TOTAL_KEY, data, 300)
+    total = (PRE_SHARDING_TOTAL +
+             WP_PLEDGE_TOTAL +
+             DEMOCRACY_DOT_COM_BALANCE +
+             CHECKS_BALANCE)
+    total += model.ShardedCounter.get_count('TOTAL')
+    total = int(total/100) * 100
     self.response.headers['Content-Type'] = 'application/javascript'
-    self.response.write('%s(%s)' % (self.request.get('callback'), data))
+    self.response.write('%s(%d)' % (self.request.get('callback'), total))
+
+
+class GetStripePublicKeyHandler(webapp2.RequestHandler):
+  def get(self):
+    if not model.Config.get().stripe_public_key:
+      raise Error('No public key in DB')
+    self.response.write(model.Config.get().stripe_public_key)
 
 
 class EmbedHandler(webapp2.RequestHandler):
   def get(self):
-    if self.request.get("widget") == "1":
-        self.redirect("/embed.html")
+    if self.request.get('widget') == '1':
+      self.redirect('/embed.html')
     else:
-        self.redirect("/")
-
-
-class FakeCustomer(object):
-  def __init__(self):
-    self.id = "1234"
-    self.cards = [{'name': 'Harry Potter'}]
+      self.redirect('/')
 
 
 class PledgeHandler(webapp2.RequestHandler):
@@ -204,7 +81,7 @@ class PledgeHandler(webapp2.RequestHandler):
     try:
       data = json.loads(self.request.body)
     except:
-      logging.Warning("Bad JSON request")
+      logging.Warning('Bad JSON request')
       self.error(400)
       self.response.write('Invalid request')
       return
@@ -248,23 +125,64 @@ class PledgeHandler(webapp2.RequestHandler):
       self.response.write('Invalid request: Bad email address')
       return
 
-    customer = stripe.Customer.create(card=token)
+    stripe.api_key = model.Config.get().stripe_private_key
+    customer = stripe.Customer.create(card=token, email=email)
 
-    pledge = addPledge(
+    pledge = model.addPledge(
             email=email, stripe_customer_id=customer.id, amount_cents=amount,
             occupation=occupation, employer=employer, phone=phone,
-            target=target, note=self.request.get("note"))
+            target=target, note=self.request.get('note'))
 
     # Add thank you email to a task queue
     deferred.defer(send_thank_you, name or email, email,
-                   pledge.url_nonce, amount, _queue="mail")
+                   pledge.url_nonce, amount, _queue='mail')
+
+    # Add to the total asynchronously.
+    deferred.defer(model.increment_donation_total, amount,
+                   _queue='incrementTotal')
 
     self.response.write('Ok.')
 
 
+class UserUpdateHandler(webapp2.RequestHandler):
+  def get(self, url_nonce):
+    user = model.User.all().filter('url_nonce =', url_nonce).get()
+    if user is None:
+      self.error(404)
+      self.response.write('This page was not found')
+      return
+
+    template = JINJA_ENVIRONMENT.get_template('user-update.html')
+    self.response.write(template.render({'user': user}))
+
+  def post(self, url_nonce):
+    try:
+      user = model.User.all().filter('url_nonce =', url_nonce).get()
+      if user is None:
+        self.error(404)
+        self.response.write('This page was not found')
+        return
+
+      user.occupation = self.request.get('occupation')
+      user.employer = self.request.get('employer')
+      user.phone = self.request.get('phone')
+      user.target = self.request.get('target')
+      user.put()
+      template = JINJA_ENVIRONMENT.get_template('user-update.html')
+      ctx = {'user': user, 'success': True}
+      self.response.write(template.render(ctx))
+    except:
+      self.error(400)
+      self.response.write('There was a problem submitting the form')
+      return
+
+
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
+  ('/stripe_public_key', GetStripePublicKeyHandler),
   ('/pledge.do', PledgeHandler),
-  ('/campaigns/may-one', EmbedHandler),
-  ('/campaigns/may-one/', EmbedHandler)
+  ('/user-update/(\w+)', UserUpdateHandler),
+  ('/campaigns/may-one/?', EmbedHandler)
+  # See wp_import
+  # ('/import.do', wp_import.ImportHandler),
 ], debug=False)
