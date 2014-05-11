@@ -14,9 +14,8 @@ class TestUser(unittest.TestCase):
     self.testbed = testbed.Testbed()
     # Then activate the testbed, which prepares the service stubs for use.
     self.testbed.activate()
-    # Next, declare which service stubs you want to use.#self.testbed.init_datastore_v3_stub()
+    # Next, declare which service stubs you want to use.
     self.testbed.init_datastore_v3_stub()
-    #self.testbed.init_urlfetch_stub()
 
   def tearDown(self):
     self.testbed.deactivate()
@@ -57,9 +56,8 @@ class TestPledge(unittest.TestCase):
       self.testbed = testbed.Testbed()
       # Then activate the testbed, which prepares the service stubs for use.
       self.testbed.activate()
-      # Next, declare which service stubs you want to use.#self.testbed.init_datastore_v3_stub()
-      #self.testbed.init_memcache_stub()
-      #self.testbed.init_urlfetch_stub()
+      # Next, declare which service stubs you want to use.
+      self.testbed.init_datastore_v3_stub()
 
     def tearDown(self):
       self.testbed.deactivate()
@@ -77,9 +75,8 @@ class TestGetTotalHandler(unittest.TestCase):
       self.testbed = testbed.Testbed()
       # Then activate the testbed, which prepares the service stubs for use.
       self.testbed.activate()
-      # Next, declare which service stubs you want to use.#self.testbed.init_datastore_v3_stub()
-      #self.testbed.init_memcache_stub()
-      #self.testbed.init_urlfetch_stub()
+      # Next, declare which service stubs you want to use.
+      self.testbed.init_datastore_v3_stub()
 
     def tearDown(self):
       self.testbed.deactivate()
@@ -93,9 +90,8 @@ class TestEmbedHandler(unittest.TestCase):
       self.testbed = testbed.Testbed()
       # Then activate the testbed, which prepares the service stubs for use.
       self.testbed.activate()
-      # Next, declare which service stubs you want to use.#self.testbed.init_datastore_v3_stub()
-      #self.testbed.init_memcache_stub()
-      #self.testbed.init_urlfetch_stub()
+      # Next, declare which service stubs you want to use.
+      self.testbed.init_datastore_v3_stub()
 
     def tearDown(self):
       self.testbed.deactivate()
@@ -110,8 +106,7 @@ class TestPledgeHandler(unittest.TestCase):
       # Then activate the testbed, which prepares the service stubs for use.
       self.testbed.activate()
       # Next, declare which service stubs you want to use.#self.testbed.init_datastore_v3_stub()
-      #self.testbed.init_memcache_stub()
-      #self.testbed.init_urlfetch_stub()
+      self.testbed.init_urlfetch_stub()
 
     def tearDown(self):
       self.testbed.deactivate()
@@ -125,9 +120,8 @@ class TestFunctions(unittest.TestCase):
       self.testbed = testbed.Testbed()
       # Then activate the testbed, which prepares the service stubs for use.
       self.testbed.activate()
-      # Next, declare which service stubs you want to use.#self.testbed.init_datastore_v3_stub()
-      #self.testbed.init_memcache_stub()
-      #self.testbed.init_urlfetch_stub()
+      # Next, declare which service stubs you want to use.
+      self.testbed.init_datastore_v3_stub()
 
     def tearDown(self):
       self.testbed.deactivate()
