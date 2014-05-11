@@ -5,8 +5,9 @@ import random
 
 from collections import namedtuple
 
-from google.appengine.api import memcache
 from google.appengine.ext import db
+
+import cache
 
 class Error(Exception): pass
 
@@ -217,19 +218,15 @@ class ShardedCounter(db.Model):
 
   @staticmethod
   def get_count(name):
-    total = memcache.get(ShardedCounter._get_memcache_key(name))
+    total = cache.GetShardedCounterTotal(name)
     if total is None:
       total = 0
       all_keys = ShardedCounter._get_keys_for(name)
       for counter in db.get(all_keys):
         if counter is not None:
           total += counter.count
-      memcache.add(ShardedCounter._get_memcache_key(name), total, 60)
+      cache.SetShardedCounterTotal(name, total)
     return total
-
-  @staticmethod
-  def _get_memcache_key(name):
-    return 'COUNTER-%s' % name
 
   @staticmethod
   def _get_keys_for(name):
@@ -253,6 +250,6 @@ class ShardedCounter(db.Model):
     #
     # Memcache increment does nothing if the name is not a key in memcache
     # memcache.incr(ShardedCounter._get_memcache_key(name), delta=delta)
-   
+
 def increment_donation_total(amount):
   ShardedCounter.increment('TOTAL', amount)
