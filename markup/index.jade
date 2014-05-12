@@ -48,7 +48,8 @@ html
           percent: function() {
             // Times 100 divided by 100
             return Math.floor($scope.ctrl.totalCents / 1000000);
-          }
+          },
+          percentWidth: function() { return Math.min(100, $scope.ctrl.percent()); }
         };
       }]);
 
@@ -76,7 +77,7 @@ html
           .progress-bar.progress-bar-danger(role="progressbar",
             aria-valuenow="ctrl.percent()",
             aria-valuemin="0", aria-valuemax="100",
-            ng-style="{width: ctrl.percent() + '%'}",
+            ng-style="{width: ctrl.percentWidth() + '%'}",
             style="position:absolute;top:0;left:0;")
           .progress-text
             div(style="text-align:left;") {{ctrl.percentFunded()}}
