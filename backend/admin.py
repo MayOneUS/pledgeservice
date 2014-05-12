@@ -46,6 +46,10 @@ class AdminDashboardHandler(webapp2.RequestHandler):
   def get(self):
     users = AdminDashboardHandler.get_missing_data_users()
 
+    wp_total = 0
+    for p in db.Query(model.WpPledge, projection=('amountCents',)):
+      wp_total += p.amountCents
+
     pre_sharding_total = 0
     post_sharding_total = 0
     for p in model.Pledge.all():
@@ -59,6 +63,7 @@ class AdminDashboardHandler(webapp2.RequestHandler):
       'missingUsers': [dict(email=user.email, amount=amt/100)
                        for user, amt in users],
       'totalMissing': sum(v for _, v in users)/100,
+      'wpTotal': wp_total,
       'preShardedTotal': pre_sharding_total,
       'postShardedTotal': post_sharding_total,
       'shardedCounterTotal': model.ShardedCounter.get_count('TOTAL'),
