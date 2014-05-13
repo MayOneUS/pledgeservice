@@ -16,7 +16,7 @@ import wp_import
 PRE_SHARDING_TOTAL = 27425754  # See model.ShardedCounter
 WP_PLEDGE_TOTAL = 41326868
 DEMOCRACY_DOT_COM_BALANCE =  6327550
-CHECKS_BALANCE = 700000  # lol US government humor
+CHECKS_BALANCE = 2547500  # lol US government humor
 
 
 class Error(Exception): pass
