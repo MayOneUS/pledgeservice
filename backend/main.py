@@ -15,8 +15,8 @@ import wp_import
 # These get added to every pledge calculation
 PRE_SHARDING_TOTAL = 27425754  # See model.ShardedCounter
 WP_PLEDGE_TOTAL = 41326868
-DEMOCRACY_DOT_COM_BALANCE = 4638250
-CHECKS_BALANCE = 0  # lol US government humor
+DEMOCRACY_DOT_COM_BALANCE =  6327550
+CHECKS_BALANCE = 700000  # lol US government humor
 
 
 class Error(Exception): pass
