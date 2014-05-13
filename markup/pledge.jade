@@ -18,8 +18,6 @@ html
             phone: '',
             target: 'Whatever Helps',
           },
-          // Set by stripe token handler.
-          userEmail: '',
           error: '',
           cents: function() {
             return Math.floor($scope.ctrl.amount * 100);
@@ -33,16 +31,14 @@ html
             });
           },
           onTokenRecv: function(token, args) {
-            $scope.ctrl.userEmail = token.email;
             $http.post('/pledge.do', {
                 email: token.email,
                 token: token.id,
                 amount: $scope.ctrl.cents(),
                 userinfo: $scope.ctrl.userinfo,
                 name: args.billing_name,
-            }).success(function(data) {
-              location.href =
-                '/receipt/' + $scope.ctrl.userEmail + '/' + data.url_nonce;
+            }).success(function() {
+              location.href = '/thankyou';
             }).error(function() {
               $scope.ctrl.error =
                 'Oops, something went wrong. Try again in a few minutes';

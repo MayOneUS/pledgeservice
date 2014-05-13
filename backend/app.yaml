@@ -33,6 +33,11 @@ handlers:
   upload: static/*
   secure: always
 
+- url: /thankyou/?
+  static_files: static/thankyou.html
+  upload: static/*
+  secure: always
+
 - url: /contact/?
   static_files: static/contact.html
   upload: static/*

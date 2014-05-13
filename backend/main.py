@@ -4,11 +4,12 @@ import logging
 import webapp2
 
 from google.appengine.api import mail
+from google.appengine.api import memcache
+from google.appengine.ext import db
 from google.appengine.ext import deferred
 
 import model
 import stripe
-import util
 import wp_import
 
 # These get added to every pledge calculation
@@ -140,8 +141,7 @@ class PledgeHandler(webapp2.RequestHandler):
     deferred.defer(model.increment_donation_total, amount,
                    _queue='incrementTotal')
 
-    result = dict(url_nonce=pledge.url_nonce)
-    json.dump(result, self.response)
+    self.response.write('Ok.')
 
 
 class UserUpdateHandler(webapp2.RequestHandler):
@@ -177,33 +177,12 @@ class UserUpdateHandler(webapp2.RequestHandler):
       return
 
 
-class ReceiptHandler(webapp2.RequestHandler):
-  def get(self, email, url_nonce):
-    pledges = (list(model.Pledge.all().filter('email =', email)) +
-               list(model.WpPledge.all().filter('email =', email)))
-    pledges = [p for p in pledges
-               if util.ConstantTimeIsEqual(p.url_nonce, url_nonce)]
-    if not pledges:
-      self.error(404)
-      self.response.write('This page was not found')
-      return
-
-    if len(pledges) > 1:
-      raise Error('Multiple pledges with the same nonce')
-
-    pledge = pledges[0]
-
-    template = JINJA_ENVIRONMENT.get_template('receipt.html')
-    self.response.write(template.render({'amount': pledge.amountCents / 100}))
-
-
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
   ('/stripe_public_key', GetStripePublicKeyHandler),
   ('/pledge.do', PledgeHandler),
   ('/user-update/(\w+)', UserUpdateHandler),
-  ('/receipt/(.+)/(.+)', ReceiptHandler),
-  ('/campaigns/may-one/?', EmbedHandler),
+  ('/campaigns/may-one/?', EmbedHandler)
   # See wp_import
   # ('/import.do', wp_import.ImportHandler),
 ], debug=False)

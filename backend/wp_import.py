@@ -8,7 +8,6 @@ from google.appengine.api import mail
 from google.appengine.ext import db
 
 import model
-import util
 
 # NOTE(hjfreyer): Commenting this out for now, as it's hopefully
 # obsolete, and I want to get rid of config_NOCOMMIT. If this is
@@ -18,9 +17,19 @@ import util
 #
 # import config_NOCOMMIT
 
+
+# def constantTimeIsEqual(a, b):
+#   if len(a) != len(b):
+#     return False
+#   acc = 0
+#   for x, y in zip(a, b):
+#     acc |= ord(x) ^ ord(y)
+#   return acc == 0
+
+
 # class ImportHandler(webapp2.RequestHandler):
 #   def post(self):
-#     if not util.ConstantTimeIsEqual(
+#     if not constantTimeIsEqual(
 #         self.request.get("import_key"), config_NOCOMMIT.IMPORT_SECRET_KEY):
 #       self.error(400)
 #       self.response.write('Invalid request')
