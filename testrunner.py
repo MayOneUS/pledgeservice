@@ -21,7 +21,6 @@ if __name__ == '__main__':
   print('UNITTESTS FOR MAYONE APPENGINE')
   SDK_PATH = SDK_PATH_manual
   TEST_PATH = TEST_PATH_manual
-  SDK_PATH_override = raw_input('Enter SDK_PATH Override (Leave blank to use the default): ')
-  if SDK_PATH_override:
-    SDK_PATH = SDK_PATH_override
+  if len(sys.argv)==2:
+    SDK_PATH = sys.argv[1]
   main(SDK_PATH, TEST_PATH)
