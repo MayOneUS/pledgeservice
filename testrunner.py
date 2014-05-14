@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import sys
-# Install the Python unittest2 package before you run this script.
 import unittest
 
 USAGE = """%prog SDK_PATH TEST_PATH
