@@ -25,5 +25,4 @@ if __name__ == '__main__':
   SDK_PATH_override = raw_input('Enter SDK_PATH Override (Leave blank to use the default): ')
   if SDK_PATH_override:
       SDK_PATH = SDK_PATH_override
-  print('STARTING UNITTESTS...')
   main(SDK_PATH, TEST_PATH)
