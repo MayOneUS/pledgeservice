@@ -20,9 +20,6 @@ class TestConfig(unittest.TestCase):
   def tearDown(self):
     self.testbed.deactivate()
 
-  def test_get(self):
-    self.fail('TEST NOT IMPLEMENTED')
-
 class TestSecrets(unittest.TestCase):
   def setUp(self):
     # First, create an instance of the Testbed class.
@@ -34,12 +31,6 @@ class TestSecrets(unittest.TestCase):
 
   def tearDown(self):
     self.testbed.deactivate()
-
-  def test_get(self):
-    self.fail('TEST NOT IMPLEMENTED')
-
-  def test_update(self):
-    self.fail('TEST NOT IMPLEMENTED')
 
 class TestUser(unittest.TestCase):
   def setUp(self):
@@ -95,9 +86,6 @@ class TestPledge(unittest.TestCase):
   def tearDown(self):
     self.testbed.deactivate()
    
-  def test_create(self):
-    self.fail('TEST NOT IMPLEMENTED')
-
 class TestWpPledge(unittest.TestCase):
   def setUp(self):
     # First, create an instance of the Testbed class.
@@ -109,9 +97,6 @@ class TestWpPledge(unittest.TestCase):
 
   def tearDown(self):
     self.testbed.deactivate()
-   
-  def test_create(self):
-    self.fail('TEST NOT IMPLEMENTED')
 
 class TestShardedCounter(unittest.TestCase):
   def setUp(self):
@@ -124,18 +109,6 @@ class TestShardedCounter(unittest.TestCase):
 
   def tearDown(self):
     self.testbed.deactivate()
-   
-  def test_get_count(self):
-    self.fail('TEST NOT IMPLEMENTED')
-  
-  def test__get_memcache_key(self):
-    self.fail('TEST NOT IMPLEMENTED')
-  
-  def test__get_keys_for(self):
-    self.fail('TEST NOT IMPLEMENTED')
-  
-  def test_increment(self):
-    self.fail('TEST NOT IMPLEMENTED')
 
 class TestFunctions(unittest.TestCase):
   def setUp(self):
@@ -149,6 +122,4 @@ class TestFunctions(unittest.TestCase):
   def tearDown(self):
     self.testbed.deactivate()
 
-  def test_increment_donation_total(self):
-    self.fail('TEST NOT IMPLEMENTED')
 

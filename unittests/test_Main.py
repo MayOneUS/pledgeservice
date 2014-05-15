@@ -19,9 +19,6 @@ class TestGetTotalHandler(unittest.TestCase):
 
   def tearDown(self):
     self.testbed.deactivate()
-   
-  def test_get(self):
-    self.fail('TEST NOT IMPLEMENTED')
     
 class TestGetStripePublicKeyHandler(unittest.TestCase):
   def setUp(self):
@@ -34,9 +31,6 @@ class TestGetStripePublicKeyHandler(unittest.TestCase):
 
   def tearDown(self):
     self.testbed.deactivate()
-   
-  def test_get(self):
-    self.fail('TEST NOT IMPLEMENTED')
 
 class TestEmbedHandler(unittest.TestCase):
   def setUp(self):
@@ -49,9 +43,6 @@ class TestEmbedHandler(unittest.TestCase):
 
   def tearDown(self):
     self.testbed.deactivate()
-   
-  def test_get(self):
-    self.fail('TEST NOT IMPLEMENTED')
 
 class TestPledgeHandler(unittest.TestCase):
   def setUp(self):
@@ -64,9 +55,6 @@ class TestPledgeHandler(unittest.TestCase):
 
   def tearDown(self):
     self.testbed.deactivate()
-   
-  def test_post(self):
-    self.fail('TEST NOT IMPLEMENTED')
 
 class TestFunctions(unittest.TestCase):
   def setUp(self):
@@ -79,6 +67,3 @@ class TestFunctions(unittest.TestCase):
 
   def tearDown(self):
     self.testbed.deactivate()
-  
-  def test_send_thank_you(self):
-    self.fail('TEST NOT IMPLEMENTED')
