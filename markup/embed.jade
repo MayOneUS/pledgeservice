@@ -21,14 +21,7 @@ html
       myApp.controller('IndexController',
                        ['$scope', '$http', function($scope, $http) {
 
-        // javascript is so awesome. this is how you write June 1st. Cause June is the
-        // 5th month, indexed by zero. thanks javascript!
-        var date_its_over = Date.UTC(2014,05,01,10,00,00,00);
-        var days_left = Math.floor((date_its_over - Date.now())/(1000*24*60*60));
-        var days_left_message = '' + days_left + ' days left';
-        if (days_left == 1) {
-          days_left_message = '' + days_left + ' day left';
-        }
+        var days_left_message = '18 days left';
 
         $scope.ctrl = {
           daysLeftMsg: days_left_message,
@@ -59,7 +52,7 @@ html
         aria-valuenow="ctrl.percent()",
         aria-valuemin="0", aria-valuemax="100",
         ng-style="{width: ctrl.percentWidth() + '%'}",
-        style="position:absolute;top:0;left:0;")
+        style="position:absolute;top:0;left:0;background-color:rgb(0, 153, 51);")
     .progress-text
       span {{ctrl.moneyString()}}
       span {{ctrl.daysLeftMsg}}
