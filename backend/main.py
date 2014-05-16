@@ -52,10 +52,10 @@ def send_thank_you(name, email, url_nonce, amount_cents):
 def enable_cors(handler):
   if 'Origin' in handler.request.headers:
     _origin = handler.request.headers['Origin']
-    # FIXME TODO - We can potentially limit our origins to ones we control
-    handler.response.headers.add_header("Access-Control-Allow-Origin", _origin)
-    handler.response.headers.add_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-    handler.response.headers.add_header("Access-Control-Allow-Headers", "content-type, origin")
+    if _origin.endswith(".mayone.us"):
+      handler.response.headers.add_header("Access-Control-Allow-Origin", _origin)
+      handler.response.headers.add_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+      handler.response.headers.add_header("Access-Control-Allow-Headers", "content-type, origin")
 
 class ContactHandler(webapp2.RequestHandler):
   def post(self):
