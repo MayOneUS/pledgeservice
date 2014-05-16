@@ -48,6 +48,35 @@ def send_thank_you(name, email, url_nonce, amount_cents):
   message.html = open('email/thank-you.html').read().format(**format_kwargs)
   message.send()
 
+# Respond to /OPTION requests in a way that allows cross site requests
+def enable_cors(handler):
+  if 'Origin' in handler.request.headers:
+    _origin = handler.request.headers['Origin']
+    if _origin.endswith(".mayone.us") or _origin == "mayone.us":
+      handler.response.headers.add_header("Access-Control-Allow-Origin", _origin)
+      handler.response.headers.add_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+      handler.response.headers.add_header("Access-Control-Allow-Headers", "content-type, origin")
+
+class ContactHandler(webapp2.RequestHandler):
+  def post(self):
+    data = json.loads(self.request.body)
+    ascii_name = data["name"].encode('ascii', errors='ignore')
+    ascii_email = data["email"].encode('ascii', errors='ignore')
+    ascii_subject = data["subject"].encode('ascii', errors='ignore')
+    ascii_body = data["body"].encode('ascii', errors='ignore')
+
+    sender = "%s <%s>" % (ascii_name, ascii_email);
+    message = mail.EmailMessage(sender=sender, subject=ascii_subject)
+    message.to = "info@mayone.us"
+    message.body = ascii_body
+    message.send()
+    enable_cors(self)
+    self.response.write('Ok.')
+
+  def options(self):
+    enable_cors(self)
+    self.response.write('Ok.')
+
 
 class GetTotalHandler(webapp2.RequestHandler):
   def get(self):
@@ -182,7 +211,8 @@ app = webapp2.WSGIApplication([
   ('/stripe_public_key', GetStripePublicKeyHandler),
   ('/pledge.do', PledgeHandler),
   ('/user-update/(\w+)', UserUpdateHandler),
-  ('/campaigns/may-one/?', EmbedHandler)
+  ('/campaigns/may-one/?', EmbedHandler),
+  ('/contact.do', ContactHandler),
   # See wp_import
   # ('/import.do', wp_import.ImportHandler),
 ], debug=False)
