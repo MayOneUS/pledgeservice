@@ -225,6 +225,7 @@ class ShardedCounter(db.Model):
       for counter in db.get(all_keys):
         if counter is not None:
           total += counter.count
+      logging.info("recalculated counter %s to %s", name, total)
       cache.SetShardedCounterTotal(name, total)
     return total
 
