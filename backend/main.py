@@ -49,13 +49,13 @@ def send_thank_you(name, email, url_nonce, amount_cents):
   message.send()
 
 # Respond to /OPTION requests in a way that allows cross site requests
-def enable_cors(self):
-  if 'Origin' in self.request.headers:
-    _origin = self.request.headers['Origin']
+def enable_cors(handler):
+  if 'Origin' in handler.request.headers:
+    _origin = handler.request.headers['Origin']
     # FIXME TODO - We can potentially limit our origins to ones we control
-    self.response.headers.add_header("Access-Control-Allow-Origin", _origin)
-    self.response.headers.add_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-    self.response.headers.add_header("Access-Control-Allow-Headers", "content-type, origin")
+    handler.response.headers.add_header("Access-Control-Allow-Origin", _origin)
+    handler.response.headers.add_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+    handler.response.headers.add_header("Access-Control-Allow-Headers", "content-type, origin")
 
 class ContactHandler(webapp2.RequestHandler):
   def post(self):
