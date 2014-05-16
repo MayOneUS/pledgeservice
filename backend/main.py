@@ -60,10 +60,15 @@ def enable_cors(handler):
 class ContactHandler(webapp2.RequestHandler):
   def post(self):
     data = json.loads(self.request.body)
-    sender = "%s <%s>" % (data["name"],  data["email"]);
-    message = mail.EmailMessage(sender=sender, subject=data['subject'])
+    ascii_name = data["name"].encode('ascii', errors='ignore')
+    ascii_email = data["email"].encode('ascii', errors='ignore')
+    ascii_subject = data["subject"].encode('ascii', errors='ignore')
+    ascii_body = data["body"].encode('ascii', errors='ignore')
+
+    sender = "%s <%s>" % (ascii_name, ascii_email);
+    message = mail.EmailMessage(sender=sender, subject=ascii_subject)
     message.to = "info@mayone.us"
-    message.body = data['body']
+    message.body = ascii_body
     message.send()
     enable_cors(self)
     self.response.write('Ok.')
