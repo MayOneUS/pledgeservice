@@ -110,7 +110,7 @@ class PledgeHandler(webapp2.RequestHandler):
     try:
       data = json.loads(self.request.body)
     except:
-      logging.Warning('Bad JSON request')
+      logging.warning('Bad JSON request')
       self.error(400)
       self.response.write('Invalid request')
       return
