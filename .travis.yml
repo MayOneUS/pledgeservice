@@ -15,3 +15,7 @@ script:
   - coverage report -m
 after_success:
   coveralls --verbose
+notifications:
+  irc:
+    - "chat.freenode.net#mayone"
+    - "chat.freenode.net#mayone-dev"
