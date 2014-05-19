@@ -1,0 +1,4 @@
+# .coveragerc to control coverage.py
+[run]
+source=backend
+omit = google_appengine/*,*/python2.7/*,backend/stripe/*
