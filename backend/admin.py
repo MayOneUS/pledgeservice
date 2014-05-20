@@ -10,6 +10,7 @@ import webapp2
 from google.appengine.api import mail, memcache
 from google.appengine.ext import db, deferred
 
+import commands
 import model
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -41,8 +42,6 @@ class SetSecretsHandler(webapp2.RequestHandler):
 
 
 class AdminDashboardHandler(webapp2.RequestHandler):
-  MISSING_DATA_USERS_KEY = 'MISSING_DATA_USERS'
-
   def get(self):
     users = AdminDashboardHandler.get_missing_data_users()
 
@@ -64,36 +63,29 @@ class AdminDashboardHandler(webapp2.RequestHandler):
       'shardedCounterTotal': model.ShardedCounter.get_count('TOTAL'),
     }))
 
-  # Gets all the users with missing employer/occupation data who gave at least
-  # $200 when we were on wordpress. Caches the result. Since the list can only
-  # shrink over time, there's no need to expire the memcache entry, and we pare
-  # it down on each request.
+  # Gets all the users with missing employer/occupation/targeting data
+  # who gave at least $200 when we were on wordpress. If a user has
+  # since updated their info, delete that user's record in the
+  # MissingDataUsersSecondary model.
+  #
+  # Returns list of (User, amountCents) tuples.
   @staticmethod
   def get_missing_data_users():
     users = []
-    for user in AdminDashboardHandler._coarse_missing_data_users():
-      if user.occupation and user.employer:
-        continue
-      pledges = (db.Query(model.WpPledge, projection=('amountCents',))
-                 .filter('email =', user.email))
-      total = sum(p.amountCents for p in pledges)
-      if total >= 20000:
-        users.append((user, total))
-    memcache.set(AdminDashboardHandler.MISSING_DATA_USERS_KEY,
-                 [user.key() for user, _ in users])
-    return users
+    for missing_user_secondary in model.MissingDataUsersSecondary.all():
+      user = model.User.get_by_key_name(missing_user_secondary.email)
 
-  # Returns a generator for a coarse list of users such that all users with
-  # missing data who gave at least $200 will be on it. It's either based on the
-  # list of such users last time we did this query (if it's still in memcache),
-  # or it's simply all users, if that has expired.
-  @staticmethod
-  def _coarse_missing_data_users():
-    keys = memcache.get(AdminDashboardHandler.MISSING_DATA_USERS_KEY)
-    if keys:
-      return db.get(keys)
-    else:
-      return model.User.all()
+      # If they've added their info, delete them.
+      if user.occupation and user.employer and user.target:
+        db.delete(missing_user_secondary)
+      else:
+        # missing_user_secondary.amountCents never gets updated, but
+        # that's okay, because it won't change unless the user makes a
+        # new pledge, which will cause their info to be updated, so
+        # we'll go down the other fork in this if.
+        users.append((user, missing_user_secondary.amountCents))
+
+    return users
 
 
 class PledgesCsvHandler(webapp2.RequestHandler):
@@ -107,8 +99,29 @@ class PledgesCsvHandler(webapp2.RequestHandler):
       w.writerow([str(pledge.donationTime), pledge.amountCents])
 
 
+def MakeCommandHandler(cmd):
+  """Takes a command and returns a route tuple which allows that command
+     to be executed.
+  """
+  class H(webapp2.RequestHandler):
+    def get(self):
+      self.response.write("""
+      <h1>You are about to run command "{}". Are you sure?</h1>
+      <form action="" method="POST">
+      <button>Punch it</button>
+      </form>""".format(cmd.NAME))
+
+    def post(self):
+      deferred.defer(cmd.run)
+      self.response.write('Command started.')
+
+  return ('/admin/command/' + cmd.SHORT_NAME, H)
+
+
+COMMAND_HANDLERS = [MakeCommandHandler(c) for c in commands.COMMANDS]
+
 app = webapp2.WSGIApplication([
   ('/admin/set_secrets', SetSecretsHandler),
   ('/admin/pledges.csv', PledgesCsvHandler),
   ('/admin/?', AdminDashboardHandler),
-], debug=False)
+] + COMMAND_HANDLERS, debug=False)
