@@ -17,5 +17,7 @@ after_success:
   coveralls --verbose
 notifications:
   irc:
-    - "chat.freenode.net#mayone"
-    - "chat.freenode.net#mayone-dev"
+    channels:
+      - "chat.freenode.net#mayone"
+      - "chat.freenode.net#mayone-dev"
+    skip_join: true
