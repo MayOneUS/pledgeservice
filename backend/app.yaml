@@ -38,11 +38,6 @@ handlers:
   upload: static/*
   secure: always
 
-- url: /chat/?
-  static_files: static/chat.html
-  upload: static/*
-  secure: always
-
 - url: /contact/?
   static_files: static/contact.html
   upload: static/*
