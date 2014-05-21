@@ -1,6 +1,7 @@
 import jinja2
 import json
 import logging
+import urlparse
 import webapp2
 
 from google.appengine.api import mail
@@ -49,14 +50,21 @@ def send_thank_you(name, email, url_nonce, amount_cents):
   message.send()
 
 # Respond to /OPTION requests in a way that allows cross site requests
+# TODO(hjfreyer): Pull into some kind of middleware?
 def enable_cors(handler):
   if 'Origin' in handler.request.headers:
-    _origin = handler.request.headers['Origin']
-    if _origin.endswith(".mayone.us") or _origin == "mayone.us":
-      handler.response.headers.add_header("Access-Control-Allow-Origin", _origin)
-      handler.response.headers.add_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-      handler.response.headers.add_header("Access-Control-Allow-Headers", "content-type, origin")
+    origin = handler.request.headers['Origin']
+    _, netloc, _, _, _, _ = urlparse.urlparse(origin)
+    if not (netloc == 'mayone.us' or netloc.endswith('.mayone.us')):
+      logging.warning('Invalid origin: ' + origin)
+      handler.error(403)
+      return
 
+    handler.response.headers.add_header("Access-Control-Allow-Origin", origin)
+    handler.response.headers.add_header("Access-Control-Allow-Methods", "POST")
+    handler.response.headers.add_header("Access-Control-Allow-Headers", "content-type, origin")
+
+# TODO(hjfreyer): Tests!!
 class ContactHandler(webapp2.RequestHandler):
   def post(self):
     data = json.loads(self.request.body)
@@ -65,17 +73,18 @@ class ContactHandler(webapp2.RequestHandler):
     ascii_subject = data["subject"].encode('ascii', errors='ignore')
     ascii_body = data["body"].encode('ascii', errors='ignore')
 
-    sender = "%s <%s>" % (ascii_name, ascii_email);
-    message = mail.EmailMessage(sender=sender, subject=ascii_subject)
+
+    message = mail.EmailMessage(sender=('MayOne no-reply <noreply@%s.appspotmail.com>' %
+                                        model.Config.get().app_name),
+                                subject=ascii_subject)
     message.to = "info@mayone.us"
-    message.body = ascii_body
+    message.body = 'FROM: %s\n\n%s' % (ascii_email, ascii_body)
     message.send()
     enable_cors(self)
     self.response.write('Ok.')
 
   def options(self):
     enable_cors(self)
-    self.response.write('Ok.')
 
 
 class GetTotalHandler(webapp2.RequestHandler):
