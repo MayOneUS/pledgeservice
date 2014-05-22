@@ -12,6 +12,12 @@ html
         .col-md-4
           h2 Dump CSV
           a(href="/admin/pledges.csv") Do it
+          h2 Admin Commands
+          {% for cmd in commands %}
+          div
+            a(href="{{cmd.url}}") {{cmd.name}}
+          {% endfor %}
+
         .col-md-4
           h2 Missing Employer/Occupation Data
           p Missing data for {{missingUsers|length}} users totalling ${{totalMissing}}.

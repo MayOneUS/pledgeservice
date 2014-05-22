@@ -19,28 +19,6 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     autoescape=True)
 
 
-class SetSecretsHandler(webapp2.RequestHandler):
-  def get(self):
-    s = model.Secrets.get()
-    if s:
-      self.response.write('Secrets already set. Delete them before reseting')
-      return
-
-    self.response.write("""
-    <form method="post" action="">
-      <label>Stripe public key</label>
-      <input name="stripe_public_key">
-      <label>Stripe private key</label>
-      <input name="stripe_private_key">
-      <input type="submit">
-    </form>""")
-
-  def post(self):
-    model.Secrets.update(
-      stripe_public_key=self.request.get('stripe_public_key'),
-      stripe_private_key=self.request.get('stripe_private_key'))
-
-
 class AdminDashboardHandler(webapp2.RequestHandler):
   def get(self):
     users = AdminDashboardHandler.get_missing_data_users()
@@ -61,6 +39,7 @@ class AdminDashboardHandler(webapp2.RequestHandler):
       'preShardedTotal': pre_sharding_total,
       'postShardedTotal': post_sharding_total,
       'shardedCounterTotal': model.ShardedCounter.get_count('TOTAL'),
+      'commands': AdminDashboardHandler.get_commands(),
     }))
 
   # Gets all the users with missing employer/occupation/targeting data
@@ -76,7 +55,7 @@ class AdminDashboardHandler(webapp2.RequestHandler):
       user = model.User.get_by_key_name(missing_user_secondary.email)
 
       # If they've added their info, delete them.
-      if user.occupation and user.employer and user.target:
+      if user.occupation and user.employer:
         db.delete(missing_user_secondary)
       else:
         # missing_user_secondary.amountCents never gets updated, but
@@ -84,8 +63,13 @@ class AdminDashboardHandler(webapp2.RequestHandler):
         # new pledge, which will cause their info to be updated, so
         # we'll go down the other fork in this if.
         users.append((user, missing_user_secondary.amountCents))
-
+    users.sort(key=lambda (_, amt): amt, reverse=True)
     return users
+
+  @staticmethod
+  def get_commands():
+    return [dict(name=c.NAME, url='/admin/command/' + c.SHORT_NAME)
+            for c in commands.COMMANDS if c.SHOW]
 
 
 class PledgesCsvHandler(webapp2.RequestHandler):
@@ -121,7 +105,6 @@ def MakeCommandHandler(cmd):
 COMMAND_HANDLERS = [MakeCommandHandler(c) for c in commands.COMMANDS]
 
 app = webapp2.WSGIApplication([
-  ('/admin/set_secrets', SetSecretsHandler),
   ('/admin/pledges.csv', PledgesCsvHandler),
   ('/admin/?', AdminDashboardHandler),
 ] + COMMAND_HANDLERS, debug=False)

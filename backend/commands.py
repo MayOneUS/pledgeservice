@@ -22,6 +22,7 @@ class Error(Exception): pass
 class TestCommand(object):
   SHORT_NAME = 'test'
   NAME = 'Perform a test'
+  SHOW = False
 
   def run(self):
     logging.info('Do something')
@@ -31,6 +32,7 @@ class TestCommand(object):
 class FindMissingDataUsersCommand(object):
   SHORT_NAME = 'find_missing_data_users'
   NAME = 'Recompute missing data users'
+  SHOW = False
 
   def run(self):
     if model.MissingDataUsersSecondary.all().count() > 0:
@@ -40,7 +42,7 @@ class FindMissingDataUsersCommand(object):
     # 30 seconds, out of our allotted 10 minutes.
     logging.info('Load all users')
     users = [u.email for u in model.User.all()
-             if not (u.occupation and u.employer and u.target)]
+             if not (u.occupation and u.employer)]
 
     logging.info('Load all Pledges')
     pledges = list(model.Pledge.all())
@@ -58,8 +60,19 @@ class FindMissingDataUsersCommand(object):
     db.put(users)
     logging.info('Done')
 
+
+class UpdateSecretsProperties(object):
+  SHORT_NAME = 'update_secrets_properties'
+  NAME = 'Update "Secrets" model properties'
+  SHOW = True
+
+  def run(self):
+    model.Secrets.update()
+
+
 # List your command here so admin.py can expose it.
 COMMANDS = [
   TestCommand(),
   FindMissingDataUsersCommand(),
+  UpdateSecretsProperties(),
 ]

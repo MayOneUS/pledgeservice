@@ -31,7 +31,8 @@ MODEL_VERSION = 2
 class Config(object):
   ConfigType = namedtuple('ConfigType',
                           ['app_name',
-                           'stripe_public_key', 'stripe_private_key'])
+                           'stripe_public_key', 'stripe_private_key',
+                           'mailchimp_api_key', 'mailchimp_list_id'])
   _instance = None
 
   @staticmethod
@@ -42,43 +43,48 @@ class Config(object):
     j = json.load(open('config.json'))
     s = Secrets.get()
 
-    if 'hardCodeStripe' in j:
+    if j.get('hardCodeStripe'):
       stripe_public_key = j['stripePublicKey']
       stripe_private_key = j['stripePrivateKey']
-    elif s:
+    else:
       stripe_public_key = s.stripe_public_key
       stripe_private_key = s.stripe_private_key
-    else:      # If the secrets haven't been loaded yet, omit them.
-      stripe_public_key = None
-      stripe_private_key = None
 
     Config._instance = Config.ConfigType(
       app_name = j['appName'],
       stripe_public_key=stripe_public_key,
-      stripe_private_key=stripe_private_key)
+      stripe_private_key=stripe_private_key,
+      mailchimp_api_key=s.mailchimp_api_key,
+      mailchimp_list_id=s.mailchimp_list_id)
     return Config._instance
 
 
 # Secrets to store in the DB, rather than git.
+#
+# If you add a field to this, set the default to the empty string, and then
+# after pushing the code, go to /admin and select the "Update Secrets model
+# properties" command. Then you should be able to edit the new field in the
+# datastore.
 class Secrets(db.Model):
+  SINGLETON_KEY = 'SINGLETON'
+
   # We include the public key so they're never out of sync.
-  stripe_public_key = db.StringProperty(required=True)
-  stripe_private_key = db.StringProperty(required=True)
+  stripe_public_key = db.StringProperty(default='')
+  stripe_private_key = db.StringProperty(default='')
+
+  mailchimp_api_key = db.StringProperty(default='')
+  mailchimp_list_id = db.StringProperty(default='')
 
   @staticmethod
   def get():
-    s = list(Secrets.all())
-    if len(s) > 1:
-      raise Error('Have multiple secrets in the database somehow. This '
-                  "shouldn't happen.")
-    return s[0] if s else None
+    return Secrets.get_or_insert(key_name=Secrets.SINGLETON_KEY)
 
   @staticmethod
-  def update(stripe_public_key, stripe_private_key):
-    if list(Secrets.all()):
-      raise Error('DB already contains secrets. Delete them first')
-    s = Secrets(stripe_public_key=stripe_public_key,
-                stripe_private_key=stripe_private_key)
+  @db.transactional
+  def update():
+    s = Secrets.get_by_key_name(Secrets.SINGLETON_KEY)
+    if s is None:
+      s = Secrets(key_name=Secrets.SINGLETON_KEY)
     s.put()
 
 
