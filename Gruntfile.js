@@ -50,6 +50,7 @@ module.exports = function(grunt) {
       main: {
         files: [
           {cwd: 'backend/', src: '**', dest: 'build/', expand: true },
+          {cwd: 'lib/', src: '**', dest: 'build/', expand: true },
           {cwd: 'assets/', src: '**', dest: 'build/static/', expand: true },
         ],
       },
