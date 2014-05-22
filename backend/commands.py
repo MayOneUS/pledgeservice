@@ -22,6 +22,7 @@ class Error(Exception): pass
 class TestCommand(object):
   SHORT_NAME = 'test'
   NAME = 'Perform a test'
+  SHOW = False
 
   def run(self):
     logging.info('Do something')
@@ -31,6 +32,7 @@ class TestCommand(object):
 class FindMissingDataUsersCommand(object):
   SHORT_NAME = 'find_missing_data_users'
   NAME = 'Recompute missing data users'
+  SHOW = False
 
   def run(self):
     if model.MissingDataUsersSecondary.all().count() > 0:

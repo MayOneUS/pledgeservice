@@ -61,6 +61,7 @@ class AdminDashboardHandler(webapp2.RequestHandler):
       'preShardedTotal': pre_sharding_total,
       'postShardedTotal': post_sharding_total,
       'shardedCounterTotal': model.ShardedCounter.get_count('TOTAL'),
+      'commands': AdminDashboardHandler.get_commands(),
     }))
 
   # Gets all the users with missing employer/occupation/targeting data
@@ -86,6 +87,11 @@ class AdminDashboardHandler(webapp2.RequestHandler):
         users.append((user, missing_user_secondary.amountCents))
 
     return users
+
+  @staticmethod
+  def get_commands():
+    return [dict(name=c.NAME, url='/admin/command/' + c.SHORT_NAME)
+            for c in commands.COMMANDS if c.SHOW]
 
 
 class PledgesCsvHandler(webapp2.RequestHandler):
