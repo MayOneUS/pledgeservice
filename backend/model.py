@@ -31,7 +31,8 @@ MODEL_VERSION = 2
 class Config(object):
   ConfigType = namedtuple('ConfigType',
                           ['app_name',
-                           'stripe_public_key', 'stripe_private_key'])
+                           'stripe_public_key', 'stripe_private_key',
+                           'mailchimp_api_key', 'mailchimp_list_id'])
   _instance = None
 
   @staticmethod
@@ -45,17 +46,16 @@ class Config(object):
     if j.get('hardCodeStripe'):
       stripe_public_key = j['stripePublicKey']
       stripe_private_key = j['stripePrivateKey']
-    elif s:
+    else:
       stripe_public_key = s.stripe_public_key
       stripe_private_key = s.stripe_private_key
-    else:      # If the secrets haven't been loaded yet, omit them.
-      stripe_public_key = None
-      stripe_private_key = None
 
     Config._instance = Config.ConfigType(
       app_name = j['appName'],
       stripe_public_key=stripe_public_key,
-      stripe_private_key=stripe_private_key)
+      stripe_private_key=stripe_private_key,
+      mailchimp_api_key=s.mailchimp_api_key,
+      mailchimp_list_id=s.mailchimp_list_id)
     return Config._instance
 
 
@@ -71,6 +71,9 @@ class Secrets(db.Model):
   # We include the public key so they're never out of sync.
   stripe_public_key = db.StringProperty(default='')
   stripe_private_key = db.StringProperty(default='')
+
+  mailchimp_api_key = db.StringProperty(default='')
+  mailchimp_list_id = db.StringProperty(default='')
 
   @staticmethod
   def get():
