@@ -63,7 +63,7 @@ class AdminDashboardHandler(webapp2.RequestHandler):
         # new pledge, which will cause their info to be updated, so
         # we'll go down the other fork in this if.
         users.append((user, missing_user_secondary.amountCents))
-
+    users.sort(key=lambda (_, amt): amt, reverse=True)
     return users
 
   @staticmethod
