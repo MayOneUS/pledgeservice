@@ -38,7 +38,11 @@ class SetSecretsHandler(webapp2.RequestHandler):
   def post(self):
     model.Secrets.update(
       stripe_public_key=self.request.get('stripe_public_key'),
-      stripe_private_key=self.request.get('stripe_private_key'))
+      stripe_private_key=self.request.get('stripe_private_key'),
+      mailchimp_api_key=self.request.get('mailchimp_api_key'),
+      mailchimp_list_id=self.request.get('mailchimp_list_id')
+      )
+    self.response.write("Keys were updated")
 
 
 class AdminDashboardHandler(webapp2.RequestHandler):

@@ -3,6 +3,9 @@ import json
 import logging
 import urlparse
 import webapp2
+import string
+import traceback
+import datetime
 
 from google.appengine.api import mail
 from google.appengine.api import memcache
@@ -11,6 +14,7 @@ from google.appengine.ext import deferred
 
 import model
 import stripe
+import mailchimp
 import wp_import
 
 # These get added to every pledge calculation
@@ -19,7 +23,6 @@ WP_PLEDGE_TOTAL = 41326868
 DEMOCRACY_DOT_COM_BALANCE = 8553428
 CHECKS_BALANCE = 7655200  # lol US government humor
 
-
 class Error(Exception): pass
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -27,6 +30,44 @@ JINJA_ENVIRONMENT = jinja2.Environment(
   extensions=['jinja2.ext.autoescape'],
   autoescape=True)
 
+
+
+def subscribe_to_mailchimp(email_to_subscribe, firstName, lastName, amount, opt_in_IP, source):
+
+  try:
+    mailchimp_api_key = model.Config.get().mailchimp_api_key
+    mailchimp_list_id = model.Config.get().mailchimp_list_id
+    
+    mc = mailchimp.Mailchimp(mailchimp_api_key)
+    
+    merge_vars = {
+                   'FNAME':firstName,
+                   'LNAME':lastName,
+                   'optin_ip': opt_in_IP,
+                   'optin_time': str(datetime.datetime.now())
+                 }                 
+                 
+    if source:
+      merge_vars['SOURCE'] = source
+      
+    if amount:
+      amountDollars = '{0:.02f}'.format(float(amount) / 100.0)
+      merge_vars['LASTPLEDGE'] = amountDollars
+                  
+    # list ID and email struct
+    mc.lists.subscribe(id=mailchimp_list_id, 
+                       email={'email': email_to_subscribe },
+                       merge_vars= merge_vars,
+                        double_optin = False,
+                        update_existing = True,
+                        send_welcome = False
+                       )
+    return True
+  except Exception as e:    
+    logging.error(e)
+    logging.info(traceback.format_exc())
+    
+    return False   
 
 def send_thank_you(name, email, url_nonce, amount_cents):
   """Deferred email task"""
@@ -171,6 +212,29 @@ class PledgeHandler(webapp2.RequestHandler):
             occupation=occupation, employer=employer, phone=phone,
             target=target, note=self.request.get('note'))
 
+    
+    # get customer name
+    firstName = ""
+    lastName = ""
+    try:
+      name = customer.cards.data[0].name
+      nameParts = name.split(None, 1)
+      firstName = nameParts[0]
+      try:
+        lastName = nameParts[1]
+      except Exception as e:
+        pass
+    except Exception as e:
+      logging.error(e)
+    
+    # Add the user to mailchimp
+    mc_result = subscribe_to_mailchimp(
+                  email, firstName, lastName, amount, 
+                  opt_in_IP=self.request.remote_addr, source="pledged")
+    if (mc_result == False):
+      # eventually, this should escalate/send admin email
+      logging.info('Did not add to MC successfully')
+    
     # Add thank you email to a task queue
     deferred.defer(send_thank_you, name or email, email,
                    pledge.url_nonce, amount, _queue='mail')

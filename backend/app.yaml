@@ -77,6 +77,12 @@ handlers:
   upload: static/*
   secure: always
 
+- url: /admin/set_secrets_form
+  static_files: static/set-secrets-form.html
+  upload: static/*  
+  secure: always
+  login: admin
+
 - url: /admin.*
   script: admin.app
   secure: always

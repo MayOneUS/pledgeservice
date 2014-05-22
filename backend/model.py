@@ -31,7 +31,10 @@ MODEL_VERSION = 2
 class Config(object):
   ConfigType = namedtuple('ConfigType',
                           ['app_name',
-                           'stripe_public_key', 'stripe_private_key'])
+                           'stripe_public_key', 
+                           'stripe_private_key',
+                           'mailchimp_api_key',
+                           'mailchimp_list_id'])
   _instance = None
 
   @staticmethod
@@ -48,14 +51,22 @@ class Config(object):
     elif s:
       stripe_public_key = s.stripe_public_key
       stripe_private_key = s.stripe_private_key
+      mailchimp_api_key = s.mailchimp_api_key
+      mailchimp_list_id = s.mailchimp_list_id
     else:      # If the secrets haven't been loaded yet, omit them.
       stripe_public_key = None
       stripe_private_key = None
+      mailchimp_api_key = None
+      mailchimp_list_id = None
 
     Config._instance = Config.ConfigType(
       app_name = j['appName'],
       stripe_public_key=stripe_public_key,
-      stripe_private_key=stripe_private_key)
+      stripe_private_key=stripe_private_key,
+      mailchimp_api_key=mailchimp_api_key,
+      mailchimp_list_id=mailchimp_list_id
+    )
+      
     return Config._instance
 
 
@@ -64,6 +75,8 @@ class Secrets(db.Model):
   # We include the public key so they're never out of sync.
   stripe_public_key = db.StringProperty(required=True)
   stripe_private_key = db.StringProperty(required=True)
+  mailchimp_api_key = db.StringProperty()
+  mailchimp_list_id = db.StringProperty()
 
   @staticmethod
   def get():
@@ -74,13 +87,15 @@ class Secrets(db.Model):
     return s[0] if s else None
 
   @staticmethod
-  def update(stripe_public_key, stripe_private_key):
+  def update(stripe_public_key, stripe_private_key, 
+             mailchimp_api_key, mailchimp_list_id):
     if list(Secrets.all()):
       raise Error('DB already contains secrets. Delete them first')
     s = Secrets(stripe_public_key=stripe_public_key,
-                stripe_private_key=stripe_private_key)
+                stripe_private_key=stripe_private_key,
+                mailchimp_api_key=mailchimp_api_key,
+                mailchimp_list_id=mailchimp_list_id )
     s.put()
-
 
 class User(db.Model):
   # a user's email is also the model key
