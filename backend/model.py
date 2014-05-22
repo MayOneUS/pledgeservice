@@ -60,6 +60,11 @@ class Config(object):
 
 
 # Secrets to store in the DB, rather than git.
+#
+# If you add a field to this, set the default to the empty string, and then
+# after pushing the code, go to /admin and select the "Update Secrets model
+# properties" command. Then you should be able to edit the new field in the
+# datastore.
 class Secrets(db.Model):
   SINGLETON_KEY = 'SINGLETON'
 
@@ -69,32 +74,7 @@ class Secrets(db.Model):
 
   @staticmethod
   def get():
-    s = list(Secrets.all())
-
-    # TEMPORARY TRANSITION CODE
-    #
-    # Our datastores already have a "Secrets" object, but with a random ID. We
-    # want to replace this with a known ID. The logic is:
-    # 1) If there's only 1 model, take it. We don't care which it is.
-    # 2) If there's two, take the one with the unknown ID.
-    # 3) If there's none, return None.
-    # 4) If there's more than 2, we did something wrong, and error.
-    #
-    # After adding the new model and setting it up with the right secrets, we'll
-    # delete the old one and things should still work. Then we replace this code
-    # with a simple get_or_insert().
-    if not s:
-      return None
-    if len(s) == 1:
-      return s[0]
-    if len(s) == 2:
-      if s[0].key().name() == Secrets.SINGLETON_KEY:
-        return s[1]
-      else:
-        return s[0]
-    else:
-      raise Error('Have more than 2 secrets in the database somehow. This '
-                  "shouldn't happen.")
+    return Secrets.get_or_insert(key_name=Secrets.SINGLETON_KEY)
 
   @staticmethod
   @db.transactional
