@@ -55,7 +55,7 @@ class AdminDashboardHandler(webapp2.RequestHandler):
       user = model.User.get_by_key_name(missing_user_secondary.email)
 
       # If they've added their info, delete them.
-      if user.occupation and user.employer and user.target:
+      if user.occupation and user.employer:
         db.delete(missing_user_secondary)
       else:
         # missing_user_secondary.amountCents never gets updated, but

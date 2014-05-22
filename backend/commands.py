@@ -42,7 +42,7 @@ class FindMissingDataUsersCommand(object):
     # 30 seconds, out of our allotted 10 minutes.
     logging.info('Load all users')
     users = [u.email for u in model.User.all()
-             if not (u.occupation and u.employer and u.target)]
+             if not (u.occupation and u.employer)]
 
     logging.info('Load all Pledges')
     pledges = list(model.Pledge.all())
