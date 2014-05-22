@@ -19,28 +19,6 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     autoescape=True)
 
 
-class SetSecretsHandler(webapp2.RequestHandler):
-  def get(self):
-    s = model.Secrets.get()
-    if s:
-      self.response.write('Secrets already set. Delete them before reseting')
-      return
-
-    self.response.write("""
-    <form method="post" action="">
-      <label>Stripe public key</label>
-      <input name="stripe_public_key">
-      <label>Stripe private key</label>
-      <input name="stripe_private_key">
-      <input type="submit">
-    </form>""")
-
-  def post(self):
-    model.Secrets.update(
-      stripe_public_key=self.request.get('stripe_public_key'),
-      stripe_private_key=self.request.get('stripe_private_key'))
-
-
 class AdminDashboardHandler(webapp2.RequestHandler):
   def get(self):
     users = AdminDashboardHandler.get_missing_data_users()
@@ -127,7 +105,6 @@ def MakeCommandHandler(cmd):
 COMMAND_HANDLERS = [MakeCommandHandler(c) for c in commands.COMMANDS]
 
 app = webapp2.WSGIApplication([
-  ('/admin/set_secrets', SetSecretsHandler),
   ('/admin/pledges.csv', PledgesCsvHandler),
   ('/admin/?', AdminDashboardHandler),
 ] + COMMAND_HANDLERS, debug=False)

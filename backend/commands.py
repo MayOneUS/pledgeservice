@@ -60,8 +60,19 @@ class FindMissingDataUsersCommand(object):
     db.put(users)
     logging.info('Done')
 
+
+class UpdateSecretsProperties(object):
+  SHORT_NAME = 'update_secrets_properties'
+  NAME = 'Update "Secrets" model properties'
+  SHOW = True
+
+  def run(self):
+    model.Secrets.update()
+
+
 # List your command here so admin.py can expose it.
 COMMANDS = [
   TestCommand(),
   FindMissingDataUsersCommand(),
+  UpdateSecretsProperties(),
 ]

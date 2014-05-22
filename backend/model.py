@@ -42,7 +42,7 @@ class Config(object):
     j = json.load(open('config.json'))
     s = Secrets.get()
 
-    if 'hardCodeStripe' in j:
+    if j.get('hardCodeStripe'):
       stripe_public_key = j['stripePublicKey']
       stripe_private_key = j['stripePrivateKey']
     elif s:
@@ -61,24 +61,47 @@ class Config(object):
 
 # Secrets to store in the DB, rather than git.
 class Secrets(db.Model):
+  SINGLETON_KEY = 'SINGLETON'
+
   # We include the public key so they're never out of sync.
-  stripe_public_key = db.StringProperty(required=True)
-  stripe_private_key = db.StringProperty(required=True)
+  stripe_public_key = db.StringProperty(default='')
+  stripe_private_key = db.StringProperty(default='')
 
   @staticmethod
   def get():
     s = list(Secrets.all())
-    if len(s) > 1:
-      raise Error('Have multiple secrets in the database somehow. This '
+
+    # TEMPORARY TRANSITION CODE
+    #
+    # Our datastores already have a "Secrets" object, but with a random ID. We
+    # want to replace this with a known ID. The logic is:
+    # 1) If there's only 1 model, take it. We don't care which it is.
+    # 2) If there's two, take the one with the unknown ID.
+    # 3) If there's none, return None.
+    # 4) If there's more than 2, we did something wrong, and error.
+    #
+    # After adding the new model and setting it up with the right secrets, we'll
+    # delete the old one and things should still work. Then we replace this code
+    # with a simple get_or_insert().
+    if not s:
+      return None
+    if len(s) == 1:
+      return s[0]
+    if len(s) == 2:
+      if s[0].key().name() == Secrets.SINGLETON_KEY:
+        return s[1]
+      else:
+        return s[0]
+    else:
+      raise Error('Have more than 2 secrets in the database somehow. This '
                   "shouldn't happen.")
-    return s[0] if s else None
 
   @staticmethod
-  def update(stripe_public_key, stripe_private_key):
-    if list(Secrets.all()):
-      raise Error('DB already contains secrets. Delete them first')
-    s = Secrets(stripe_public_key=stripe_public_key,
-                stripe_private_key=stripe_private_key)
+  @db.transactional
+  def update():
+    s = Secrets.get_by_key_name(Secrets.SINGLETON_KEY)
+    if s is None:
+      s = Secrets(key_name=Secrets.SINGLETON_KEY)
     s.put()
 
 
