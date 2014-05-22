@@ -19,7 +19,8 @@ class Error(Exception): pass
 #   <missing>: Initial model.
 #   2: Implemented sharded counter for donation total. Objects before
 #      this version are not included in that counter.
-MODEL_VERSION = 2
+#   3: Added the capability to pledge for specific teams
+MODEL_VERSION = 3
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -158,6 +159,9 @@ class Pledge(db.Model):
 
   note = db.TextProperty(required=False)
 
+  # the team a user is pleding for (if any)
+  team = db.StringProperty(required=False)
+
   # it's possible we'll want to let people change just their pledge. i can't
   # imagine a bunch of people pledging with the same email address and then
   # getting access to change a bunch of other people's credit card info, but
@@ -167,13 +171,14 @@ class Pledge(db.Model):
 
   @staticmethod
   def create(email, stripe_customer_id, amount_cents, fundraisingRound="1",
-             note=None):
+             note=None, team=None):
     pledge = Pledge(model_version=MODEL_VERSION,
                     email=email,
                     stripeCustomer=stripe_customer_id,
                     fundraisingRound=fundraisingRound,
                     amountCents=amount_cents,
                     note=note,
+                    team=team,
                     url_nonce=os.urandom(32).encode("hex"))
     pledge.put()
     return pledge
@@ -181,7 +186,7 @@ class Pledge(db.Model):
 
 def addPledge(email, stripe_customer_id, amount_cents, occupation=None,
               employer=None, phone=None, fundraisingRound="1", target=None,
-              note=None):
+              note=None, team=None):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
@@ -196,7 +201,7 @@ def addPledge(email, stripe_customer_id, amount_cents, occupation=None,
   return Pledge.create(
           email=email, stripe_customer_id=stripe_customer_id,
           amount_cents=amount_cents, fundraisingRound=fundraisingRound,
-          note=note)
+          note=note, team=team)
 
 
 class WpPledge(db.Model):
