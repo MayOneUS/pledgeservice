@@ -4,6 +4,8 @@ html
     include includes/head
     script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
     script.
+      ga('require', 'ecommerce', 'ecommerce.js');
+    script.
       var myApp = angular.module('mayOne',[]);
 
       myApp.controller('PledgeController',
@@ -37,7 +39,12 @@ html
                 amount: $scope.ctrl.cents(),
                 userinfo: $scope.ctrl.userinfo,
                 name: args.billing_name,
-            }).success(function() {
+            }).success(function(data) {
+              ga('ecommerce:addTransaction', {
+                id: data.id,
+                revenue: $scope.ctrl.cents() / 100.0,
+              });
+              ga('ecommerce:send');
               location.href = '/thankyou';
             }).error(function() {
               $scope.ctrl.error =
