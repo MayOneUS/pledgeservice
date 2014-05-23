@@ -180,6 +180,7 @@ class PledgeHandler(webapp2.RequestHandler):
                    _queue='incrementTotal')
 
     response = dict(id=pledge.url_nonce)
+    self.response.headers['Content-Type'] = 'application/json'
     json.dump(response, self.response)
 
 
