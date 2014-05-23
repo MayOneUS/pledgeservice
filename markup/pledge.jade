@@ -4,6 +4,8 @@ html
     include includes/head
     script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
     script.
+      ga('require', 'ecommerce', 'ecommerce.js');
+    script.
       var myApp = angular.module('mayOne',[]);
 
       myApp.controller('PledgeController',
@@ -30,7 +32,6 @@ html
             var cents = $scope.ctrl.cents();
             $scope.ctrl.stripeHandler.open({
               email: $scope.ctrl.userinfo.email,
-              description: 'Pledging $' + (cents / 100),
               amount: cents,
             });
           },
@@ -43,7 +44,12 @@ html
                 token: token.id,
                 amount: $scope.ctrl.cents(),
                 userinfo: $scope.ctrl.userinfo,
-            }).success(function() {
+            }).success(function(data) {
+              ga('ecommerce:addTransaction', {
+                id: data.id,
+                revenue: $scope.ctrl.cents() / 100.0,
+              });
+              ga('ecommerce:send');
               location.href = '/thankyou';
             }).error(function() {
               $scope.ctrl.error =
@@ -56,6 +62,7 @@ html
           $scope.ctrl.stripeHandler = StripeCheckout.configure({
             key: key,
             name: 'MayOne.US',
+            panelLabel: 'Pledge',
             billingAddress: true,
             image: '/static/flag.jpg',
             token: function(token, args) {

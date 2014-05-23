@@ -241,7 +241,9 @@ class PledgeHandler(webapp2.RequestHandler):
                      amount=amount, opt_in_IP=self.request.remote_addr,
                      source='pledged')
 
-    self.response.write('Ok.')
+    response = dict(id=pledge.url_nonce)
+    self.response.headers['Content-Type'] = 'application/json'
+    json.dump(response, self.response)
 
 
 class UserUpdateHandler(webapp2.RequestHandler):
