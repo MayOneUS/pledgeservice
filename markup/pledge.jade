@@ -32,8 +32,9 @@ html
           },
           onTokenRecv: function(token, args) {
             var url_parameters = $location.search();
+            var team_name = '';
             if ('t' in url_parameters) {
-                var team_name = url_parameters['t'];
+                team_name = url_parameters['t'];
             }
 
             $http.post('/pledge.do', {
