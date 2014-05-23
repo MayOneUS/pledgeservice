@@ -1,3 +1,4 @@
+import datetime
 import jinja2
 import json
 import logging
@@ -8,6 +9,8 @@ from google.appengine.api import mail
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import deferred
+
+from mailchimp import mailchimp
 
 import model
 import stripe
@@ -49,6 +52,36 @@ def send_thank_you(name, email, url_nonce, amount_cents):
   message.html = open('email/thank-you.html').read().format(**format_kwargs)
   message.send()
 
+
+def subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
+                           amount, opt_in_IP, source):
+  mailchimp_api_key = model.Config.get().mailchimp_api_key
+  mailchimp_list_id = model.Config.get().mailchimp_list_id
+  mc = mailchimp.Mailchimp(mailchimp_api_key)
+
+  merge_vars = {
+    'FNAME': first_name,
+    'LNAME': last_name,
+    'optin_ip': opt_in_IP,
+    'optin_time': str(datetime.datetime.now())
+  }
+
+  if source:
+    merge_vars['SOURCE'] = source
+
+  if amount:
+    amountDollars = '{0:.02f}'.format(float(amount) / 100.0)
+    merge_vars['LASTPLEDGE'] = amountDollars
+
+  # list ID and email struct
+  mc.lists.subscribe(id=mailchimp_list_id,
+                     email={'email': email_to_subscribe },
+                     merge_vars=merge_vars,
+                     double_optin=False,
+                     update_existing=True,
+                     send_welcome=False)
+
+
 # Respond to /OPTION requests in a way that allows cross site requests
 # TODO(hjfreyer): Pull into some kind of middleware?
 def enable_cors(handler):
@@ -62,7 +95,8 @@ def enable_cors(handler):
 
     handler.response.headers.add_header("Access-Control-Allow-Origin", origin)
     handler.response.headers.add_header("Access-Control-Allow-Methods", "POST")
-    handler.response.headers.add_header("Access-Control-Allow-Headers", "content-type, origin")
+    handler.response.headers.add_header("Access-Control-Allow-Headers",
+                                        "content-type, origin")
 
 # TODO(hjfreyer): Tests!!
 class ContactHandler(webapp2.RequestHandler):
@@ -139,12 +173,16 @@ class PledgeHandler(webapp2.RequestHandler):
     email = data['email']
     token = data['token']
     amount = data['amount']
-    name = data.get('name', '')
 
     occupation = data['userinfo']['occupation']
     employer = data['userinfo']['employer']
     phone = data['userinfo']['phone']
     target = data['userinfo']['target']
+
+    # TODO(hjfreyer): Require these fields.
+    first_name = data['userinfo'].get('firstName')
+    last_name = data['userinfo'].get('lastName')
+    subscribe = data['userinfo'].get('subscribe')
 
     try:
       amount = int(amount)
@@ -167,9 +205,12 @@ class PledgeHandler(webapp2.RequestHandler):
     customer = stripe.Customer.create(card=token, email=email)
 
     pledge = model.addPledge(
-            email=email, stripe_customer_id=customer.id, amount_cents=amount,
-            occupation=occupation, employer=employer, phone=phone,
-            target=target, note=self.request.get('note'))
+      email=email, stripe_customer_id=customer.id, amount_cents=amount,
+      first_name=first_name, last_name=last_name,
+      occupation=occupation, employer=employer, phone=phone,
+      target=target, note=self.request.get('note'))
+
+    name = first_name + ' ' + last_name if first_name and last_name else None
 
     # Add thank you email to a task queue
     deferred.defer(send_thank_you, name or email, email,
@@ -178,6 +219,12 @@ class PledgeHandler(webapp2.RequestHandler):
     # Add to the total asynchronously.
     deferred.defer(model.increment_donation_total, amount,
                    _queue='incrementTotal')
+
+    if first_name and last_name and data['userinfo'].get('subscribe'):
+      deferred.defer(subscribe_to_mailchimp,
+                     email, first_name=first_name, last_name=last_name,
+                     amount=amount, opt_in_IP=self.request.remote_addr,
+                     source='pledged')
 
     self.response.write('Ok.')
 

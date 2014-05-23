@@ -89,8 +89,13 @@ class Secrets(db.Model):
 
 
 class User(db.Model):
+  model_version = db.IntegerProperty()
+
   # a user's email is also the model key
   email = db.EmailProperty(required=True)
+
+  first_name = db.StringProperty()
+  last_name = db.StringProperty()
 
   # occupation and employer are logically required for all new users, but we
   # don't have this data for everyone. so from a data model perspective, they
@@ -113,26 +118,29 @@ class User(db.Model):
 
   @staticmethod
   @db.transactional
-  def createOrUpdate(email, occupation=None, employer=None, phone=None,
-                     target=None, from_import=None):
+  def createOrUpdate(email, first_name=None, last_name=None, occupation=None,
+                     employer=None, phone=None, target=None, subscribe=None,
+                     from_import=None):
     user = User.get_by_key_name(email)
     if user is None:
-      user = User(key_name=email,
+      user = User(model_version=MODEL_VERSION,
+                  key_name=email,
                   email=email,
                   url_nonce=os.urandom(32).encode("hex"),
                   from_import=from_import)
-    if occupation is not None:
-      if not from_import or user.occupation is None:
-          user.occupation = occupation
-    if employer is not None:
-      if not from_import or user.employer is None:
-        user.employer = employer
-    if phone is not None:
-      if not from_import or user.phone is None:
-        user.phone = phone
-    if target is not None:
-      if not from_import or user.target is None:
-        user.target = target
+
+    def choose(current, new):
+      # If this is an import, current data should win.
+      if from_import:
+        return current or new
+      else:
+        return new or current
+    user.first_name = choose(user.first_name, first_name)
+    user.last_name = choose(user.last_name, last_name)
+    user.occupation = choose(user.occupation, occupation)
+    user.employer = choose(user.employer, employer)
+    user.phone = choose(user.phone, phone)
+    user.target = choose(user.target, target)
     user.put()
     return user
 
@@ -179,7 +187,8 @@ class Pledge(db.Model):
     return pledge
 
 
-def addPledge(email, stripe_customer_id, amount_cents, occupation=None,
+def addPledge(email, stripe_customer_id, amount_cents,
+              first_name=None, last_name=None, occupation=None,
               employer=None, phone=None, fundraisingRound="1", target=None,
               note=None):
   """Creates a User model if one doesn't exist, finding one if one already
@@ -190,13 +199,12 @@ def addPledge(email, stripe_customer_id, amount_cents, occupation=None,
   """
   # first, let's find the user by email
   User.createOrUpdate(
-          email=email, occupation=occupation, employer=employer, phone=phone,
-          target=target)
+    email=email, first_name=first_name, last_name=last_name,
+    occupation=occupation, employer=employer, phone=phone, target=target)
 
   return Pledge.create(
-          email=email, stripe_customer_id=stripe_customer_id,
-          amount_cents=amount_cents, fundraisingRound=fundraisingRound,
-          note=note)
+    email=email, stripe_customer_id=stripe_customer_id,
+    amount_cents=amount_cents, fundraisingRound=fundraisingRound, note=note)
 
 
 class WpPledge(db.Model):

@@ -13,10 +13,14 @@ html
 
           amount: 0,
           userinfo: {
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
             occupation: '',
             employer: '',
-            phone: '',
             target: 'Whatever Helps',
+            subscribe: true,
           },
           error: '',
           cents: function() {
@@ -25,18 +29,20 @@ html
           pledge: function() {
             var cents = $scope.ctrl.cents();
             $scope.ctrl.stripeHandler.open({
-              name: 'MayOne.US',
+              email: $scope.ctrl.userinfo.email,
               description: 'Pledging $' + (cents / 100),
               amount: cents,
             });
           },
           onTokenRecv: function(token, args) {
             $http.post('/pledge.do', {
+                // TODO(hjfreyer): Remove redundant fields.
                 email: token.email,
+                name: args.billing_name,
+
                 token: token.id,
                 amount: $scope.ctrl.cents(),
                 userinfo: $scope.ctrl.userinfo,
-                name: args.billing_name,
             }).success(function() {
               location.href = '/thankyou';
             }).error(function() {
@@ -49,6 +55,7 @@ html
         $http.get('/stripe_public_key').success(function(key) {
           $scope.ctrl.stripeHandler = StripeCheckout.configure({
             key: key,
+            name: 'MayOne.US',
             billingAddress: true,
             image: '/static/flag.jpg',
             token: function(token, args) {
@@ -70,60 +77,70 @@ html
       #content.row
         .col-md-8
           .row
-            h2.col-md-12 Two ways to give
-            form(ng-submit="ctrl.pledge()").col-md-12
+            .col-md-12
+              h2 Two ways to give
+
               h3 Pledge
-              .row
-                .col-md-12
-                  p.
-                    We are running an all or nothing campaign. If we
-                    don’t meet our targets, you don’t get
-                    charged. That way, you know that you will only be
-                    charged if there’s enough money collected to make
-                    a difference. So if we fail to meet our goal of
-                    $1M by June 1st for the first round, or $5M by
-                    July 1st for the second round, your pledge will
-                    not be collected, and your card will not be
-                    charged.
-                  p Use this form to pledge.
-              .row
-                .col-md-12
-                  label Occupation
-                  .input-group.input-group-lg
-                    input.form-control(type="text", required,
-                      placeholder="Gardener, Railroad Worker, etc",
-                      ng-model="ctrl.userinfo.occupation")
-              .row
-                .col-md-12
-                  label Employer
-                  .input-group.input-group-lg
-                    input.form-control(type="text", required,
-                      placeholder="Nintendo, UPS, Self, etc"
-                      ng-model="ctrl.userinfo.employer")
-              .row
-                .col-md-6
-                  label Phone Number (optional)
-                  .input-group.input-group-lg
-                    input.form-control(type="tel",
-                      placeholder="(212) 867-5309"
-                      ng-model="ctrl.userinfo.phone")
-                .col-md-6
-                  label Who to Fund?
-                  .input-group.input-group-lg
-                    select.form-control(ng-model="ctrl.userinfo.target")
-                      option Whatever Helps
-                      option Democrats Only
-                      option Republicans Only
-              .row
-                .col-md-12
-                  label Amount
+              p.
+                We are running an all or nothing campaign. If we don’t meet our
+                targets, you don’t get charged. That way, you know that you will
+                only be charged if there’s enough money collected to make a
+                difference. So if we fail to meet our goal of $1M by June 1st
+                for the first round, or $5M by July 1st for the second round,
+                your pledge will not be collected, and your card will not be
+                charged.
+
+              p Use this form to pledge.
+
+              form(role="form", method="POST", ng-submit="ctrl.pledge()")
+                .form-group.col-sm-6
+                  label.control-label First Name
+                  input.form-control.input-lg(type="text", required,
+                    placeholder="Mary", ng-model="ctrl.userinfo.firstName")
+                .form-group.col-sm-6
+                  label.control-label Last Name
+                  input.form-control.input-lg(type="text", required,
+                    placeholder="Smith", ng-model="ctrl.userinfo.lastName")
+
+                .form-group.col-sm-6
+                  label.control-label Email
+                  input.form-control.input-lg(type="email", required,
+                    placeholder="smith@example.com", ng-model="ctrl.userinfo.email")
+                .form-group.col-sm-6
+                  label.control-label Phone Number <span class="label label-default">Optional</span>
+                  input.form-control.input-lg(type="tel",
+                    placeholder="(212) 867-5309", ng-model="ctrl.userinfo.phone")
+
+                .form-group.col-sm-6
+                  label.control-label Occupation
+                  input.form-control.input-lg(type="text", required,
+                    placeholder="Gardener, Railroad Worker, etc",
+                    ng-model="ctrl.userinfo.occupation")
+                .form-group.col-sm-6
+                  label.control-label Employer
+                  input.form-control.input-lg(type="text", required,
+                    placeholder="Nintendo, UPS, Self, etc",
+                    ng-model="ctrl.userinfo.employer")
+
+                .form-group.col-sm-6
+                  label.control-label Who to Fund?
+                  select.form-control.input-lg(ng-model="ctrl.userinfo.target")
+                    option Whatever Helps
+                    option Democrats Only
+                    option Republicans Only
+                .form-group.col-sm-6
+                  label.control-label How Much to Fund?
                   .input-group.input-group-lg
                     span.input-group-addon $
                     input.form-control(type="number", required, min="1",
                       ng-model="ctrl.amount")
-                    span.input-group-btn
-                      button.btn.btn-danger(type="submit") Pledge
 
+                .form-group.col-sm-9
+                  .checkbox
+                    label <input type="checkbox" ng-model="ctrl.userinfo.subscribe"> Want to know how we're using the money? Sign up for emails from us.
+                .form-group.col-sm-3
+                  button.form-control.input-lg.btn.btn-lg.btn-danger Pledge
+          .row
             .col-md-12
               h3 Donate Directly
               p.
