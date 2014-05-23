@@ -169,7 +169,7 @@ class PledgeHandler(webapp2.RequestHandler):
     pledge = model.addPledge(
             email=email, stripe_customer_id=customer.id, amount_cents=amount,
             occupation=occupation, employer=employer, phone=phone,
-            target=target, note=self.request.get('note'))
+            target=target, note=self.request.get('note'), team=self.request.get('team'))
 
     # Add thank you email to a task queue
     deferred.defer(send_thank_you, name or email, email,
