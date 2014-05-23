@@ -173,15 +173,14 @@ class PledgeHandler(webapp2.RequestHandler):
     email = data['email']
     token = data['token']
     amount = data['amount']
+    name = data['name']
 
     occupation = data['userinfo']['occupation']
     employer = data['userinfo']['employer']
     phone = data['userinfo']['phone']
     target = data['userinfo']['target']
 
-    # TODO(hjfreyer): Require these fields.
-    first_name = data['userinfo'].get('firstName')
-    last_name = data['userinfo'].get('lastName')
+    # TODO(hjfreyer): Require this field.
     subscribe = data['userinfo'].get('subscribe')
 
     try:
@@ -191,7 +190,8 @@ class PledgeHandler(webapp2.RequestHandler):
       self.response.write('Invalid request')
       return
 
-    if not (email and token and amount and occupation and employer and target):
+    if not (email and token and amount and occupation and employer and target
+            and name):
       self.error(400)
       self.response.write('Invalid request: missing field')
       return
@@ -201,6 +201,16 @@ class PledgeHandler(webapp2.RequestHandler):
       self.response.write('Invalid request: Bad email address')
       return
 
+    # Split apart the name into first and last. Yes, this sucks, but adding the
+    # name fields makes the form look way more daunting. We may reconsider this.
+    name_parts = name.split(None, 1)
+    first_name = name_parts[0]
+    if len(name_parts) == 1:
+      last_name = ''
+      logging.warning('Could not determine last name: %s', name)
+    else:
+      last_name = name_parts[1]
+
     stripe.api_key = model.Config.get().stripe_private_key
     customer = stripe.Customer.create(card=token, email=email)
 
@@ -209,23 +219,6 @@ class PledgeHandler(webapp2.RequestHandler):
       first_name=first_name, last_name=last_name,
       occupation=occupation, employer=employer, phone=phone,
       target=target, note=self.request.get('note'))
-
-    # Temporary paranoia for during the cutover. If someone loads the old form,
-    # but hits the new code, we'll take our best guess as to how the name is
-    # split up. Shouldn't really come up in practice.
-    if not (first_name and last_name):
-      try:
-        name = customer.cards.data[0].name
-        nameParts = name.split(None, 1)
-        first_name = nameParts[0]
-        try:
-          last_name = nameParts[1]
-        except Exception as e:
-          pass
-      except Exception as e:
-        logging.error(e)
-
-    name = first_name + ' ' + last_name
 
     # Add thank you email to a task queue
     deferred.defer(send_thank_you, name or email, email,

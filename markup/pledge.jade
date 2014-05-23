@@ -15,8 +15,6 @@ html
 
           amount: 0,
           userinfo: {
-            firstName: '',
-            lastName: '',
             email: '',
             phone: '',
             occupation: '',
@@ -38,12 +36,12 @@ html
           onTokenRecv: function(token, args) {
             $http.post('/pledge.do', {
                 // TODO(hjfreyer): Remove redundant fields.
-                email: token.email,
-                name: args.billing_name,
+                email: $scope.ctrl.userinfo.email,
 
                 token: token.id,
                 amount: $scope.ctrl.cents(),
                 userinfo: $scope.ctrl.userinfo,
+                name: args.billing_name,
             }).success(function(data) {
               ga('ecommerce:addTransaction', {
                 id: data.id,
@@ -89,9 +87,9 @@ html
 
               h3 Pledge
               p.
-                We are running an all or nothing campaign. If we don’t meet our
-                targets, you don’t get charged. That way, you know that you will
-                only be charged if there’s enough money collected to make a
+                We are running an all or nothing campaign. If we don't meet our
+                targets, you don't get charged. That way, you know that you will
+                only be charged if there's enough money collected to make a
                 difference. So if we fail to meet our goal of $1M by June 1st
                 for the first round, or $5M by July 1st for the second round,
                 your pledge will not be collected, and your card will not be
@@ -100,15 +98,6 @@ html
               p Use this form to pledge.
 
               form(role="form", method="POST", ng-submit="ctrl.pledge()")
-                .form-group.col-sm-6
-                  label.control-label First Name
-                  input.form-control.input-lg(type="text", required,
-                    placeholder="Mary", ng-model="ctrl.userinfo.firstName")
-                .form-group.col-sm-6
-                  label.control-label Last Name
-                  input.form-control.input-lg(type="text", required,
-                    placeholder="Smith", ng-model="ctrl.userinfo.lastName")
-
                 .form-group.col-sm-6
                   label.control-label Email
                   input.form-control.input-lg(type="email", required,
