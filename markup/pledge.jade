@@ -5,6 +5,7 @@ html
     script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
     script.
       var myApp = angular.module('mayOne',[]);
+      var team_name = '';
 
       myApp.controller('PledgeController',
                        ['$scope', '$http', function($scope, $http) {
@@ -17,7 +18,6 @@ html
             employer: '',
             phone: '',
             target: 'Whatever Helps',
-            team: '',
           },
           error: '',
           cents: function() {
@@ -26,7 +26,6 @@ html
           pledge: function() {
             var cents = $scope.ctrl.cents();
             var url_parameters = $location.search();
-            var team_name = '';
             if ('t' in url_parameters) {
                 team_name = url_parameters['t'];
             }
