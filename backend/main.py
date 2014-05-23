@@ -179,7 +179,9 @@ class PledgeHandler(webapp2.RequestHandler):
     deferred.defer(model.increment_donation_total, amount,
                    _queue='incrementTotal')
 
-    self.response.write('Ok.')
+    response = dict(id=pledge.url_nonce)
+    self.response.headers['Content-Type'] = 'application/json'
+    json.dump(response, self.response)
 
 
 class UserUpdateHandler(webapp2.RequestHandler):
