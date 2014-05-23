@@ -1,0 +1,9 @@
+setuptools
+
+[docs]
+Sphinx
+docutils
+
+[testing]
+nose
+coverage
