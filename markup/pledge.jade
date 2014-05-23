@@ -7,7 +7,9 @@ html
       var myApp = angular.module('mayOne',[]);
 
       myApp.controller('PledgeController',
-                       ['$scope', '$http', '$location', function($scope, $http, $location) {
+          ['$scope', '$http', '$locationProvider', function($scope, $http, $locationProvider) {
+        // Note: Using html5mode may create some issues for older browsers. More testing may be required.
+        $locationProvider.html5mode(true);
         $scope.ctrl = {
           stripeHandler: null,
 
