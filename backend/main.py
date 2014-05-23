@@ -12,6 +12,7 @@ from google.appengine.ext import deferred
 
 from mailchimp import mailchimp
 
+import handlers
 import model
 import stripe
 import wp_import
@@ -281,4 +282,4 @@ app = webapp2.WSGIApplication([
   ('/contact.do', ContactHandler),
   # See wp_import
   # ('/import.do', wp_import.ImportHandler),
-], debug=False)
+] + handlers.HANDLERS, debug=False)
