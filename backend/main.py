@@ -140,12 +140,12 @@ class PledgeHandler(webapp2.RequestHandler):
     token = data['token']
     amount = data['amount']
     name = data.get('name', '')
+    team = data['team']
 
     occupation = data['userinfo']['occupation']
     employer = data['userinfo']['employer']
     phone = data['userinfo']['phone']
     target = data['userinfo']['target']
-    team = data['userinfo']['team']
 
     try:
       amount = int(amount)
