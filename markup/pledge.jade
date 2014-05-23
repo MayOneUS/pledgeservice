@@ -17,6 +17,7 @@ html
             employer: '',
             phone: '',
             target: 'Whatever Helps',
+            team: '',
           },
           error: '',
           cents: function() {
@@ -24,6 +25,11 @@ html
           },
           pledge: function() {
             var cents = $scope.ctrl.cents();
+            var url_parameters = $location.search();
+            var team_name = '';
+            if ('t' in url_parameters) {
+                team_name = url_parameters['t'];
+            }
             $scope.ctrl.stripeHandler.open({
               name: 'MayOne.US',
               description: 'Pledging $' + (cents / 100),
@@ -37,6 +43,7 @@ html
                 amount: $scope.ctrl.cents(),
                 userinfo: $scope.ctrl.userinfo,
                 name: args.billing_name,
+                team: team_name,
             }).success(function() {
               location.href = '/thankyou';
             }).error(function() {
