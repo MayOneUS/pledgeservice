@@ -210,7 +210,22 @@ class PledgeHandler(webapp2.RequestHandler):
       occupation=occupation, employer=employer, phone=phone,
       target=target, note=self.request.get('note'))
 
-    name = first_name + ' ' + last_name if first_name and last_name else None
+    # Temporary paranoia for during the cutover. If someone loads the old form,
+    # but hits the new code, we'll take our best guess as to how the name is
+    # split up. Shouldn't really come up in practice.
+    if not (first_name and last_name):
+      try:
+        name = customer.cards.data[0].name
+        nameParts = name.split(None, 1)
+        first_name = nameParts[0]
+        try:
+          last_name = nameParts[1]
+        except Exception as e:
+          pass
+      except Exception as e:
+        logging.error(e)
+
+    name = first_name + ' ' + last_name
 
     # Add thank you email to a task queue
     deferred.defer(send_thank_you, name or email, email,
@@ -220,7 +235,7 @@ class PledgeHandler(webapp2.RequestHandler):
     deferred.defer(model.increment_donation_total, amount,
                    _queue='incrementTotal')
 
-    if first_name and last_name and data['userinfo'].get('subscribe'):
+    if data['userinfo'].get('subscribe'):
       deferred.defer(subscribe_to_mailchimp,
                      email, first_name=first_name, last_name=last_name,
                      amount=amount, opt_in_IP=self.request.remote_addr,
