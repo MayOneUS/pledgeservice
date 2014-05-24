@@ -9,9 +9,7 @@ html
       var myApp = angular.module('mayOne',[]);
 
       myApp.controller('PledgeController',
-          ['$scope', '$http', '$locationProvider', function($scope, $http, $locationProvider) {
-        // Note: Using html5mode may create some issues for older browsers. More testing may be required.
-        $locationProvider.html5mode(true);
+          ['$scope', '$http', function($scope, $http) {
         $scope.ctrl = {
           stripeHandler: null,
 
@@ -35,7 +33,20 @@ html
             });
           },
           onTokenRecv: function(token, args) {
-            var url_parameters = $location.search();
+            // Part of this function modified from here: http://stackoverflow.com/a/2880929/1569632
+            var urlParams;
+            (window.onpopstate = function () {
+                var match,
+                    pl     = /\+/g,  // Regex for replacing addition symbol with a space
+                    search = /([^&=]+)=?([^&]*)/g,
+                    decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+                    query  = window.location.search.substring(1);
+
+                urlParams = {};
+                while (match = search.exec(query))
+               urlParams[decode(match[1])] = decode(match[2]);
+            })();
+            // End modified function
             var team_name = '';
             if ('t' in url_parameters) {
                 team_name = url_parameters['t'];
