@@ -9,9 +9,7 @@ SDK_PATH_manual = '/usr/local/google_appengine'
 TEST_PATH_manual = 'unittests'
 
 def main(sdk_path, test_path):
-  sys.path.insert(0, sdk_path)
-  sys.path.insert(1,'backend')
-  sys.path.insert(1,'backend/stripe')
+  sys.path.extend([sdk_path, 'backend', 'lib'])
   import dev_appserver
   dev_appserver.fix_sys_path()
   suite = unittest.loader.TestLoader().discover(test_path)
