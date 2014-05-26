@@ -24,6 +24,7 @@ html
             subscribe: true,
           },
           error: '',
+          loading: false,
           cents: function() {
             return Math.floor($scope.ctrl.form.amount * 100);
           },
@@ -35,6 +36,7 @@ html
             });
           },
           onTokenRecv: function(token, args) {
+            $scope.ctrl.loading = true;
             $scope.ctrl.createPledge(args.billing_name,
               { STRIPE: { token: token.id } });
           },
@@ -143,9 +145,11 @@ html
                   .checkbox
                     label <input type="checkbox" ng-model="ctrl.form.subscribe"> Want to know how we're using the money? Sign up for emails from us.
                 .form-group.col-sm-3
-                  button.form-control.input-lg.btn.btn-lg.btn-danger
+                  button.form-control.input-lg.btn.btn-lg.btn-danger(
+                      ng-disabled="ctrl.loading")
+                    .spinner(ng-show="ctrl.loading")
                     span(ng-show="ctrl.paymentConfig.testMode") TEST&nbsp;
-                    span Pledge
+                    span(ng-hide="ctrl.loading") Pledge
           .row
             .col-md-12
               h3 Donate Directly
