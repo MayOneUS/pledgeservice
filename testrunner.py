@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import os
 import sys
 import unittest
 
@@ -6,10 +7,11 @@ USAGE = """%prog SDK_PATH TEST_PATH
 Run unit tests for App Engine apps."""
 
 SDK_PATH_manual = '/usr/local/google_appengine'
-TEST_PATH_manual = 'unittests'
+TEST_PATH_manual = '../unittests'
 
 def main(sdk_path, test_path):
-  sys.path.extend([sdk_path, 'backend', 'lib', 'testlib'])
+  os.chdir('backend')
+  sys.path.extend([sdk_path, '../lib', '../testlib'])
   import dev_appserver
   dev_appserver.fix_sys_path()
   suite = unittest.loader.TestLoader().discover(test_path)

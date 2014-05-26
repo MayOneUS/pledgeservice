@@ -28,6 +28,8 @@ MODEL_VERSION = 2
 #
 # Note that this isn't really a "model", it's built up from config.json
 # and the "Secrets" model.
+#
+# TODO(hjfreyer): Deprecate this and replace it with handlers.Environment.
 class Config(object):
   ConfigType = namedtuple('ConfigType',
                           ['app_name',

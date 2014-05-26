@@ -1,21 +1,25 @@
 """Handlers for MayOne.US."""
 
 from collections import namedtuple
+import datetime
 import json
 import logging
+
+from google.appengine.ext import deferred
+import validictory
 import webapp2
 
-import validictory
+import model
 
 # Immutable environment with both configuration variables, and backends to be
 # mocked out in tests.
 Environment = namedtuple(
   'Environment',
   [
-    # AppEngine app name.
+    # App engine app name, or 'local' for dev_appserver, or 'unittest' for unit
+    # tests.
     'app_name',
 
-    # Stripe creds to export.
     'stripe_public_key',
 
     # PaymentProcessor
@@ -23,49 +27,75 @@ Environment = namedtuple(
 
     # MailingListSubscriber
     'mailing_list_subscriber',
+
+    # MailSender
+    'mail_sender',
   ])
 
 
 class PaymentProcessor(object):
   """Interface which processes payments."""
-  def CreateCustomer(self, payment_params, pledge_model):
+
+  STRIPE = 'STRIPE'
+
+  def CreateCustomer(self, params):
     """Does whatever the payment processor needs to do in order to be able to
     charge the customer later.
 
     Args:
-      payment_params: dict with keys like 'paypal' or 'stripe', with values
-          which are dicts with parameters specific to that payment platform.
-      pledge_model: A not-yet-committed pledge model for us to modify to include
-          a record of the customer.
+      params: dict representing the JSON object send to the pledge creation
+          handler.
+
+    Returns: A dict giving the fields that will need to be included in the
+      Pledge model.
+
     """
     raise NotImplementedError()
 
 
 class MailingListSubscriber(object):
   """Interface which signs folks up for emails."""
-  def Subscribe(self, first_name, last_name, amount_cents, ip_addr, time,
+  def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
                 source):
+    raise NotImplementedError()
+
+
+class MailSender(object):
+  """Interface which sends mail."""
+  def Send(self, to, subject, text_body, html_body):
     raise NotImplementedError()
 
 
 _STR = dict(type='string')
 class PledgeHandler(webapp2.RequestHandler):
+  """RESTful handler for pledge objects."""
+
   CREATE_SCHEMA = dict(
     type='object',
     properties=dict(
       email=_STR,
       phone=dict(type='string', blank=True),
-      firstName=_STR,
-      lastName=_STR,
+      name=_STR,
       occupation=_STR,
       employer=_STR,
       target=_STR,
       subscribe=dict(type='boolean'),
-      amountCents=dict(type='integer', minimum=100)
+      amountCents=dict(type='integer', minimum=100),
+      payment=dict(type='object',
+                   properties=dict(
+                     STRIPE=dict(type='object',
+                                 required=False,
+                                 properties=dict(token=_STR)),
+                     # TODO: Paypal
+                   )
+                 ),
     )
   )
 
   def post(self):
+    """Create a new pledge, and update user info."""
+    env = self.app.config['env']
+
     try:
       data = json.loads(self.request.body)
     except ValueError, e:
@@ -82,10 +112,73 @@ class PledgeHandler(webapp2.RequestHandler):
       self.response.write('Invalid request')
       return
 
+    # Do any server-side processing the payment processor needs.
+    stripe_customer_id = None
+    if PaymentProcessor.STRIPE in data['payment']:
+      customer = env.payment_processor.CreateCustomer(data)
+      stripe_customer_id = customer['customer_id']
+    else:
+      logging.warning('No payment processor specified: %s', data)
+    pledge = model.addPledge(email=data['email'],
+                             stripe_customer_id=stripe_customer_id,
+                             amount_cents=data['amountCents'],
+                             occupation=data['occupation'],
+                             employer=data['employer'],
+                             phone=data['phone'],
+                             fundraisingRound='1',
+                             target=data['target'])
+
+    # Split apart the name into first and last. Yes, this sucks, but adding the
+    # name fields makes the form look way more daunting. We may reconsider this.
+    name_parts = data['name'].split(None, 1)
+    first_name = name_parts[0]
+    if len(name_parts) == 1:
+      last_name = ''
+      logging.warning('Could not determine last name: %s', data['name'])
+    else:
+      last_name = name_parts[1]
+
+    if data['subscribe']:
+      env.mailing_list_subscriber.Subscribe(
+        email=data['email'],
+        first_name=first_name, last_name=last_name,
+        amount_cents=data['amountCents'],
+        ip_addr=self.request.remote_addr,
+        time=datetime.datetime.now(),
+        source='pledged')
+
+    format_kwargs = {
+      'name': data['name'].encode('utf-8'),
+      'url_nonce': pledge.url_nonce,
+      'total': '$%d' % int(data['amountCents'] / 100)
+    }
+
+    text_body = open('email/thank-you.txt').read().format(**format_kwargs)
+    html_body = open('email/thank-you.html').read().format(**format_kwargs)
+
+    env.mail_sender.Send(to=data['email'].encode('utf-8'),
+                         subject='Thank you for your pledge',
+                         text_body=text_body,
+                         html_body=html_body)
+
     self.response.headers['Content-Type'] = 'application/json'
-    json.dump(dict(id='2'), self.response)
+    json.dump(dict(id=str(pledge.key()),
+                   auth_token=pledge.url_nonce), self.response)
+
+
+class PaymentConfigHandler(webapp2.RequestHandler):
+  def get(self):
+    env = self.app.config['env']
+    if not env.stripe_public_key:
+      raise Error('No stripe public key in DB')
+    params = dict(testMode=(env.app_name == u'local'),
+                  stripePublicKey=env.stripe_public_key)
+
+    self.response.headers['Content-Type'] = 'application/json'
+    json.dump(params, self.response)
 
 
 HANDLERS = [
   ('/r/pledge', PledgeHandler),
+  ('/r/payment_config', PaymentConfigHandler),
 ]

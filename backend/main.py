@@ -1,20 +1,19 @@
 import datetime
-import jinja2
 import json
 import logging
 import urlparse
-import webapp2
 
 from google.appengine.api import mail
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import deferred
-
 from mailchimp import mailchimp
+import jinja2
+import stripe
+import webapp2
 
 import handlers
 import model
-import stripe
 import wp_import
 
 # These get added to every pledge calculation
@@ -32,25 +31,14 @@ JINJA_ENVIRONMENT = jinja2.Environment(
   autoescape=True)
 
 
-def send_thank_you(name, email, url_nonce, amount_cents):
+def send_mail(to, subject, text_body, html_body):
   """Deferred email task"""
   sender = ('MayOne no-reply <noreply@%s.appspotmail.com>' %
             model.Config.get().app_name)
-  subject = 'Thank you for your pledge'
   message = mail.EmailMessage(sender=sender, subject=subject)
-  message.to = email
-
-  format_kwargs = {
-    # TODO: Figure out how to set the outgoing email content encoding.
-    #  once we can set the email content encoding to utf8, we can change this
-    #  to name.encode('utf-8') and not drop fancy characters. :(
-    'name': name.encode('ascii', errors='ignore'),
-    'url_nonce': url_nonce,
-    'total': '$%d' % int(amount_cents/100)
-  }
-
-  message.body = open('email/thank-you.txt').read().format(**format_kwargs)
-  message.html = open('email/thank-you.html').read().format(**format_kwargs)
+  message.to = to
+  message.body = text_body
+  message.html = html_body
   message.send()
 
 
@@ -133,7 +121,8 @@ class GetTotalHandler(webapp2.RequestHandler):
     self.response.headers['Content-Type'] = 'application/javascript'
     self.response.write('%s(%d)' % (self.request.get('callback'), total))
 
-
+# DEPRECATED. Replaced by handlers.PaymentConfigHandler
+# TODO(hjfreyer): Remove
 class GetStripePublicKeyHandler(webapp2.RequestHandler):
   def get(self):
     if not model.Config.get().stripe_public_key:
@@ -149,6 +138,8 @@ class EmbedHandler(webapp2.RequestHandler):
       self.redirect('/')
 
 
+# DEPRECATED. Replaced by handlers.PledgeHandler
+# TODO(hjfreyer): Remove
 class PledgeHandler(webapp2.RequestHandler):
   def post(self):
     try:
@@ -273,6 +264,66 @@ class UserUpdateHandler(webapp2.RequestHandler):
       return
 
 
+class ProdPaymentProcessor(handlers.PaymentProcessor):
+  def __init__(self, stripe_private_key):
+    self.stripe_private_key = stripe_private_key
+
+  def CreateCustomer(self, request):
+    if 'STRIPE' not in request['payment']:
+      raise Error('STRIPE is the only supported payment platform')
+    stripe.api_key = self.stripe_private_key
+    customer = stripe.Customer.create(
+      card=request['payment']['STRIPE']['token'],
+      email=request['email'])
+    return dict(customer_id=customer.id)
+
+
+class FakePaymentProcessor(handlers.PaymentProcessor):
+  def CreateCustomer(self, request):
+    logging.error('USING FAKE PAYMENT PROCESSOR')
+    return dict(customer_id='fake_1234')
+
+
+class MailchimpSubscriber(handlers.MailingListSubscriber):
+  def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
+                source):
+    deferred.defer(subscribe_to_mailchimp,
+                   email, first_name, last_name,
+                   amount_cents, ip_addr, 'pledge')
+
+
+class FakeSubscriber(handlers.MailingListSubscriber):
+  def Subscribe(self, **kwargs):
+    logging.info('Subscribing %s', kwargs)
+
+
+class ProdMailSender(handlers.MailSender):
+  def Send(self, to, subject, text_body, html_body):
+    deferred.defer(send_mail, to, subject, text_body, html_body)
+
+
+def GetEnv():
+  j = json.load(open('config.json'))
+  s = model.Secrets.get()
+
+  payment_processor = None
+  mailing_list_subscriber = None
+  if j['appName'] == 'local':
+    payment_processor = FakePaymentProcessor()
+    mailing_list_subscriber = FakeSubscriber()
+  else:
+    payment_processor = ProdPaymentProcessor(
+      model.Config.get().stripe_private_key)
+    mailing_list_subscriber = MailchimpSubscriber()
+
+  return handlers.Environment(
+    app_name=j['appName'],
+    stripe_public_key=model.Config.get().stripe_public_key,
+    payment_processor=payment_processor,
+    mailing_list_subscriber=mailing_list_subscriber,
+    mail_sender=ProdMailSender())
+
+
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
   ('/stripe_public_key', GetStripePublicKeyHandler),
@@ -282,4 +333,4 @@ app = webapp2.WSGIApplication([
   ('/contact.do', ContactHandler),
   # See wp_import
   # ('/import.do', wp_import.ImportHandler),
-] + handlers.HANDLERS, debug=False)
+] + handlers.HANDLERS, debug=False, config=dict(env=GetEnv()))
