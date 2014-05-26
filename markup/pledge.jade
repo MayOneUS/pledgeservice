@@ -28,7 +28,6 @@ html
             return Math.floor($scope.ctrl.amount * 100);
           },
           pledge: function() {
-            $scope.ctrl.loading = true;
             var cents = $scope.ctrl.cents();
             $scope.ctrl.stripeHandler.open({
               email: $scope.ctrl.userinfo.email,
@@ -36,6 +35,7 @@ html
             });
           },
           onTokenRecv: function(token, args) {
+            $scope.ctrl.loading = true;
             $http.post('/pledge.do', {
                 // TODO(hjfreyer): Remove redundant fields.
                 email: $scope.ctrl.userinfo.email,
