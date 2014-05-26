@@ -43,6 +43,10 @@ class StripeBackend(object):
     """
     raise NotImplementedError()
 
+  def Charge(self, customer_id, amount_cents):
+    """Charges a customer and returns an identifier for the charge."""
+    raise NotImplementedError()
+
 
 class MailingListSubscriber(object):
   """Interface which signs folks up for emails."""

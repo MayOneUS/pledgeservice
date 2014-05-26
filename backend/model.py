@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -232,6 +233,107 @@ class WpPledge(db.Model):
   target = db.StringProperty(required=False)
 
   url_nonce = db.StringProperty(required=True)
+
+
+
+class ChargeStatus(db.Model):
+  """Indicates whether a Pledge or WpPledge has been charged or not.
+
+  The key of this model must always be the child of a Pledge or WpPledge, with
+  key_name='SINGLETON'.
+
+  When a ChargeStatus is created, it represents permission to execute the charge
+  for the parent Pledge or WpPledge. When start_time is set, it indicates that
+  some task has attempted to execute that charge. When end_time is set, it
+  indicates that the charge was successfully completed, and that information
+  about that charge can be found in the other fields.
+
+  If start_time is sufficiently far in the past (10 minutes, say), and end_time
+  is as of yet unset, something went wrong which needs to be looked into
+  manually.
+  """
+  SINGLETON_KEY = 'SINGLETON'
+
+  # These three times are as described in the comment above.
+  request_time = db.DateTimeProperty(required=True)
+  start_time = db.DateTimeProperty()
+  end_time = db.DateTimeProperty()
+
+  stripe_charge_id = db.StringProperty()
+
+  @staticmethod
+  @db.transactional
+  def request(pledge_key):
+    """Indicates that we are allowed to execute the charge at our leisure."""
+    charge_key = ChargeStatus._get_charge_key(pledge_key)
+    pledge = db.get(pledge_key)
+    charge_status = db.get(charge_key)
+
+    if not pledge:
+      raise Error('No pledge found with key: %s' % pledge_key)
+
+    if charge_status:
+      logging.warning('Requesting already requested charge for pledge: %s',
+                      pledge_key)
+      return
+
+    charge_status = ChargeStatus(key=charge_key,
+                                 request_time=datetime.datetime.now())
+    charge_status.put()
+
+  @staticmethod
+  def execute(stripe_backend, pledge_key):
+    """Attempts to execute the charge.
+
+    First, sets the start_time atomically and releases the lock. Then tries to
+    charge the user. If successful, sets end_time and the paper trail for the
+    charge.
+    """
+    charge_key = ChargeStatus._get_charge_key(pledge_key)
+
+    # First, indicate that we've started (or bail if someone else already has).
+    @db.transactional
+    def txn():
+      pledge = db.get(pledge_key)
+      charge = db.get(charge_key)
+      if not pledge:
+        raise Error('No pledge found with key: %s' % pledge_key)
+      if not charge:
+        raise Error('Cannot execute unrequested charge. No status for: %s' %
+                    pledge_key)
+      if charge.start_time:
+        return True, None, None
+      else:
+        charge.start_time = datetime.datetime.now()
+        charge.put()
+        return False, pledge, charge
+
+    already_started, pledge, charge = txn()
+    if already_started:
+      logging.warning('Execution of charge already started for pledge %s',
+                      pledge_key)
+      return
+
+    # TODO(hjfreyer): Generalize to paypal.
+    charge.stripe_charge_id = stripe_backend.Charge(pledge.stripeCustomer,
+                                                    pledge.amountCents)
+    charge.end_time = datetime.datetime.now()
+
+    # Since we have the lock on this, the transaction should be unnecessary, but
+    # let's indulge in a little paranoia.
+    @db.transactional
+    def txn2():
+      charge2 = db.get(charge_key)
+      if charge2.end_time:
+        raise Error('Lock stolen while executing transaction! Pledge %s' %
+                    pledge_key)
+      charge.put()
+    txn2()
+
+  @staticmethod
+  def _get_charge_key(pledge_key):
+    return db.Key.from_path('ChargeStatus', ChargeStatus.SINGLETON_KEY,
+                            parent=pledge_key)
 
 
 SHARD_KEY_TEMPLATE = 'shard-{}-{:d}'

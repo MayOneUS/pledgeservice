@@ -276,11 +276,26 @@ class ProdStripe(handlers.StripeBackend):
     customer = stripe.Customer.create(card=card_token, email=email)
     return customer.id
 
+  def Charge(self, customer_id, amount_cents):
+    stripe.api_key = self.stripe_private_key
+    charge = stripe.Charge.create(
+      amount=amount_cents,
+      currency='usd',
+      customer=customer_id,
+      statement_description='MayOne.US',
+    )
+    return charge.id
+
 
 class FakeStripe(handlers.StripeBackend):
   def CreateCustomer(self, email, card_token):
     logging.error('USING FAKE STRIPE')
     return 'fake_1234'
+
+  def Charge(self, customer_id, amount_cents):
+    logging.error('USING FAKE STRIPE')
+    logging.error('CHARGED CUSTOMER %s %d cents', customer_id, amount_cents)
+    return 'fake_charge_1234'
 
 
 class MailchimpSubscriber(handlers.MailingListSubscriber):
