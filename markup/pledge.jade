@@ -23,10 +23,12 @@ html
             subscribe: true,
           },
           error: '',
+          loading: false,
           cents: function() {
             return Math.floor($scope.ctrl.amount * 100);
           },
           pledge: function() {
+            $scope.ctrl.loading = true;
             var cents = $scope.ctrl.cents();
             $scope.ctrl.stripeHandler.open({
               email: $scope.ctrl.userinfo.email,
@@ -135,7 +137,10 @@ html
                   .checkbox
                     label <input type="checkbox" ng-model="ctrl.userinfo.subscribe"> Want to know how we're using the money? Sign up for emails from us.
                 .form-group.col-sm-3
-                  button.form-control.input-lg.btn.btn-lg.btn-danger Pledge
+                  button.form-control.input-lg.btn.btn-lg.btn-danger(
+                      ng-disabled="ctrl.loading")
+                    .spinner(ng-show="ctrl.loading")
+                    span(ng-hide="ctrl.loading") Pledge
           .row
             .col-md-12
               h3 Donate Directly
