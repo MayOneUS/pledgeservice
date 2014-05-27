@@ -87,7 +87,7 @@ def subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
 def enable_cors(handler):
   if 'Origin' in handler.request.headers:
     origin = handler.request.headers['Origin']
-    _, netloc, _, _, _, _ = urlparse.urlparse(origin)
+    _, netloc, _, _, _, _ = urlparse.urlparse(origin)    
     if not (netloc == 'mayone.us' or netloc.endswith('.mayone.us')):
       logging.warning('Invalid origin: ' + origin)
       handler.error(403)
@@ -107,9 +107,10 @@ class ContactHandler(webapp2.RequestHandler):
     ascii_subject = data["subject"].encode('ascii', errors='ignore')
     ascii_body = data["body"].encode('ascii', errors='ignore')
 
-
+    replyto = '%s <%s>' % (ascii_name, ascii_email)
     message = mail.EmailMessage(sender=('MayOne no-reply <noreply@%s.appspotmail.com>' %
-                                        model.Config.get().app_name),
+                                           model.Config.get().app_name),
+                                reply_to=replyto,
                                 subject=ascii_subject)
     message.to = "info@mayone.us"
     message.body = 'FROM: %s\n\n%s' % (ascii_email, ascii_body)
