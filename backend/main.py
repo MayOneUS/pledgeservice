@@ -5,18 +5,14 @@ import logging
 import urlparse
 
 from google.appengine.api import mail
-from google.appengine.api import memcache
-from google.appengine.ext import db
-from google.appengine.ext import deferred
-from mailchimp import mailchimp
-import jinja2
 import stripe
 import webapp2
 
+import env
 import handlers
 import model
+import templates
 import wp_import
-import env
 
 # These get added to every pledge calculation
 PRE_SHARDING_TOTAL = 27425754  # See model.ShardedCounter
@@ -26,11 +22,6 @@ CHECKS_BALANCE = 7655200  # lol US government humor
 
 
 class Error(Exception): pass
-
-JINJA_ENVIRONMENT = jinja2.Environment(
-  loader=jinja2.FileSystemLoader('templates/'),
-  extensions=['jinja2.ext.autoescape'],
-  autoescape=True)
 
 
 # Respond to /OPTION requests in a way that allows cross site requests
@@ -101,7 +92,7 @@ class UserUpdateHandler(webapp2.RequestHandler):
       self.response.write('This page was not found')
       return
 
-    template = JINJA_ENVIRONMENT.get_template('user-update.html')
+    template = templates.GetTemplate('user-update.html')
     self.response.write(template.render({'user': user}))
 
   def post(self, url_nonce):
@@ -117,7 +108,7 @@ class UserUpdateHandler(webapp2.RequestHandler):
       user.phone = self.request.get('phone')
       user.target = self.request.get('target')
       user.put()
-      template = JINJA_ENVIRONMENT.get_template('user-update.html')
+      template = templates.GetTemplate('user-update.html')
       ctx = {'user': user, 'success': True}
       self.response.write(template.render(ctx))
     except:

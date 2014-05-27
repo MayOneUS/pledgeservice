@@ -12,12 +12,7 @@ from google.appengine.ext import db, deferred
 
 import commands
 import model
-
-JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader('templates/'),
-    extensions=['jinja2.ext.autoescape'],
-    autoescape=True)
-
+import templates
 
 class AdminDashboardHandler(webapp2.RequestHandler):
   def get(self):
@@ -31,7 +26,7 @@ class AdminDashboardHandler(webapp2.RequestHandler):
       else:
         pre_sharding_total += p.amountCents
 
-    template = JINJA_ENVIRONMENT.get_template('admin-dashboard.html')
+    template = templates.GetTemplate('admin-dashboard.html')
     self.response.write(template.render({
       'missingUsers': [dict(email=user.email, amount=amt/100)
                        for user, amt in users],
