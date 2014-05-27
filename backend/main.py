@@ -219,7 +219,8 @@ class PledgeHandler(webapp2.RequestHandler):
       email=email, stripe_customer_id=customer.id, amount_cents=amount,
       first_name=first_name, last_name=last_name,
       occupation=occupation, employer=employer, phone=phone,
-      target=target, note=self.request.get('note'))
+      target=target, note=self.request.get('note'), 
+      mail_list_optin=subscribe)
 
     # Add thank you email to a task queue
     deferred.defer(send_thank_you, name or email, email,
@@ -229,7 +230,7 @@ class PledgeHandler(webapp2.RequestHandler):
     deferred.defer(model.increment_donation_total, amount,
                    _queue='incrementTotal')
 
-    if data['userinfo'].get('subscribe'):
+    if subscribe:
       deferred.defer(subscribe_to_mailchimp,
                      email, first_name=first_name, last_name=last_name,
                      amount=amount, opt_in_IP=self.request.remote_addr,
