@@ -1,4 +1,5 @@
 import datetime
+import itertools
 import jinja2
 import json
 import logging
@@ -273,11 +274,61 @@ class UserUpdateHandler(webapp2.RequestHandler):
       return
 
 
+class UserInfoHandler(webapp2.RequestHandler):
+  def get(self, url_nonce):
+    enable_cors(self)
+    user = model.User.all().filter('url_nonce =', url_nonce).get()
+    if user is None:
+      self.error(404)
+      self.response.write('user not found')
+      return
+
+    # maybe we should do sum instead?
+    biggest_pledge = None
+    biggest_amount = 0
+    for pledge in itertools.chain(
+        model.Pledge.all().filter('email =', user.email),
+        model.WpPledge.all().filter('email =', user.email)):
+      if (pledge.amountCents or 0) >= biggest_amount:
+        biggest_pledge = pledge
+        biggest_amount = (pledge.amountCents or 0)
+
+    if biggest_pledge is None:
+      self.error(404)
+      self.response.write("user not found")
+      return
+
+    cus = stripe.Customer.retrieve(biggest_pledge.stripeCustomer)
+    if len(cus.cards.data) == 0:
+      self.error(404)
+      self.response.write("user not found")
+      return
+
+    if user.first_name or user.last_name:
+      # TODO(jt): we should backfill this information
+      user_name = "%s %s" % (user.first_name or "", user.last_name or "")
+    else:
+      user_name = cus.cards.data[0].name
+
+    zip_code = cus.cards.data[0].address_zip
+
+    self.response.headers['Content-Type'] = 'application/javascript'
+    self.response.write(json.dumps({
+        "user": {
+          "name": user_name,
+          "pledge_amount_cents": biggest_amount,
+          "zip_code": zip_code}}))
+
+  def options(self):
+    enable_cors(self)
+
+
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
   ('/stripe_public_key', GetStripePublicKeyHandler),
   ('/pledge.do', PledgeHandler),
   ('/user-update/(\w+)', UserUpdateHandler),
+  ('/user-info/(\w+)', UserInfoHandler),
   ('/campaigns/may-one/?', EmbedHandler),
   ('/contact.do', ContactHandler),
   # See wp_import
