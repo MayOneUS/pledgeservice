@@ -304,6 +304,7 @@ class UserInfoHandler(webapp2.RequestHandler):
       return
 
     if user.first_name or user.last_name:
+      # TODO(jt): we should backfill this information
       user_name = "%s %s" % (user.first_name or "", user.last_name or "")
     else:
       user_name = cus.cards.data[0].name
@@ -311,11 +312,11 @@ class UserInfoHandler(webapp2.RequestHandler):
     zip_code = cus.cards.data[0].address_zip
 
     self.response.headers['Content-Type'] = 'application/javascript'
-    self.response.write('%s(%s)' % (self.request.get('callback'), json.dumps({
+    self.response.write(json.dumps({
         "user": {
           "name": user_name,
           "pledge_amount_cents": biggest_amount,
-          "zip_code": zip_code}})))
+          "zip_code": zip_code}}))
 
   def options(self):
     enable_cors(self)
