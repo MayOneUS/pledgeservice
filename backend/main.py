@@ -177,8 +177,8 @@ class UserInfoHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
-  ('/user-update/(\w+)', UserUpdateHandler),
-  ('/user-info/(\w+)', UserInfoHandler),
+  (r'/user-update/(\w+)', UserUpdateHandler),
+  (r'/user-info/(\w+)', UserInfoHandler),
   ('/campaigns/may-one/?', EmbedHandler),
   ('/contact.do', ContactHandler),
   # See wp_import
