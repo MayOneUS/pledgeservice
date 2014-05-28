@@ -22,8 +22,8 @@ Environment = namedtuple(
 
     'stripe_public_key',
 
-    # PaymentProcessor
-    'payment_processor',
+    # StripeBackend
+    'stripe_backend',
 
     # MailingListSubscriber
     'mailing_list_subscriber',
@@ -33,22 +33,13 @@ Environment = namedtuple(
   ])
 
 
-class PaymentProcessor(object):
-  """Interface which processes payments."""
+class StripeBackend(object):
+  """Interface which contacts stripe."""
 
-  STRIPE = 'STRIPE'
+  def CreateCustomer(self, email, card_token):
+    """Creates a stripe customer so we can charge them later.
 
-  def CreateCustomer(self, params):
-    """Does whatever the payment processor needs to do in order to be able to
-    charge the customer later.
-
-    Args:
-      params: dict representing the JSON object send to the pledge creation
-          handler.
-
-    Returns: A dict giving the fields that will need to be included in the
-      Pledge model.
-
+    Returns: A string customer id.
     """
     raise NotImplementedError()
 
@@ -114,11 +105,14 @@ class PledgeHandler(webapp2.RequestHandler):
 
     # Do any server-side processing the payment processor needs.
     stripe_customer_id = None
-    if PaymentProcessor.STRIPE in data['payment']:
-      customer = env.payment_processor.CreateCustomer(data)
-      stripe_customer_id = customer['customer_id']
+    if 'STRIPE' in data['payment']:
+      stripe_customer_id = env.stripe_backend.CreateCustomer(
+        email=data['email'], card_token=data['payment']['STRIPE']['token'])
     else:
       logging.warning('No payment processor specified: %s', data)
+      self.error(400)
+      return
+
     pledge = model.addPledge(email=data['email'],
                              stripe_customer_id=stripe_customer_id,
                              amount_cents=data['amountCents'],

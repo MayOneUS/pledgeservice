@@ -264,24 +264,20 @@ class UserUpdateHandler(webapp2.RequestHandler):
       return
 
 
-class ProdPaymentProcessor(handlers.PaymentProcessor):
+class ProdStripe(handlers.StripeBackend):
   def __init__(self, stripe_private_key):
     self.stripe_private_key = stripe_private_key
 
-  def CreateCustomer(self, request):
-    if 'STRIPE' not in request['payment']:
-      raise Error('STRIPE is the only supported payment platform')
+  def CreateCustomer(self, email, card_token):
     stripe.api_key = self.stripe_private_key
-    customer = stripe.Customer.create(
-      card=request['payment']['STRIPE']['token'],
-      email=request['email'])
-    return dict(customer_id=customer.id)
+    customer = stripe.Customer.create(card=card_token, email=email)
+    return customer.id
 
 
-class FakePaymentProcessor(handlers.PaymentProcessor):
-  def CreateCustomer(self, request):
-    logging.error('USING FAKE PAYMENT PROCESSOR')
-    return dict(customer_id='fake_1234')
+class FakeStripe(handlers.StripeBackend):
+  def CreateCustomer(self, email, card_token):
+    logging.error('USING FAKE STRIPE')
+    return 'fake_1234'
 
 
 class MailchimpSubscriber(handlers.MailingListSubscriber):
@@ -306,20 +302,20 @@ def GetEnv():
   j = json.load(open('config.json'))
   s = model.Secrets.get()
 
-  payment_processor = None
+  stripe_backend = None
   mailing_list_subscriber = None
   if j['appName'] == 'local':
-    payment_processor = FakePaymentProcessor()
+    stripe_backend = FakeStripe()
     mailing_list_subscriber = FakeSubscriber()
   else:
-    payment_processor = ProdPaymentProcessor(
+    stripe_backend = ProdStripe(
       model.Config.get().stripe_private_key)
     mailing_list_subscriber = MailchimpSubscriber()
 
   return handlers.Environment(
     app_name=j['appName'],
     stripe_public_key=model.Config.get().stripe_public_key,
-    payment_processor=payment_processor,
+    stripe_backend=stripe_backend,
     mailing_list_subscriber=mailing_list_subscriber,
     mail_sender=ProdMailSender())
 

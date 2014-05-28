@@ -20,7 +20,7 @@ class BaseTest(unittest.TestCase):
     self.testbed.init_datastore_v3_stub()
 
     self.mockery = mox.Mox()
-    self.payment_processor = self.mockery.CreateMock(handlers.PaymentProcessor)
+    self.stripe = self.mockery.CreateMock(handlers.StripeBackend)
     self.mailing_list_subscriber = self.mockery.CreateMock(
       handlers.MailingListSubscriber)
     self.mail_sender = self.mockery.CreateMock(handlers.MailSender)
@@ -28,7 +28,7 @@ class BaseTest(unittest.TestCase):
     self.env = handlers.Environment(
       app_name='unittest',
       stripe_public_key='pubkey1234',
-      payment_processor=self.payment_processor,
+      stripe_backend=self.stripe,
       mailing_list_subscriber=self.mailing_list_subscriber,
       mail_sender=self.mail_sender)
     self.wsgi_app = webapp2.WSGIApplication(handlers.HANDLERS,
@@ -65,9 +65,9 @@ class PledgeTest(BaseTest):
     self.app.post_json('/r/pledge', dict(email='foo@bar.com'), status=400)
 
   def testCreateAddsPledge(self):
-    self.payment_processor \
-        .CreateCustomer(self.samplePledge()) \
-        .AndReturn(dict(customer_id='cust_4321'))
+    self.stripe.CreateCustomer(email='pika@pokedex.biz',
+                               card_token='tok_1234') \
+               .AndReturn('cust_4321')
 
     self.mailing_list_subscriber \
         .Subscribe(email='pika@pokedex.biz',
@@ -103,9 +103,9 @@ class PledgeTest(BaseTest):
     assert not user.from_import
 
   def testSubscribes(self):
-    self.payment_processor \
-        .CreateCustomer(self.samplePledge()) \
-        .AndReturn(dict(customer_id='cust_4321'))
+    self.stripe.CreateCustomer(email='pika@pokedex.biz',
+                               card_token='tok_1234') \
+               .AndReturn('cust_4321')
 
     self.mailing_list_subscriber \
         .Subscribe(email='pika@pokedex.biz',
@@ -126,9 +126,9 @@ class PledgeTest(BaseTest):
     sample = self.samplePledge()
     sample['subscribe'] = False
 
-    self.payment_processor \
-        .CreateCustomer(sample) \
-        .AndReturn(dict(customer_id='cust_4321'))
+    self.stripe.CreateCustomer(email='pika@pokedex.biz',
+                               card_token='tok_1234') \
+               .AndReturn('cust_4321')
 
     self.mail_sender.Send(to=mox.IsA(str), subject=mox.IsA(str),
                           text_body=mox.IsA(str),
@@ -144,9 +144,9 @@ class PledgeTest(BaseTest):
     sample = self.samplePledge()
     sample['phone'] = ''
 
-    self.payment_processor \
-        .CreateCustomer(sample) \
-        .AndReturn(dict(customer_id='cust_4321'))
+    self.stripe.CreateCustomer(email='pika@pokedex.biz',
+                               card_token='tok_1234') \
+               .AndReturn('cust_4321')
 
     self.mailing_list_subscriber \
         .Subscribe(email='pika@pokedex.biz',
@@ -175,9 +175,9 @@ class PledgeTest(BaseTest):
     sample = self.samplePledge()
     sample['subscribe'] = False
 
-    self.payment_processor \
-        .CreateCustomer(sample) \
-        .AndReturn(dict(customer_id='cust_4321'))
+    self.stripe.CreateCustomer(email='pika@pokedex.biz',
+                               card_token='tok_1234') \
+               .AndReturn('cust_4321')
 
     self.mail_sender.Send(to='pika@pokedex.biz', subject='Thank you for your pledge',
                           text_body="""Dear Pik\xc3\xa1 Chu:
