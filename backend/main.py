@@ -16,6 +16,7 @@ import webapp2
 import handlers
 import model
 import wp_import
+import env
 
 # These get added to every pledge calculation
 PRE_SHARDING_TOTAL = 27425754  # See model.ShardedCounter
@@ -30,46 +31,6 @@ JINJA_ENVIRONMENT = jinja2.Environment(
   loader=jinja2.FileSystemLoader('templates/'),
   extensions=['jinja2.ext.autoescape'],
   autoescape=True)
-
-
-def send_mail(to, subject, text_body, html_body):
-  """Deferred email task"""
-  sender = ('MayOne no-reply <noreply@%s.appspotmail.com>' %
-            model.Config.get().app_name)
-  message = mail.EmailMessage(sender=sender, subject=subject)
-  message.to = to
-  message.body = text_body
-  message.html = html_body
-  message.send()
-
-
-def subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
-                           amount, opt_in_IP, source):
-  mailchimp_api_key = model.Config.get().mailchimp_api_key
-  mailchimp_list_id = model.Config.get().mailchimp_list_id
-  mc = mailchimp.Mailchimp(mailchimp_api_key)
-
-  merge_vars = {
-    'FNAME': first_name,
-    'LNAME': last_name,
-    'optin_ip': opt_in_IP,
-    'optin_time': str(datetime.datetime.now())
-  }
-
-  if source:
-    merge_vars['SOURCE'] = source
-
-  if amount:
-    amountDollars = '{0:.02f}'.format(float(amount) / 100.0)
-    merge_vars['LASTPLEDGE'] = amountDollars
-
-  # list ID and email struct
-  mc.lists.subscribe(id=mailchimp_list_id,
-                     email={'email': email_to_subscribe },
-                     merge_vars=merge_vars,
-                     double_optin=False,
-                     update_existing=True,
-                     send_welcome=False)
 
 
 # Respond to /OPTION requests in a way that allows cross site requests
@@ -165,76 +126,6 @@ class UserUpdateHandler(webapp2.RequestHandler):
       return
 
 
-class ProdStripe(handlers.StripeBackend):
-  def __init__(self, stripe_private_key):
-    self.stripe_private_key = stripe_private_key
-
-  def CreateCustomer(self, email, card_token):
-    stripe.api_key = self.stripe_private_key
-    customer = stripe.Customer.create(card=card_token, email=email)
-    return customer.id
-
-  def Charge(self, customer_id, amount_cents):
-    stripe.api_key = self.stripe_private_key
-    charge = stripe.Charge.create(
-      amount=amount_cents,
-      currency='usd',
-      customer=customer_id,
-      statement_description='MayOne.US',
-    )
-    return charge.id
-
-
-class FakeStripe(handlers.StripeBackend):
-  def CreateCustomer(self, email, card_token):
-    logging.error('USING FAKE STRIPE')
-    return 'fake_1234'
-
-  def Charge(self, customer_id, amount_cents):
-    logging.error('USING FAKE STRIPE')
-    logging.error('CHARGED CUSTOMER %s %d cents', customer_id, amount_cents)
-    return 'fake_charge_1234'
-
-
-class MailchimpSubscriber(handlers.MailingListSubscriber):
-  def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
-                source):
-    deferred.defer(subscribe_to_mailchimp,
-                   email, first_name, last_name,
-                   amount_cents, ip_addr, 'pledge')
-
-
-class FakeSubscriber(handlers.MailingListSubscriber):
-  def Subscribe(self, **kwargs):
-    logging.info('Subscribing %s', kwargs)
-
-
-class ProdMailSender(handlers.MailSender):
-  def Send(self, to, subject, text_body, html_body):
-    deferred.defer(send_mail, to, subject, text_body, html_body)
-
-
-def GetEnv():
-  j = json.load(open('config.json'))
-  s = model.Secrets.get()
-
-  stripe_backend = None
-  mailing_list_subscriber = None
-  if j['appName'] == 'local':
-    stripe_backend = FakeStripe()
-    mailing_list_subscriber = FakeSubscriber()
-  else:
-    stripe_backend = ProdStripe(
-      model.Config.get().stripe_private_key)
-    mailing_list_subscriber = MailchimpSubscriber()
-
-  return handlers.Environment(
-    app_name=j['appName'],
-    stripe_public_key=model.Config.get().stripe_public_key,
-    stripe_backend=stripe_backend,
-    mailing_list_subscriber=mailing_list_subscriber,
-    mail_sender=ProdMailSender())
-
 class UserInfoHandler(webapp2.RequestHandler):
   def get(self, url_nonce):
     enable_cors(self)
@@ -292,4 +183,4 @@ app = webapp2.WSGIApplication([
   ('/contact.do', ContactHandler),
   # See wp_import
   # ('/import.do', wp_import.ImportHandler),
-] + handlers.HANDLERS, debug=False, config=dict(env=GetEnv()))
+] + handlers.HANDLERS, debug=False, config=dict(env=env.get_env()))
