@@ -19,7 +19,9 @@ class Error(Exception): pass
 #   <missing>: Initial model.
 #   2: Implemented sharded counter for donation total. Objects before
 #      this version are not included in that counter.
-MODEL_VERSION = 2
+#   3: Include information in the User model including their name and whether
+#      they wish to be subscribed to the mailing list.
+MODEL_VERSION = 3
 
 
 # Config singleton. Loaded once per instance and never modified. It's
