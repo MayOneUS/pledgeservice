@@ -1,20 +1,20 @@
 import datetime
 import itertools
-import jinja2
 import json
 import logging
 import urlparse
-import webapp2
 
 from google.appengine.api import mail
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import deferred
-
 from mailchimp import mailchimp
-
-import model
+import jinja2
 import stripe
+import webapp2
+
+import handlers
+import model
 import wp_import
 
 # These get added to every pledge calculation
@@ -32,25 +32,14 @@ JINJA_ENVIRONMENT = jinja2.Environment(
   autoescape=True)
 
 
-def send_thank_you(name, email, url_nonce, amount_cents):
+def send_mail(to, subject, text_body, html_body):
   """Deferred email task"""
   sender = ('MayOne no-reply <noreply@%s.appspotmail.com>' %
             model.Config.get().app_name)
-  subject = 'Thank you for your pledge'
   message = mail.EmailMessage(sender=sender, subject=subject)
-  message.to = email
-
-  format_kwargs = {
-    # TODO: Figure out how to set the outgoing email content encoding.
-    #  once we can set the email content encoding to utf8, we can change this
-    #  to name.encode('utf-8') and not drop fancy characters. :(
-    'name': name.encode('ascii', errors='ignore'),
-    'url_nonce': url_nonce,
-    'total': '$%d' % int(amount_cents/100)
-  }
-
-  message.body = open('email/thank-you.txt').read().format(**format_kwargs)
-  message.html = open('email/thank-you.html').read().format(**format_kwargs)
+  message.to = to
+  message.body = text_body
+  message.html = html_body
   message.send()
 
 
@@ -88,7 +77,7 @@ def subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
 def enable_cors(handler):
   if 'Origin' in handler.request.headers:
     origin = handler.request.headers['Origin']
-    _, netloc, _, _, _, _ = urlparse.urlparse(origin)    
+    _, netloc, _, _, _, _ = urlparse.urlparse(origin)
     if not (netloc == 'mayone.us' or netloc.endswith('.mayone.us')):
       logging.warning('Invalid origin: ' + origin)
       handler.error(403)
@@ -134,7 +123,8 @@ class GetTotalHandler(webapp2.RequestHandler):
     self.response.headers['Content-Type'] = 'application/javascript'
     self.response.write('%s(%d)' % (self.request.get('callback'), total))
 
-
+# DEPRECATED. Replaced by handlers.PaymentConfigHandler
+# TODO(hjfreyer): Remove
 class GetStripePublicKeyHandler(webapp2.RequestHandler):
   def get(self):
     if not model.Config.get().stripe_public_key:
@@ -150,6 +140,8 @@ class EmbedHandler(webapp2.RequestHandler):
       self.redirect('/')
 
 
+# DEPRECATED. Replaced by handlers.PledgeHandler
+# TODO(hjfreyer): Remove
 class PledgeHandler(webapp2.RequestHandler):
   def post(self):
     try:
@@ -220,7 +212,7 @@ class PledgeHandler(webapp2.RequestHandler):
       email=email, stripe_customer_id=customer.id, amount_cents=amount,
       first_name=first_name, last_name=last_name,
       occupation=occupation, employer=employer, phone=phone,
-      target=target, note=self.request.get('note'), 
+      target=target, note=self.request.get('note'),
       mail_list_optin=subscribe)
 
     # Add thank you email to a task queue
@@ -274,6 +266,61 @@ class UserUpdateHandler(webapp2.RequestHandler):
       self.response.write('There was a problem submitting the form')
       return
 
+
+class ProdStripe(handlers.StripeBackend):
+  def __init__(self, stripe_private_key):
+    self.stripe_private_key = stripe_private_key
+
+  def CreateCustomer(self, email, card_token):
+    stripe.api_key = self.stripe_private_key
+    customer = stripe.Customer.create(card=card_token, email=email)
+    return customer.id
+
+
+class FakeStripe(handlers.StripeBackend):
+  def CreateCustomer(self, email, card_token):
+    logging.error('USING FAKE STRIPE')
+    return 'fake_1234'
+
+
+class MailchimpSubscriber(handlers.MailingListSubscriber):
+  def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
+                source):
+    deferred.defer(subscribe_to_mailchimp,
+                   email, first_name, last_name,
+                   amount_cents, ip_addr, 'pledge')
+
+
+class FakeSubscriber(handlers.MailingListSubscriber):
+  def Subscribe(self, **kwargs):
+    logging.info('Subscribing %s', kwargs)
+
+
+class ProdMailSender(handlers.MailSender):
+  def Send(self, to, subject, text_body, html_body):
+    deferred.defer(send_mail, to, subject, text_body, html_body)
+
+
+def GetEnv():
+  j = json.load(open('config.json'))
+  s = model.Secrets.get()
+
+  stripe_backend = None
+  mailing_list_subscriber = None
+  if j['appName'] == 'local':
+    stripe_backend = FakeStripe()
+    mailing_list_subscriber = FakeSubscriber()
+  else:
+    stripe_backend = ProdStripe(
+      model.Config.get().stripe_private_key)
+    mailing_list_subscriber = MailchimpSubscriber()
+
+  return handlers.Environment(
+    app_name=j['appName'],
+    stripe_public_key=model.Config.get().stripe_public_key,
+    stripe_backend=stripe_backend,
+    mailing_list_subscriber=mailing_list_subscriber,
+    mail_sender=ProdMailSender())
 
 class UserInfoHandler(webapp2.RequestHandler):
   def get(self, url_nonce):
@@ -334,4 +381,4 @@ app = webapp2.WSGIApplication([
   ('/contact.do', ContactHandler),
   # See wp_import
   # ('/import.do', wp_import.ImportHandler),
-], debug=False)
+] + handlers.HANDLERS, debug=False, config=dict(env=GetEnv()))

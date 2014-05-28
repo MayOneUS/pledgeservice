@@ -28,6 +28,8 @@ MODEL_VERSION = 2
 #
 # Note that this isn't really a "model", it's built up from config.json
 # and the "Secrets" model.
+#
+# TODO(hjfreyer): Deprecate this and replace it with handlers.Environment.
 class Config(object):
   ConfigType = namedtuple('ConfigType',
                           ['app_name',
@@ -122,7 +124,7 @@ class User(db.Model):
   @staticmethod
   @db.transactional
   def createOrUpdate(email, first_name=None, last_name=None, occupation=None,
-                     employer=None, phone=None, target=None, subscribe=None,
+                     employer=None, phone=None, target=None,
                      from_import=None, mail_list_optin=None):
     user = User.get_by_key_name(email)
     if user is None:
@@ -130,7 +132,7 @@ class User(db.Model):
                   key_name=email,
                   email=email,
                   url_nonce=os.urandom(32).encode("hex"),
-                  from_import=from_import, 
+                  from_import=from_import,
                   mail_list_optin=mail_list_optin)
 
     def choose(current, new):

@@ -11,39 +11,46 @@ html
       myApp.controller('PledgeController',
                        ['$scope', '$http', function($scope, $http) {
         $scope.ctrl = {
+          paymentConfig: null,
           stripeHandler: null,
 
-          amount: 0,
-          userinfo: {
+          form: {
             email: '',
             phone: '',
             occupation: '',
             employer: '',
             target: 'Whatever Helps',
+            amount: 0,
             subscribe: true,
           },
           error: '',
           loading: false,
           cents: function() {
-            return Math.floor($scope.ctrl.amount * 100);
+            return Math.floor($scope.ctrl.form.amount * 100);
           },
           pledge: function() {
             var cents = $scope.ctrl.cents();
             $scope.ctrl.stripeHandler.open({
-              email: $scope.ctrl.userinfo.email,
+              email: $scope.ctrl.form.email,
               amount: cents,
             });
           },
           onTokenRecv: function(token, args) {
             $scope.ctrl.loading = true;
-            $http.post('/pledge.do', {
-                // TODO(hjfreyer): Remove redundant fields.
-                email: $scope.ctrl.userinfo.email,
-
-                token: token.id,
-                amount: $scope.ctrl.cents(),
-                userinfo: $scope.ctrl.userinfo,
-                name: args.billing_name,
+            $scope.ctrl.createPledge(args.billing_name,
+              { STRIPE: { token: token.id } });
+          },
+          createPledge: function(name, payment) {
+            $http.post('/r/pledge', {
+                email: $scope.ctrl.form.email,
+                phone: $scope.ctrl.form.phone,
+                name: name,
+                occupation: $scope.ctrl.form.occupation,
+                employer: $scope.ctrl.form.employer,
+                target: $scope.ctrl.form.target,
+                subscribe: $scope.ctrl.form.subscribe,
+                amountCents: $scope.ctrl.cents(),
+                payment: payment,
             }).success(function(data) {
               ga('ecommerce:addTransaction', {
                 id: data.id,
@@ -58,16 +65,17 @@ html
           },
         };
 
-        $http.get('/stripe_public_key').success(function(key) {
+        $http.get('/r/payment_config').success(function(config) {
+          $scope.ctrl.paymentConfig = config;
           $scope.ctrl.stripeHandler = StripeCheckout.configure({
-            key: key,
+            key: config.stripePublicKey,
             name: 'MayOne.US',
             panelLabel: 'Pledge',
             billingAddress: true,
             image: '/static/flag.jpg',
             token: function(token, args) {
               $scope.ctrl.onTokenRecv(token, args);
-            }
+            },
           });
         });
       }]);
@@ -103,26 +111,26 @@ html
                 .form-group.col-sm-6
                   label.control-label Email
                   input.form-control.input-lg(type="email", required,
-                    placeholder="smith@example.com", ng-model="ctrl.userinfo.email")
+                    placeholder="smith@example.com", ng-model="ctrl.form.email")
                 .form-group.col-sm-6
                   label.control-label Phone Number <span class="label label-default">Optional</span>
                   input.form-control.input-lg(type="tel",
-                    placeholder="(212) 867-5309", ng-model="ctrl.userinfo.phone")
+                    placeholder="(212) 867-5309", ng-model="ctrl.form.phone")
 
                 .form-group.col-sm-6
                   label.control-label Occupation
                   input.form-control.input-lg(type="text", required,
                     placeholder="Gardener, Railroad Worker, etc",
-                    ng-model="ctrl.userinfo.occupation")
+                    ng-model="ctrl.form.occupation")
                 .form-group.col-sm-6
                   label.control-label Employer
                   input.form-control.input-lg(type="text", required,
                     placeholder="Nintendo, UPS, Self, etc",
-                    ng-model="ctrl.userinfo.employer")
+                    ng-model="ctrl.form.employer")
 
                 .form-group.col-sm-6
                   label.control-label Who to Fund?
-                  select.form-control.input-lg(ng-model="ctrl.userinfo.target")
+                  select.form-control.input-lg(ng-model="ctrl.form.target")
                     option Whatever Helps
                     option Democrats Only
                     option Republicans Only
@@ -131,15 +139,16 @@ html
                   .input-group.input-group-lg
                     span.input-group-addon $
                     input.form-control(type="number", required, min="1",
-                      ng-model="ctrl.amount")
+                      ng-model="ctrl.form.amount")
 
                 .form-group.col-sm-9
                   .checkbox
-                    label <input type="checkbox" ng-model="ctrl.userinfo.subscribe"> Want to know how we're using the money? Sign up for emails from us.
+                    label <input type="checkbox" ng-model="ctrl.form.subscribe"> Want to know how we're using the money? Sign up for emails from us.
                 .form-group.col-sm-3
                   button.form-control.input-lg.btn.btn-lg.btn-danger(
                       ng-disabled="ctrl.loading")
                     .spinner(ng-show="ctrl.loading")
+                    span(ng-show="ctrl.paymentConfig.testMode") TEST&nbsp;
                     span(ng-hide="ctrl.loading") Pledge
           .row
             .col-md-12
