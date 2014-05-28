@@ -1,4 +1,5 @@
 import datetime
+import itertools
 import json
 import logging
 import urlparse
@@ -96,9 +97,10 @@ class ContactHandler(webapp2.RequestHandler):
     ascii_subject = data["subject"].encode('ascii', errors='ignore')
     ascii_body = data["body"].encode('ascii', errors='ignore')
 
-
+    replyto = '%s <%s>' % (ascii_name, ascii_email)
     message = mail.EmailMessage(sender=('MayOne no-reply <noreply@%s.appspotmail.com>' %
-                                        model.Config.get().app_name),
+                                           model.Config.get().app_name),
+                                reply_to=replyto,
                                 subject=ascii_subject)
     message.to = "info@mayone.us"
     message.body = 'FROM: %s\n\n%s' % (ascii_email, ascii_body)
@@ -210,7 +212,8 @@ class PledgeHandler(webapp2.RequestHandler):
       email=email, stripe_customer_id=customer.id, amount_cents=amount,
       first_name=first_name, last_name=last_name,
       occupation=occupation, employer=employer, phone=phone,
-      target=target, note=self.request.get('note'))
+      target=target, note=self.request.get('note'),
+      mail_list_optin=subscribe)
 
     # Add thank you email to a task queue
     deferred.defer(send_thank_you, name or email, email,
@@ -220,7 +223,7 @@ class PledgeHandler(webapp2.RequestHandler):
     deferred.defer(model.increment_donation_total, amount,
                    _queue='incrementTotal')
 
-    if data['userinfo'].get('subscribe'):
+    if subscribe:
       deferred.defer(subscribe_to_mailchimp,
                      email, first_name=first_name, last_name=last_name,
                      amount=amount, opt_in_IP=self.request.remote_addr,
@@ -319,12 +322,61 @@ def GetEnv():
     mailing_list_subscriber=mailing_list_subscriber,
     mail_sender=ProdMailSender())
 
+class UserInfoHandler(webapp2.RequestHandler):
+  def get(self, url_nonce):
+    enable_cors(self)
+    user = model.User.all().filter('url_nonce =', url_nonce).get()
+    if user is None:
+      self.error(404)
+      self.response.write('user not found')
+      return
+
+    # maybe we should do sum instead?
+    biggest_pledge = None
+    biggest_amount = 0
+    for pledge in itertools.chain(
+        model.Pledge.all().filter('email =', user.email),
+        model.WpPledge.all().filter('email =', user.email)):
+      if (pledge.amountCents or 0) >= biggest_amount:
+        biggest_pledge = pledge
+        biggest_amount = (pledge.amountCents or 0)
+
+    if biggest_pledge is None:
+      self.error(404)
+      self.response.write("user not found")
+      return
+
+    cus = stripe.Customer.retrieve(biggest_pledge.stripeCustomer)
+    if len(cus.cards.data) == 0:
+      self.error(404)
+      self.response.write("user not found")
+      return
+
+    if user.first_name or user.last_name:
+      # TODO(jt): we should backfill this information
+      user_name = "%s %s" % (user.first_name or "", user.last_name or "")
+    else:
+      user_name = cus.cards.data[0].name
+
+    zip_code = cus.cards.data[0].address_zip
+
+    self.response.headers['Content-Type'] = 'application/javascript'
+    self.response.write(json.dumps({
+        "user": {
+          "name": user_name,
+          "pledge_amount_cents": biggest_amount,
+          "zip_code": zip_code}}))
+
+  def options(self):
+    enable_cors(self)
+
 
 app = webapp2.WSGIApplication([
   ('/total', GetTotalHandler),
   ('/stripe_public_key', GetStripePublicKeyHandler),
   ('/pledge.do', PledgeHandler),
   ('/user-update/(\w+)', UserUpdateHandler),
+  ('/user-info/(\w+)', UserInfoHandler),
   ('/campaigns/may-one/?', EmbedHandler),
   ('/contact.do', ContactHandler),
   # See wp_import

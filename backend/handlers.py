@@ -132,7 +132,8 @@ class PledgeHandler(webapp2.RequestHandler):
                              employer=data['employer'],
                              phone=data['phone'],
                              fundraisingRound='1',
-                             target=data['target'])
+                             target=data['target'],
+                             mail_list_optin=data['subscribe'])
 
     if data['subscribe']:
       env.mailing_list_subscriber.Subscribe(

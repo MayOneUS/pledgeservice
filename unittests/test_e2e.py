@@ -101,6 +101,7 @@ class PledgeTest(BaseTest):
     assertEqualsSampleProperty('employer', user.employer)
     assertEqualsSampleProperty('phone', user.phone)
     assertEqualsSampleProperty('target', user.target)
+    assertEqualsSampleProperty('subscribe', user.mail_list_optin)
     assert user.url_nonce
     assert not user.from_import
 
@@ -123,6 +124,8 @@ class PledgeTest(BaseTest):
     self.mockery.ReplayAll()
 
     self.app.post_json('/r/pledge', self.samplePledge())
+    user = model.User.get_by_key_name('pika@pokedex.biz')
+    assert user.mail_list_optin
 
   def testSubscribeOptOut(self):
     sample = self.samplePledge()
@@ -141,6 +144,8 @@ class PledgeTest(BaseTest):
     self.mockery.ReplayAll()
 
     self.app.post_json('/r/pledge', sample)
+    user = model.User.get_by_key_name('pika@pokedex.biz')
+    assert not user.mail_list_optin
 
   def testNoPhone(self):
     sample = self.samplePledge()

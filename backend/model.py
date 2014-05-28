@@ -118,18 +118,22 @@ class User(db.Model):
 
   from_import = db.BooleanProperty(required=False)
 
+  # whether the user opted in to receive email from us
+  mail_list_optin = db.BooleanProperty(required=False)
+
   @staticmethod
   @db.transactional
   def createOrUpdate(email, first_name=None, last_name=None, occupation=None,
-                     employer=None, phone=None, target=None, subscribe=None,
-                     from_import=None):
+                     employer=None, phone=None, target=None,
+                     from_import=None, mail_list_optin=None):
     user = User.get_by_key_name(email)
     if user is None:
       user = User(model_version=MODEL_VERSION,
                   key_name=email,
                   email=email,
                   url_nonce=os.urandom(32).encode("hex"),
-                  from_import=from_import)
+                  from_import=from_import,
+                  mail_list_optin=mail_list_optin)
 
     def choose(current, new):
       # If this is an import, current data should win.
@@ -143,6 +147,7 @@ class User(db.Model):
     user.employer = choose(user.employer, employer)
     user.phone = choose(user.phone, phone)
     user.target = choose(user.target, target)
+    user.mail_list_optin = choose(user.mail_list_optin, mail_list_optin)
     user.put()
     return user
 
@@ -192,7 +197,7 @@ class Pledge(db.Model):
 def addPledge(email, stripe_customer_id, amount_cents,
               first_name=None, last_name=None, occupation=None,
               employer=None, phone=None, fundraisingRound="1", target=None,
-              note=None):
+              note=None, mail_list_optin=None):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
@@ -202,7 +207,8 @@ def addPledge(email, stripe_customer_id, amount_cents,
   # first, let's find the user by email
   User.createOrUpdate(
     email=email, first_name=first_name, last_name=last_name,
-    occupation=occupation, employer=employer, phone=phone, target=target)
+    occupation=occupation, employer=employer, phone=phone, target=target,
+    mail_list_optin=mail_list_optin)
 
   return Pledge.create(
     email=email, stripe_customer_id=stripe_customer_id,
