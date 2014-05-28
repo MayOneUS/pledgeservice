@@ -43,10 +43,19 @@ Hacking
 After checking out the code, run `npm install`. To start the server, run `npm start` and go to http://localhost:8080. That's it!
 
 If you want to rapidly set up a development environment that already has npm and
-dependencies installed using docker, try running
+dependencies installed using [docker](https://www.docker.io/), try running
 
 ```
-docker run -t -i -v /path/to/repo:/development jtolds/mayone-gae /bin/bash
+docker run -t -i -v /path/to/checkout:/develop jtolds/mayone-gae /bin/bash
+```
+
+Then in that new shell
+
+```
+stunnel4 /etc/stunnel/https.conf
+cd /develop
+npm install
+npm start
 ```
 
 Deploying
