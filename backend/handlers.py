@@ -113,15 +113,6 @@ class PledgeHandler(webapp2.RequestHandler):
       self.error(400)
       return
 
-    pledge = model.addPledge(email=data['email'],
-                             stripe_customer_id=stripe_customer_id,
-                             amount_cents=data['amountCents'],
-                             occupation=data['occupation'],
-                             employer=data['employer'],
-                             phone=data['phone'],
-                             fundraisingRound='1',
-                             target=data['target'])
-
     # Split apart the name into first and last. Yes, this sucks, but adding the
     # name fields makes the form look way more daunting. We may reconsider this.
     name_parts = data['name'].split(None, 1)
@@ -131,6 +122,17 @@ class PledgeHandler(webapp2.RequestHandler):
       logging.warning('Could not determine last name: %s', data['name'])
     else:
       last_name = name_parts[1]
+
+    pledge = model.addPledge(email=data['email'],
+                             stripe_customer_id=stripe_customer_id,
+                             amount_cents=data['amountCents'],
+                             first_name=first_name,
+                             last_name=last_name,
+                             occupation=data['occupation'],
+                             employer=data['employer'],
+                             phone=data['phone'],
+                             fundraisingRound='1',
+                             target=data['target'])
 
     if data['subscribe']:
       env.mailing_list_subscriber.Subscribe(

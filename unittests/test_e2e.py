@@ -95,6 +95,8 @@ class PledgeTest(BaseTest):
     def assertEqualsSampleProperty(prop_name, actual):
       self.assertEquals(sample[prop_name], actual)
     assertEqualsSampleProperty('email', user.email)
+    self.assertEquals(u'Pik\u00E1', user.first_name)
+    self.assertEquals('Chu', user.last_name)
     assertEqualsSampleProperty('occupation', user.occupation)
     assertEqualsSampleProperty('employer', user.employer)
     assertEqualsSampleProperty('phone', user.phone)
