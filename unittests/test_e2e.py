@@ -8,8 +8,8 @@ import mox
 import webapp2
 import webtest
 
-from backend import handlers
-from backend import model
+import handlers
+import model
 
 
 class BaseTest(unittest.TestCase):
