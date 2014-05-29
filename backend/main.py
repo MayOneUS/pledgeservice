@@ -64,6 +64,7 @@ class ContactHandler(webapp2.RequestHandler):
     enable_cors(self)
 
 
+#TODO(jt/hjfreyer): replicate this in handlers as /r/total, with proper JSON
 class GetTotalHandler(webapp2.RequestHandler):
   def get(self):
     team = self.request.get("team")
