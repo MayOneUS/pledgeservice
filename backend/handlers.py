@@ -5,11 +5,14 @@ import datetime
 import json
 import logging
 
+from google.appengine.ext import db
 from google.appengine.ext import deferred
 import validictory
 import webapp2
 
 import model
+import templates
+import util
 
 # Immutable environment with both configuration variables, and backends to be
 # mocked out in tests.
@@ -162,9 +165,38 @@ class PledgeHandler(webapp2.RequestHandler):
                          text_body=text_body,
                          html_body=html_body)
 
+    id = str(pledge.key())
+    receipt_url = '/receipt/%s?auth_token=%s' % (id, pledge.url_nonce)
+
     self.response.headers['Content-Type'] = 'application/json'
-    json.dump(dict(id=str(pledge.key()),
-                   auth_token=pledge.url_nonce), self.response)
+    json.dump(dict(id=id,
+                   auth_token=pledge.url_nonce,
+                   receipt_url=receipt_url), self.response)
+
+
+class ReceiptHandler(webapp2.RequestHandler):
+  def get(self, id):
+    try:
+      pledge = db.get(db.Key(id))
+    except db.BadKeyError, e:
+      logging.warning('Bad key error: %s', e)
+      self.error(404)
+      self.response.write('Not found')
+      return
+
+    if not pledge:
+      self.error(404)
+      self.response.write('Not found')
+      return
+
+    auth_token = self.request.get('auth_token')
+    if not util.ConstantTimeIsEqual(auth_token, pledge.url_nonce):
+      self.error(403)
+      self.response.write('Access denied')
+      return
+
+    template = templates.GetTemplate('receipt.html')
+    self.response.write(template.render(dict(pledge=pledge)))
 
 
 class PaymentConfigHandler(webapp2.RequestHandler):
@@ -181,5 +213,6 @@ class PaymentConfigHandler(webapp2.RequestHandler):
 
 HANDLERS = [
   ('/r/pledge', PledgeHandler),
+  ('/receipt/(.+)', ReceiptHandler),
   ('/r/payment_config', PaymentConfigHandler),
 ]

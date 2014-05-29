@@ -58,13 +58,7 @@ class PledgeTest(BaseTest):
         )
       ))
 
-  def testBadJson(self):
-    self.app.post('/r/pledge', '{foo', status=400)
-
-  def testNotEnoughJson(self):
-    self.app.post_json('/r/pledge', dict(email='foo@bar.com'), status=400)
-
-  def testCreateAddsPledge(self):
+  def makeDefaultRequest(self):
     self.stripe.CreateCustomer(email='pika@pokedex.biz',
                                card_token='tok_1234') \
                .AndReturn('cust_4321')
@@ -82,8 +76,16 @@ class PledgeTest(BaseTest):
 
     self.mockery.ReplayAll()
 
-    resp = self.app.post_json('/r/pledge', self.samplePledge())
+    return self.app.post_json('/r/pledge', self.samplePledge())
 
+  def testBadJson(self):
+    self.app.post('/r/pledge', '{foo', status=400)
+
+  def testNotEnoughJson(self):
+    self.app.post_json('/r/pledge', dict(email='foo@bar.com'), status=400)
+
+  def testCreateAddsPledge(self):
+    resp = self.makeDefaultRequest()
     pledge = db.get(resp.json['id'])
     self.assertEquals(4200, pledge.amountCents)
     self.assertEquals(resp.json['auth_token'], pledge.url_nonce)
@@ -259,3 +261,20 @@ www.MayOne.us
     self.mockery.ReplayAll()
 
     self.app.post_json('/r/pledge', sample)
+
+  def testReceipt_404(self):
+    self.app.get('/receipt/foobar', status=404)
+
+  def testReceipt_403(self):
+    resp = self.makeDefaultRequest()
+    self.app.get('/receipt/' + resp.json['id'], status=403)
+    self.app.get('/receipt/%s?auth_token=%s' % (resp.json['id'], 'foobar'),
+                 status=403)
+
+  # TODO(hjfreyer): Re-enable this test. At the moment it fails because the path
+  # isn't right, and it can't get at the template it needs.
+  #
+  # def testReceipt_200(self):
+  #   resp = self.makeDefaultRequest()
+  #   self.app.get('/receipt/%s?auth_token=%s' % (resp.json['id'],
+  #                                               resp.json['auth_token']))
