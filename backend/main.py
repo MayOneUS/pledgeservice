@@ -12,6 +12,7 @@ import env
 import handlers
 import model
 import templates
+import util
 import wp_import
 
 # These get added to every pledge calculation
@@ -118,10 +119,11 @@ class UserUpdateHandler(webapp2.RequestHandler):
 
 
 class UserInfoHandler(webapp2.RequestHandler):
-  def get(self, url_nonce):
+  def get(self, db_key):
+    url_nonce = self.request.get("auth_token")
     enable_cors(self)
-    user = model.User.all().filter('url_nonce =', url_nonce).get()
-    if user is None:
+    user = model.User.get_by_key_name(db_key)
+    if user is None or not util.ConstantTimeIsEqual(user.url_nonce, url_nonce):
       self.error(404)
       self.response.write('user not found')
       return
