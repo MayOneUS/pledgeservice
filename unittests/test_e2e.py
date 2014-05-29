@@ -232,12 +232,6 @@ www.MayOne.us
 
     self.app.post_json('/r/pledge', self.pledge)
 
-  def testNoTeam(self):
-    del self.pledge['team']
-    resp = self.makeDefaultRequest()
-    pledge = db.get(resp.json['id'])
-    self.assertEquals('', pledge.team)
-
   def testEmptyTeam(self):
     self.pledge['team'] = ''
     resp = self.makeDefaultRequest()
