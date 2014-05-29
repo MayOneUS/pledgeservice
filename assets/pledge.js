@@ -39,6 +39,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
         target: $scope.ctrl.form.target,
         subscribe: $scope.ctrl.form.subscribe,
         amountCents: $scope.ctrl.cents(),
+        team: '',
         payment: payment
       }).success(function(data) {
         location.href = data.receipt_url;

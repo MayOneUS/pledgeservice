@@ -22,7 +22,8 @@ class Error(Exception): pass
 #      this version are not included in that counter.
 #   3: Include information in the User model including their name and whether
 #      they wish to be subscribed to the mailing list.
-MODEL_VERSION = 3
+#   4: Pledges now have "team"s.
+MODEL_VERSION = 4
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -169,12 +170,15 @@ class Pledge(db.Model):
   donationTime = db.DateTimeProperty(auto_now_add=True)
 
   # we plan to have multiple fundraising rounds. right now we're in round "1"
-  fundraisingRound = db.StringProperty(required=True)
+  fundraisingRound = db.StringProperty()
 
   # what the user is pledging for
   amountCents = db.IntegerProperty(required=True)
 
   note = db.TextProperty(required=False)
+
+  # Optionally, a pledge can be assigned to a "team".
+  team = db.StringProperty()
 
   # it's possible we'll want to let people change just their pledge. i can't
   # imagine a bunch of people pledging with the same email address and then
@@ -184,14 +188,12 @@ class Pledge(db.Model):
   url_nonce = db.StringProperty(required=True)
 
   @staticmethod
-  def create(email, stripe_customer_id, amount_cents, fundraisingRound="1",
-             note=None):
+  def create(email, stripe_customer_id, amount_cents, team):
     pledge = Pledge(model_version=MODEL_VERSION,
                     email=email,
                     stripeCustomer=stripe_customer_id,
-                    fundraisingRound=fundraisingRound,
                     amountCents=amount_cents,
-                    note=note,
+                    team=team,
                     url_nonce=os.urandom(32).encode("hex"))
     pledge.put()
     return pledge
@@ -199,8 +201,8 @@ class Pledge(db.Model):
 
 def addPledge(email, stripe_customer_id, amount_cents,
               first_name=None, last_name=None, occupation=None,
-              employer=None, phone=None, fundraisingRound="1", target=None,
-              note=None, mail_list_optin=None):
+              employer=None, phone=None, target=None, team=None,
+              mail_list_optin=None):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
@@ -213,9 +215,10 @@ def addPledge(email, stripe_customer_id, amount_cents,
     occupation=occupation, employer=employer, phone=phone, target=target,
     mail_list_optin=mail_list_optin)
 
-  return Pledge.create(
-    email=email, stripe_customer_id=stripe_customer_id,
-    amount_cents=amount_cents, fundraisingRound=fundraisingRound, note=note)
+  return Pledge.create(email=email,
+                       stripe_customer_id=stripe_customer_id,
+                       amount_cents=amount_cents,
+                       team=team)
 
 
 class WpPledge(db.Model):

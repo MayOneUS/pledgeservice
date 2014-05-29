@@ -53,6 +53,7 @@ class PledgeTest(BaseTest):
       target='Republicans Only',
       subscribe=True,
       amountCents=4200,
+      team='rocket',
       payment=dict(
         STRIPE=dict(
           token='tok_1234',
@@ -99,6 +100,7 @@ class PledgeTest(BaseTest):
     self.assertEquals(4200, pledge.amountCents)
     self.assertEquals(resp.json['auth_token'], pledge.url_nonce)
     self.assertEquals('cust_4321', pledge.stripeCustomer)
+    self.assertEquals('rocket', pledge.team)
 
     user = model.User.get_by_key_name('pika@pokedex.biz')
 
@@ -229,6 +231,18 @@ www.MayOne.us
     self.mockery.ReplayAll()
 
     self.app.post_json('/r/pledge', self.pledge)
+
+  def testNoTeam(self):
+    del self.pledge['team']
+    resp = self.makeDefaultRequest()
+    pledge = db.get(resp.json['id'])
+    self.assertEquals('', pledge.team)
+
+  def testEmptyTeam(self):
+    self.pledge['team'] = ''
+    resp = self.makeDefaultRequest()
+    pledge = db.get(resp.json['id'])
+    self.assertEquals('', pledge.team)
 
   def testReceipt_404(self):
     self.app.get('/receipt/foobar', status=404)

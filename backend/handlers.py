@@ -79,6 +79,10 @@ class PledgeHandler(webapp2.RequestHandler):
       target=_STR,
       subscribe=dict(type='boolean'),
       amountCents=dict(type='integer', minimum=100),
+
+      # TODO(hjfreyer): Require this, allowing blank.
+      team=dict(type='string', blank=True, required=False),
+
       payment=dict(type='object',
                    properties=dict(
                      STRIPE=dict(type='object',
@@ -138,8 +142,8 @@ class PledgeHandler(webapp2.RequestHandler):
                              occupation=data['occupation'],
                              employer=data['employer'],
                              phone=data['phone'],
-                             fundraisingRound='1',
                              target=data['target'],
+                             team=data.get('team', ''),
                              mail_list_optin=data['subscribe'])
 
     if data['subscribe']:
