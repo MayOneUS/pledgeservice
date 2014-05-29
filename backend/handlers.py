@@ -79,9 +79,7 @@ class PledgeHandler(webapp2.RequestHandler):
       target=_STR,
       subscribe=dict(type='boolean'),
       amountCents=dict(type='integer', minimum=100),
-
-      # TODO(hjfreyer): Require this, allowing blank.
-      team=dict(type='string', blank=True, required=False),
+      team=dict(type='string', blank=True),
 
       payment=dict(type='object',
                    properties=dict(
