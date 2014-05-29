@@ -42,8 +42,9 @@ class BaseTest(unittest.TestCase):
 
 
 class PledgeTest(BaseTest):
-  def samplePledge(self):
-    return dict(
+  def setUp(self):
+    super(PledgeTest, self).setUp()
+    self.pledge = dict(
       email='pika@pokedex.biz',
       phone='212-234-5432',
       name=u'Pik\u00E1 Chu',
@@ -58,25 +59,33 @@ class PledgeTest(BaseTest):
         )
       ))
 
-  def makeDefaultRequest(self):
-    self.stripe.CreateCustomer(email='pika@pokedex.biz',
-                               card_token='tok_1234') \
+  def expectStripe(self):
+    self.stripe.CreateCustomer(
+      email=self.pledge['email'],
+      card_token=self.pledge['payment']['STRIPE']['token']) \
                .AndReturn('cust_4321')
 
+  def expectSubscribe(self):
     self.mailing_list_subscriber \
-        .Subscribe(email='pika@pokedex.biz',
-                   first_name=u'Pik\u00E1', last_name='Chu',
+        .Subscribe(email=self.pledge['email'],
+                   first_name=u'Pik\u00E1',
+                   last_name='Chu',
                    amount_cents=4200, ip_addr=None,  # Not sure why this is None
                                                      # in unittests.
                    time=mox.IsA(datetime.datetime), source='pledged')
 
+  def expectMailSend(self):
     self.mail_sender.Send(to=mox.IsA(str), subject=mox.IsA(str),
                           text_body=mox.IsA(str),
                           html_body=mox.IsA(str))
 
+  def makeDefaultRequest(self):
+    self.expectStripe()
+    self.expectSubscribe()
+    self.expectMailSend()
     self.mockery.ReplayAll()
 
-    return self.app.post_json('/r/pledge', self.samplePledge())
+    return self.app.post_json('/r/pledge', self.pledge)
 
   def testBadJson(self):
     self.app.post('/r/pledge', '{foo', status=400)
@@ -93,9 +102,8 @@ class PledgeTest(BaseTest):
 
     user = model.User.get_by_key_name('pika@pokedex.biz')
 
-    sample = self.samplePledge()
     def assertEqualsSampleProperty(prop_name, actual):
-      self.assertEquals(sample[prop_name], actual)
+      self.assertEquals(self.pledge[prop_name], actual)
     assertEqualsSampleProperty('email', user.email)
     self.assertEquals(u'Pik\u00E1', user.first_name)
     self.assertEquals('Chu', user.last_name)
@@ -108,85 +116,45 @@ class PledgeTest(BaseTest):
     assert not user.from_import
 
   def testSubscribes(self):
-    self.stripe.CreateCustomer(email='pika@pokedex.biz',
-                               card_token='tok_1234') \
-               .AndReturn('cust_4321')
-
-    self.mailing_list_subscriber \
-        .Subscribe(email='pika@pokedex.biz',
-                   first_name=u'Pik\u00E1', last_name='Chu',
-                   amount_cents=4200, ip_addr=None,  # Not sure why this is None
-                                                     # in unittests.
-                   time=mox.IsA(datetime.datetime), source='pledged')
-
-    self.mail_sender.Send(to=mox.IsA(str), subject=mox.IsA(str),
-                          text_body=mox.IsA(str),
-                          html_body=mox.IsA(str))
+    self.expectStripe()
+    self.expectSubscribe()
+    self.expectMailSend()
 
     self.mockery.ReplayAll()
 
-    self.app.post_json('/r/pledge', self.samplePledge())
+    self.app.post_json('/r/pledge', self.pledge)
     user = model.User.get_by_key_name('pika@pokedex.biz')
     assert user.mail_list_optin
 
   def testSubscribeOptOut(self):
-    sample = self.samplePledge()
-    sample['subscribe'] = False
+    self.pledge['subscribe'] = False
 
-    self.stripe.CreateCustomer(email='pika@pokedex.biz',
-                               card_token='tok_1234') \
-               .AndReturn('cust_4321')
-
-    self.mail_sender.Send(to=mox.IsA(str), subject=mox.IsA(str),
-                          text_body=mox.IsA(str),
-                          html_body=mox.IsA(str))
+    self.expectStripe()
+    self.expectMailSend()
 
     # Don't subscribe.
 
     self.mockery.ReplayAll()
 
-    self.app.post_json('/r/pledge', sample)
+    self.app.post_json('/r/pledge', self.pledge)
     user = model.User.get_by_key_name('pika@pokedex.biz')
     assert not user.mail_list_optin
 
   def testNoPhone(self):
-    sample = self.samplePledge()
-    sample['phone'] = ''
-
-    self.stripe.CreateCustomer(email='pika@pokedex.biz',
-                               card_token='tok_1234') \
-               .AndReturn('cust_4321')
-
-    self.mailing_list_subscriber \
-        .Subscribe(email='pika@pokedex.biz',
-                   first_name=u'Pik\u00E1', last_name='Chu',
-                   amount_cents=4200, ip_addr=None,  # Not sure why this is None
-                                                     # in unittests.
-                   time=mox.IsA(datetime.datetime), source='pledged')
-
-    self.mail_sender.Send(to=mox.IsA(str), subject=mox.IsA(str),
-                          text_body=mox.IsA(str),
-                          html_body=mox.IsA(str))
-
-    self.mockery.ReplayAll()
-
-    self.app.post_json('/r/pledge', sample)
+    self.pledge['phone'] = ''
+    self.makeDefaultRequest()
 
   def testNoName(self):
-    sample = self.samplePledge()
-    sample['name'] = ''
+    self.pledge['name'] = ''
 
     self.mockery.ReplayAll()
 
-    self.app.post_json('/r/pledge', sample, status=400)
+    self.app.post_json('/r/pledge', self.pledge, status=400)
 
   def testMail(self):
-    sample = self.samplePledge()
-    sample['subscribe'] = False
+    self.pledge['subscribe'] = False
 
-    self.stripe.CreateCustomer(email='pika@pokedex.biz',
-                               card_token='tok_1234') \
-               .AndReturn('cust_4321')
+    self.expectStripe()
 
     self.mail_sender.Send(to='pika@pokedex.biz', subject='Thank you for your pledge',
                           text_body="""Dear Pik\xc3\xa1 Chu:
@@ -260,7 +228,7 @@ www.MayOne.us
 
     self.mockery.ReplayAll()
 
-    self.app.post_json('/r/pledge', sample)
+    self.app.post_json('/r/pledge', self.pledge)
 
   def testReceipt_404(self):
     self.app.get('/receipt/foobar', status=404)
