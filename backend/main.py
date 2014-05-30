@@ -5,6 +5,7 @@ import logging
 import urlparse
 
 from google.appengine.api import mail
+from google.appengine.api import memcache
 import stripe
 import webapp2
 
