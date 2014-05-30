@@ -7,5 +7,5 @@ queue:
   rate: 60/s
 
 - name: stripeCharge
-  rate: 40/m
+  rate: 1/s
   max_concurrent_requests: 5
