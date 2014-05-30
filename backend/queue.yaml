@@ -5,3 +5,7 @@ queue:
 
 - name: incrementTotal
   rate: 60/s
+
+- name: stripeCharge
+  rate: 40/m
+  max_concurrent_requests: 5
