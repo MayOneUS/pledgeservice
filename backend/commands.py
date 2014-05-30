@@ -5,11 +5,17 @@ import logging
 from collections import defaultdict
 
 from google.appengine.ext import db
+from google.appengine.ext import deferred
 
 import model
 
 
 class Error(Exception): pass
+
+class Command(object):
+  """Base class for commands."""
+  def __init__(self, config):
+    self.config = config
 
 
 # Format for a command. SHORT_NAME should be URL-safe. You can execute
@@ -19,7 +25,7 @@ class Error(Exception): pass
 # minute deadline. Make it count, or if it takes longer than that, use
 # deferred chaining by catching DeadlineExceededError and deferring a
 # call to yourself which picks up where you left off.
-class TestCommand(object):
+class TestCommand(Command):
   SHORT_NAME = 'test'
   NAME = 'Perform a test'
   SHOW = False
@@ -29,7 +35,7 @@ class TestCommand(object):
 
 
 # Populates the MissingDataUsersSecondary table.
-class FindMissingDataUsersCommand(object):
+class FindMissingDataUsersCommand(Command):
   SHORT_NAME = 'find_missing_data_users'
   NAME = 'Recompute missing data users'
   SHOW = False
@@ -61,7 +67,7 @@ class FindMissingDataUsersCommand(object):
     logging.info('Done')
 
 
-class UpdateSecretsProperties(object):
+class UpdateSecretsProperties(Command):
   SHORT_NAME = 'update_secrets_properties'
   NAME = 'Update "Secrets" model properties'
   SHOW = True
@@ -70,9 +76,43 @@ class UpdateSecretsProperties(object):
     model.Secrets.update()
 
 
+class ChargeRequested(Command):
+  SHORT_NAME = 'execute_requested_charges'
+  NAME = 'Execute requested charges'
+  SHOW = True
+
+  def run(self):
+    for charge_status in model.ChargeStatus.all().filter('start_time =', None):
+      deferred.defer(self.charge_one,
+                     charge_status.key().parent(),
+                     _queue='stripeCharge')
+
+  def charge_one(self, pledge_key):
+    model.ChargeStatus.execute(self.config['env'].stripe_backend, pledge_key)
+
+
+class RequestAllPledges(Command):
+  SHORT_NAME = 'request_all_pledges'
+  NAME = 'Request charges for all pledges'
+  SHOW = True
+
+  def run(self):
+    logging.info('Start')
+    pledge_keys = set(str(k) for k in model.Pledge.all(keys_only=True))
+    requested_keys = set(str(k.parent())
+                         for k in model.ChargeStatus.all(keys_only=True))
+    needed_keys = pledge_keys.difference(requested_keys)
+    logging.info('Loaded')
+    for pledge_key in needed_keys:
+      model.ChargeStatus.request(db.Key(pledge_key))
+    logging.info('Done')
+
+
 # List your command here so admin.py can expose it.
 COMMANDS = [
-  TestCommand(),
-  FindMissingDataUsersCommand(),
-  UpdateSecretsProperties(),
+  TestCommand,
+  FindMissingDataUsersCommand,
+  UpdateSecretsProperties,
+  RequestAllPledges,
+  ChargeRequested,
 ]

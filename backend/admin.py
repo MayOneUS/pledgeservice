@@ -11,6 +11,7 @@ from google.appengine.api import mail, memcache
 from google.appengine.ext import db, deferred
 
 import commands
+import env
 import model
 import templates
 
@@ -78,8 +79,8 @@ class PledgesCsvHandler(webapp2.RequestHandler):
       w.writerow([str(pledge.donationTime), pledge.amountCents])
 
 
-def MakeCommandHandler(cmd):
-  """Takes a command and returns a route tuple which allows that command
+def MakeCommandHandler(cmd_cls):
+  """Takes a command class and returns a route tuple which allows that command
      to be executed.
   """
   class H(webapp2.RequestHandler):
@@ -88,13 +89,20 @@ def MakeCommandHandler(cmd):
       <h1>You are about to run command "{}". Are you sure?</h1>
       <form action="" method="POST">
       <button>Punch it</button>
-      </form>""".format(cmd.NAME))
+      </form>""".format(self._get_cmd().NAME))
 
     def post(self):
-      deferred.defer(cmd.run)
+      deferred.defer(self._get_cmd().run)
       self.response.write('Command started.')
 
-  return ('/admin/command/' + cmd.SHORT_NAME, H)
+    def _get_cmd(self):
+      if 'cmds' not in self.app.registry:
+        self.app.registry['cmds'] = {}
+      if cmd_cls.SHORT_NAME not in self.app.registry['cmds']:
+        self.app.registry['cmds'][cmd_cls.SHORT_NAME] = cmd_cls(self.app.config)
+      return self.app.registry['cmds'][cmd_cls.SHORT_NAME]
+
+  return ('/admin/command/' + cmd_cls.SHORT_NAME, H)
 
 
 COMMAND_HANDLERS = [MakeCommandHandler(c) for c in commands.COMMANDS]
@@ -102,4 +110,4 @@ COMMAND_HANDLERS = [MakeCommandHandler(c) for c in commands.COMMANDS]
 app = webapp2.WSGIApplication([
   ('/admin/pledges.csv', PledgesCsvHandler),
   ('/admin/?', AdminDashboardHandler),
-] + COMMAND_HANDLERS, debug=False)
+] + COMMAND_HANDLERS, debug=False, config=dict(env=env.get_env()))
