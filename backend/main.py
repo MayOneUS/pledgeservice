@@ -15,7 +15,7 @@ import templates
 import wp_import
 
 # These get added to every pledge calculation
-PRE_SHARDING_TOTAL = 27425754  # See model.ShardedCounter
+PRE_SHARDING_TOTAL = 59767534  # See model.ShardedCounter
 WP_PLEDGE_TOTAL = 41326868
 DEMOCRACY_DOT_COM_BALANCE = 9036173
 CHECKS_BALANCE = 7655200  # lol US government humor
@@ -74,7 +74,7 @@ class GetTotalHandler(webapp2.RequestHandler):
              WP_PLEDGE_TOTAL +
              DEMOCRACY_DOT_COM_BALANCE +
              CHECKS_BALANCE)
-    total += model.ShardedCounter.get_count('TOTAL')
+    total += model.ShardedCounter.get_count('TOTAL-5')
     total = int(total/100) * 100
     self.response.headers['Content-Type'] = 'application/javascript'
     self.response.write('%s(%d)' % (self.request.get('callback'), total))
