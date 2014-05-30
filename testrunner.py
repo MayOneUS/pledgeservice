@@ -11,7 +11,7 @@ TEST_PATH_manual = '../unittests'
 
 def main(sdk_path, test_path):
   os.chdir('backend')
-  sys.path.extend([sdk_path, '.', '../lib', '../testlib'])
+  sys.path.extend([sdk_path, '.', '../lib'])
   import dev_appserver
   dev_appserver.fix_sys_path()
   suite = unittest.loader.TestLoader().discover(test_path)
