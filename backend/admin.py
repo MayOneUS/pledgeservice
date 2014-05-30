@@ -22,7 +22,7 @@ class AdminDashboardHandler(webapp2.RequestHandler):
     pre_sharding_total = 0
     post_sharding_total = 0
     for p in model.Pledge.all():
-      if p.model_version >= 2:
+      if p.model_version >= 5:
         post_sharding_total += p.amountCents
       else:
         pre_sharding_total += p.amountCents
@@ -34,7 +34,7 @@ class AdminDashboardHandler(webapp2.RequestHandler):
       'totalMissing': sum(v for _, v in users)/100,
       'preShardedTotal': pre_sharding_total,
       'postShardedTotal': post_sharding_total,
-      'shardedCounterTotal': model.ShardedCounter.get_count('TOTAL'),
+      'shardedCounterTotal': model.ShardedCounter.get_count('TOTAL-5'),
       'commands': AdminDashboardHandler.get_commands(),
     }))
 

@@ -23,7 +23,8 @@ class Error(Exception): pass
 #   3: Include information in the User model including their name and whether
 #      they wish to be subscribed to the mailing list.
 #   4: Pledges now have "team"s.
-MODEL_VERSION = 4
+#   5: Reset the total sharding counter.
+MODEL_VERSION = 5
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -382,7 +383,7 @@ class ShardedCounter(db.Model):
     # memcache.incr(ShardedCounter._get_memcache_key(name), delta=delta)
 
 def increment_donation_total(amount):
-  ShardedCounter.increment('TOTAL', amount)
+  ShardedCounter.increment('TOTAL-%d' % MODEL_VERSION, amount)
 
 
 # SECONDARY MODELS

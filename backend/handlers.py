@@ -153,6 +153,10 @@ class PledgeHandler(webapp2.RequestHandler):
         time=datetime.datetime.now(),
         source='pledged')
 
+    # Add to the total asynchronously.
+    deferred.defer(model.increment_donation_total, data['amountCents'],
+                   _queue='incrementTotal')
+
     format_kwargs = {
       'name': data['name'].encode('utf-8'),
       'url_nonce': pledge.url_nonce,
