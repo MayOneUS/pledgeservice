@@ -86,7 +86,7 @@ class GetTotalHandler(webapp2.RequestHandler):
     res = memcache.get(key)
     if not res:
       total_pledges, total_amount = 0, 0
-      for pledge in Pledge.all().filter("team =", team):
+      for pledge in model.Pledge.all().filter("team =", team):
         total_pledges += 1
         total_amount += pledge.amountCents
       # doh, we should probably return a json object here instead of just an
