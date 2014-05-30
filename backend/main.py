@@ -64,8 +64,12 @@ class ContactHandler(webapp2.RequestHandler):
     enable_cors(self)
 
 
+#TODO(jt/hjfreyer): replicate this in handlers as /r/total, with proper JSON
 class GetTotalHandler(webapp2.RequestHandler):
   def get(self):
+    team = self.request.get("team")
+    if team:
+      return self.getTeamTotal(team)
     total = (PRE_SHARDING_TOTAL +
              WP_PLEDGE_TOTAL +
              DEMOCRACY_DOT_COM_BALANCE +
@@ -74,6 +78,22 @@ class GetTotalHandler(webapp2.RequestHandler):
     total = int(total/100) * 100
     self.response.headers['Content-Type'] = 'application/javascript'
     self.response.write('%s(%d)' % (self.request.get('callback'), total))
+
+  def getTeamTotal(self, team):
+    self.response.headers['Content-Type'] = 'application/javascript'
+    key = "TEAM-TOTAL-%s" % team
+    res = memcache.get(key)
+    if not res:
+      total_pledges, total_amount = 0, 0
+      for pledge in Pledge.all().filter("team =", team):
+        total_pledges += 1
+        total_amount += pledge.amountCents
+      # doh, we should probably return a json object here instead of just an
+      # some ints, but we'd like to be backwards compatible with the previous
+      # (non-team) api. so for now, let's make use javascript varargs
+      res = '(%d, %d)' % (total_amount, total_pledges)
+      memcache.add(key, res, 60)
+    self.response.write("%s%s" % (self.request.get('callback'), res))
 
 
 class EmbedHandler(webapp2.RequestHandler):
