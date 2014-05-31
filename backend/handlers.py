@@ -123,9 +123,9 @@ class PledgeHandler(webapp2.RequestHandler):
       self.error(400)
       return
 
-    #TODO: replace below with util.SplitName()
     # Split apart the name into first and last. Yes, this sucks, but adding the
     # name fields makes the form look way more daunting. We may reconsider this.
+    # TODO: replace below with util.SplitName()
     name_parts = data['name'].split(None, 1)
     first_name = name_parts[0]
     if len(name_parts) == 1:
@@ -199,6 +199,8 @@ class SubscribeHandler(webapp2.RequestHandler):
     #TODO: skills (up to 255)
     #TODO: rootstrikers (Waiting on details from Aaron re Mailchimp field update)
     
+    # Split apart the name into first and last. Yes, this sucks, but adding the
+    # name fields makes the form look way more daunting. We may reconsider this.
     first_name, last_name = util.SplitName(name)
     
     env.mailing_list_subscriber.Subscribe(

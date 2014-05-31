@@ -11,8 +11,6 @@ def ConstantTimeIsEqual(a, b):
   return acc == 0
 
 def SplitName(name_to_split):
-  # Split apart the name into first and last. Yes, this sucks, but adding the
-  # name fields makes the form look way more daunting. We may reconsider this.
   name_parts = name_to_split.split(None, 1)
   first_name = name_parts[0]
   if len(name_parts) == 1:
