@@ -5,10 +5,16 @@ html
     script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
   body(ng-app="mayOne", ng-controller="IndexController",ng-init="ctrl.init()")#index
     include includes/header
-    p hello world
+    p Subscribe to the MayDayPAC Mailing List
     form(name="subscribe", action="/r/subscribe", method="post")
       label(for="email_input") Email
       input(id="email_input",type="text", name="email")
       label(for="name_input") Name
       input(id="name_input", type="text", name="name")
+      label(for="zip_input") Zip Code
+      input(id="zip_input", type="text", name="zip")
+      label(for="volunteer_input") Are You Able to Volunteer?
+      input(id="volunteer_input", type="checkbox", name="volunteer")
+      label(for="skills_input") Do you have any specific skills that can help us with organizing? (Both technical and non-technical!)
+      input(id="skills_input", type="text", name="skills")
       button(type="submit") Subscribe

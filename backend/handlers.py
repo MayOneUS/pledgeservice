@@ -187,24 +187,31 @@ class SubscribeHandler(webapp2.RequestHandler):
 
   def post(self):
     env = self.app.config['env']
-    
-    email = cgi.escape(self.request.get('email', default_value=None))
-    if email is None:
+    logging.info('body: %s' % self.request.body)
+    email_input = cgi.escape(self.request.get('email', default_value=None))
+    if email_input is None:
       logging.warning("Bad Request: required field (email) missing.")
       self.error(400)
     
-    name = cgi.escape(self.request.get('name', default_value=None))    
-    #TODO: get zip 
-    #TODO: get volunteer (YES/NO)
-    #TODO: skills (up to 255)
-    #TODO: rootstrikers (Waiting on details from Aaron re Mailchimp field update)
-    
     # Split apart the name into first and last. Yes, this sucks, but adding the
     # name fields makes the form look way more daunting. We may reconsider this.
-    first_name, last_name = util.SplitName(name)
+    name_input = cgi.escape(self.request.get('name', default_value=None))
+    first_name, last_name = util.SplitName(name_input)
     
+    zip_input = cgi.escape(self.request.get('zip', default_value=None))
+    
+    volunteer_input = cgi.escape(self.request.get('volunteer', default_value="NO")) # "YES" or "NO"
+    if volunteer_input=='on':
+      volunteer_input = 'YES'
+    elif volunteer_input=='off':
+      volunteer_input = 'NO'
+    
+    skills_input = cgi.escape(self.request.get('skills', default_value=None)) #Free text, limited to 255 char
+    #TODO: rootstrikers (Waiting on details from Aaron re Mailchimp field update)
+    
+    #TODO: extend .Subscribe to accept additional optional fields for Mailchimp
     env.mailing_list_subscriber.Subscribe(
-      email=email,
+      email=email_input,
       first_name=first_name, last_name=last_name,
       amount_cents=0,
       ip_addr=self.request.remote_addr,
