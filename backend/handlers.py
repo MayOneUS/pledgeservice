@@ -196,9 +196,14 @@ class SubscribeHandler(webapp2.RequestHandler):
     # Split apart the name into first and last. Yes, this sucks, but adding the
     # name fields makes the form look way more daunting. We may reconsider this.
     name_input = cgi.escape(self.request.get('name', default_value=None))
-    first_name, last_name = util.SplitName(name_input)
+    if name_input:
+      first_name, last_name = util.SplitName(name_input)
+    else:
+      first_name, last_name = (None, None)
     
     zipcode_input = cgi.escape(self.request.get('zip', default_value=None))
+    if zipcode_input == '':
+      zipcode_input = None
     
     volunteer_input = cgi.escape(self.request.get('volunteer', default_value="NO")) # "YES" or "NO"
     if volunteer_input=='on':
@@ -207,6 +212,8 @@ class SubscribeHandler(webapp2.RequestHandler):
       volunteer_input = 'NO'
     
     skills_input = cgi.escape(self.request.get('skills', default_value=None)) #Free text, limited to 255 char
+    if skills_input =='':
+      skills_input = None
     
     #TODO: rootstrikers (Waiting on details from Aaron re Mailchimp field update)
     
