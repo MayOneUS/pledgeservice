@@ -123,6 +123,7 @@ class PledgeHandler(webapp2.RequestHandler):
       self.error(400)
       return
 
+    #TODO: replace below with util.SplitName()
     # Split apart the name into first and last. Yes, this sucks, but adding the
     # name fields makes the form look way more daunting. We may reconsider this.
     name_parts = data['name'].split(None, 1)
@@ -185,17 +186,25 @@ class SubscribeHandler(webapp2.RequestHandler):
   # https://www.pivotaltracker.com/s/projects/1075614/stories/71725060
 
   def post(self):
+    env = self.app.config['env']
+    
     email = cgi.escape(self.request.get('email', default_value=None))
-    name = cgi.escape(self.request.get('name', default_value=None))
-    if email is None or name is None:
-      logging.warning("required field missing.")
-      self.error(404)
+    if email is None:
+      logging.warning("Bad Request: required field (email) missing.")
+      self.error(400)
+    
+    name = cgi.escape(self.request.get('name', default_value=None))    
+    #TODO: get zip 
+    #TODO: get volunteer (YES/NO)
+    #TODO: skills (up to 255)
+    #TODO: rootstrikers (Waiting on details from Aaron re Mailchimp field update)
     
     first_name, last_name = util.SplitName(name)
     
     env.mailing_list_subscriber.Subscribe(
       email=email,
       first_name=first_name, last_name=last_name,
+      amount_cents=0,
       ip_addr=self.request.remote_addr,
       time=datetime.datetime.now(),
       source='subscribed')
