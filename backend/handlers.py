@@ -4,6 +4,7 @@ from collections import namedtuple
 import datetime
 import json
 import logging
+import cgi
 
 from google.appengine.ext import db
 from google.appengine.ext import deferred
@@ -182,33 +183,15 @@ class PledgeHandler(webapp2.RequestHandler):
 class MailingListSubscriberHandler(webapp2.RequestHandler):
   """RESTful handler for MailingListSubscriber objects."""
   # https://www.pivotaltracker.com/s/projects/1075614/stories/71725060
-  CREATE_SCHEMA = dict(
-    type='object',
-    properties=dict(
-      email=_STR, #required, 
-      phone=dict(type='string', blank=True),
-      name=_STR, #first name required
-      skills=dict(type='list')
-      subscribe=dict(type='boolean'),
-      team=dict(type='string', blank=True),
-  )
+
   def post(self):
-    try:
-      data = json.loads(self.request.body)
-    except ValueError, e:
-      logging.warning('Bad JSON request: %s', e)
-      self.error(400)
-      self.response.write('Invalid request')
-      return
+    email = cgi.escape(self.request.get('email', default_value=None))
+    name = cgi.escape(self.request.get('name', default_value=None))
+    if email is None or name is None:
+      logging.warning("required field missing.")
+      self.error(404)
     
-    try:
-      validictory.validate(data, MailingListSubscriberHandler.CREATE_SCHEMA)
-    except ValueError, e:
-      logging.warning('Schema check failed: %s', e)
-      self.error(400)
-      self.response.write('Invalid request')
-      return
-    
+
     
 
     self.redirect('/pledge')
