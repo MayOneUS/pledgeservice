@@ -191,8 +191,14 @@ class SubscribeHandler(webapp2.RequestHandler):
       logging.warning("required field missing.")
       self.error(404)
     
-
+    first_name, last_name = util.SplitName(name)
     
+    env.mailing_list_subscriber.Subscribe(
+      email=email,
+      first_name=first_name, last_name=last_name,
+      ip_addr=self.request.remote_addr,
+      time=datetime.datetime.now(),
+      source='subscribed')
 
     self.redirect('/pledge')
 
