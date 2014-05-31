@@ -198,7 +198,7 @@ class SubscribeHandler(webapp2.RequestHandler):
     name_input = cgi.escape(self.request.get('name', default_value=None))
     first_name, last_name = util.SplitName(name_input)
     
-    zip_input = cgi.escape(self.request.get('zip', default_value=None))
+    zipcode_input = cgi.escape(self.request.get('zip', default_value=None))
     
     volunteer_input = cgi.escape(self.request.get('volunteer', default_value="NO")) # "YES" or "NO"
     if volunteer_input=='on':
@@ -207,16 +207,21 @@ class SubscribeHandler(webapp2.RequestHandler):
       volunteer_input = 'NO'
     
     skills_input = cgi.escape(self.request.get('skills', default_value=None)) #Free text, limited to 255 char
+    
     #TODO: rootstrikers (Waiting on details from Aaron re Mailchimp field update)
     
     #TODO: extend .Subscribe to accept additional optional fields for Mailchimp
     env.mailing_list_subscriber.Subscribe(
       email=email_input,
       first_name=first_name, last_name=last_name,
-      amount_cents=0,
+      amount_cents=None,
       ip_addr=self.request.remote_addr,
       time=datetime.datetime.now(),
-      source='subscribed')
+      source='subscribed',
+      zipcode=zipcode_input,
+      volunteer=volunteer_input,
+      skills=skills_input
+      )
 
     self.redirect('/pledge')
 

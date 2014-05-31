@@ -114,6 +114,15 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
     amount_dollars = '{0:.02f}'.format(float(amount) / 100.0)
     merge_vars['LASTPLEDGE'] = amount_dollars
 
+  if volunteer in ['YES', 'NO']:
+    merge_vars['VOLN'] = volunteer
+
+  if skills is not None and len(skills)>0:
+    merge_vars['SKILLS'] = skills[0:255]
+
+  if zipcode is not None:
+    merge_vars['ZIPCODE'] = zipcode
+
   # list ID and email struct
   mc.lists.subscribe(id=mailchimp_list_id,
                      email=dict(email=email_to_subscribe),
