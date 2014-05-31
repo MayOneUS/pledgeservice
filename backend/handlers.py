@@ -179,6 +179,40 @@ class PledgeHandler(webapp2.RequestHandler):
                    auth_token=pledge.url_nonce,
                    receipt_url=receipt_url), self.response)
 
+class MailingListSubscriberHandler(webapp2.RequestHandler):
+  """RESTful handler for MailingListSubscriber objects."""
+  # https://www.pivotaltracker.com/s/projects/1075614/stories/71725060
+  CREATE_SCHEMA = dict(
+    type='object',
+    properties=dict(
+      email=_STR, #required, 
+      phone=dict(type='string', blank=True),
+      name=_STR, #first name required
+      skills=dict(type='list')
+      subscribe=dict(type='boolean'),
+      team=dict(type='string', blank=True),
+  )
+  def post(self):
+    try:
+      data = json.loads(self.request.body)
+    except ValueError, e:
+      logging.warning('Bad JSON request: %s', e)
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+    
+    try:
+      validictory.validate(data, MailingListSubscriberHandler.CREATE_SCHEMA)
+    except ValueError, e:
+      logging.warning('Schema check failed: %s', e)
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+    
+    
+
+    self.redirect('/pledge')
+
 
 class ReceiptHandler(webapp2.RequestHandler):
   def get(self, id):
@@ -221,4 +255,5 @@ HANDLERS = [
   ('/r/pledge', PledgeHandler),
   ('/receipt/(.+)', ReceiptHandler),
   ('/r/payment_config', PaymentConfigHandler),
+  ('/r/subscribe', MailingListSubscriberHandler),
 ]
