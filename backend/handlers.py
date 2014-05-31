@@ -189,9 +189,10 @@ class SubscribeHandler(webapp2.RequestHandler):
     env = self.app.config['env']
     logging.info('body: %s' % self.request.body)
     email_input = cgi.escape(self.request.get('email', default_value=None))
-    if email_input is None:
+    if email_input is None or len(email_input)==0:
       logging.warning("Bad Request: required field (email) missing.")
       self.error(400)
+      return
 
     first_name = cgi.escape(self.request.get('first_name', default_value=None))
     last_name = cgi.escape(self.request.get('last_name', default_value=None))
