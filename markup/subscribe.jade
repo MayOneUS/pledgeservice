@@ -1,0 +1,14 @@
+doctype html
+html
+  head
+    include includes/head
+    script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
+  body(ng-app="mayOne", ng-controller="IndexController",ng-init="ctrl.init()")#index
+    include includes/header
+    p hello world
+    form(name="subscribe", action="/r/subscribe", method="post")
+      label(for="email_input") Email
+      input(id="email_input",type="text", name="email")
+      label(for="name_input") Name
+      input(id="name_input", type="text", name="name")
+      button(type="submit") Subscribe
