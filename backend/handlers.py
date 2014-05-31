@@ -180,8 +180,8 @@ class PledgeHandler(webapp2.RequestHandler):
                    auth_token=pledge.url_nonce,
                    receipt_url=receipt_url), self.response)
 
-class MailingListSubscriberHandler(webapp2.RequestHandler):
-  """RESTful handler for MailingListSubscriber objects."""
+class SubscribeHandler(webapp2.RequestHandler):
+  """RESTful handler for subscription requests."""
   # https://www.pivotaltracker.com/s/projects/1075614/stories/71725060
 
   def post(self):
@@ -238,5 +238,5 @@ HANDLERS = [
   ('/r/pledge', PledgeHandler),
   ('/receipt/(.+)', ReceiptHandler),
   ('/r/payment_config', PaymentConfigHandler),
-  ('/r/subscribe', MailingListSubscriberHandler),
+  ('/r/subscribe', SubscribeHandler),
 ]
