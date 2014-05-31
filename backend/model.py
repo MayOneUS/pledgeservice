@@ -383,7 +383,7 @@ class ShardedCounter(db.Model):
     # memcache.incr(ShardedCounter._get_memcache_key(name), delta=delta)
 
 def increment_donation_total(amount):
-  ShardedCounter.increment('TOTAL-%d' % MODEL_VERSION, amount)
+  ShardedCounter.increment('TOTAL-5', amount)
 
 
 # SECONDARY MODELS
