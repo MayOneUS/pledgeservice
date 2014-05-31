@@ -1,5 +1,4 @@
 """General utilities."""
-import logging
 
 def ConstantTimeIsEqual(a, b):
   """Securely compare two strings without leaking timing information."""
@@ -9,14 +8,3 @@ def ConstantTimeIsEqual(a, b):
   for x, y in zip(a, b):
     acc |= ord(x) ^ ord(y)
   return acc == 0
-
-def SplitName(name_to_split):
-  name_parts = name_to_split.split(None, 1)
-  first_name = name_parts[0]
-  if len(name_parts) == 1:
-    last_name = ''
-    logging.warning('Could not determine last name: %s', name_to_split)
-  else:
-    last_name = name_parts[1]
-  
-  return (first_name, last_name)

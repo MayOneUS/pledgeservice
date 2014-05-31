@@ -192,15 +192,10 @@ class SubscribeHandler(webapp2.RequestHandler):
     if email_input is None:
       logging.warning("Bad Request: required field (email) missing.")
       self.error(400)
-    
-    # Split apart the name into first and last. Yes, this sucks, but adding the
-    # name fields makes the form look way more daunting. We may reconsider this.
-    name_input = cgi.escape(self.request.get('name', default_value=None))
-    if name_input:
-      first_name, last_name = util.SplitName(name_input)
-    else:
-      first_name, last_name = (None, None)
-    
+
+    first_name = cgi.escape(self.request.get('first_name', default_value=None))
+    last_name = cgi.escape(self.request.get('last_name', default_value=None))
+
     zipcode_input = cgi.escape(self.request.get('zip', default_value=None))
     if zipcode_input == '':
       zipcode_input = None
@@ -217,7 +212,6 @@ class SubscribeHandler(webapp2.RequestHandler):
     
     #TODO: rootstrikers (Waiting on details from Aaron re Mailchimp field update)
     
-    #TODO: extend .Subscribe to accept additional optional fields for Mailchimp
     env.mailing_list_subscriber.Subscribe(
       email=email_input,
       first_name=first_name, last_name=last_name,
