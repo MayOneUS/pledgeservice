@@ -10,6 +10,7 @@ from google.appengine.ext import deferred
 import validictory
 import webapp2
 
+import cache
 import model
 import templates
 import util
@@ -141,7 +142,7 @@ class PledgeHandler(webapp2.RequestHandler):
                              employer=data['employer'],
                              phone=data['phone'],
                              target=data['target'],
-                             team=data.get('team', ''),
+                             team=data['team'],
                              mail_list_optin=data['subscribe'])
 
     if data['subscribe']:
@@ -153,9 +154,12 @@ class PledgeHandler(webapp2.RequestHandler):
         time=datetime.datetime.now(),
         source='pledged')
 
-    # Add to the total asynchronously.
-    deferred.defer(model.increment_donation_total, data['amountCents'],
-                   _queue='incrementTotal')
+    # Add to the total.
+    model.ShardedCounter.increment('TOTAL-5', data['amountCents'])
+
+    if data['team']:
+      cache.IncrementTeamPledgeCount(data['team'], 1)
+      cache.IncrementTeamTotal(data['team'], data['amountCents'])
 
     format_kwargs = {
       'name': data['name'].encode('utf-8'),
@@ -217,8 +221,48 @@ class PaymentConfigHandler(webapp2.RequestHandler):
     json.dump(params, self.response)
 
 
+class TotalHandler(webapp2.RequestHandler):
+  # These get added to every pledge calculation
+  PRE_SHARDING_TOTAL = 59767534  # See model.ShardedCounter
+  WP_PLEDGE_TOTAL = 41326868
+  DEMOCRACY_DOT_COM_BALANCE = 9036173
+  CHECKS_BALANCE = 7655200  # lol US government humor
+
+  def get(self):
+    util.EnableCors(self)
+    total = (TotalHandler.PRE_SHARDING_TOTAL +
+             TotalHandler.WP_PLEDGE_TOTAL +
+             TotalHandler.DEMOCRACY_DOT_COM_BALANCE +
+             TotalHandler.CHECKS_BALANCE)
+    total += model.ShardedCounter.get_count('TOTAL-5')
+
+    result = dict(totalCents=total)
+
+    team = self.request.get("team")
+    if team:
+      team_pledges = cache.GetTeamPledgeCount(team) or 0
+      team_total = cache.GetTeamTotal(team) or 0
+
+      if not (team_pledges and team_total):
+        for pledge in model.Pledge.all().filter("team =", team):
+          team_pledges += 1
+          team_total += pledge.amountCents
+        cache.SetTeamPledgeCount(team, team_pledges)
+        cache.SetTeamTotal(team, team_total)
+
+      result['team'] = team
+      result['teamPledges'] = team_pledges
+      result['teamTotalCents'] = team_total
+
+    self.response.headers['Content-Type'] = 'application/json'
+    json.dump(result, self.response)
+
+  def options(self):
+    util.EnableCors(self)
+
 HANDLERS = [
   ('/r/pledge', PledgeHandler),
   ('/receipt/(.+)', ReceiptHandler),
   ('/r/payment_config', PaymentConfigHandler),
+  ('/r/total', TotalHandler),
 ]

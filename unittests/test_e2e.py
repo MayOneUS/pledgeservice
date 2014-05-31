@@ -18,6 +18,7 @@ class BaseTest(unittest.TestCase):
     self.testbed.activate()
 
     self.testbed.init_datastore_v3_stub()
+    self.testbed.init_memcache_stub()
 
     self.mockery = mox.Mox()
     self.stripe = self.mockery.CreateMock(handlers.StripeBackend)
@@ -59,6 +60,13 @@ class PledgeTest(BaseTest):
           token='tok_1234',
         )
       ))
+
+    handlers.TotalHandler.PRE_SHARDING_TOTAL = 10
+    handlers.TotalHandler.WP_PLEDGE_TOTAL = 11
+    handlers.TotalHandler.DEMOCRACY_DOT_COM_BALANCE = 12
+    handlers.TotalHandler.CHECKS_BALANCE = 13
+
+    self.balance_baseline = 46
 
   def expectStripe(self):
     self.stripe.CreateCustomer(
@@ -237,6 +245,73 @@ www.MayOne.us
     resp = self.makeDefaultRequest()
     pledge = db.get(resp.json['id'])
     self.assertEquals('', pledge.team)
+
+  def testTotal(self):
+    resp = self.app.get('/r/total')
+    self.assertEquals(self.balance_baseline, resp.json['totalCents'])
+    self.makeDefaultRequest()
+
+    resp = self.app.get('/r/total')
+    self.assertEquals(self.balance_baseline + 4200, resp.json['totalCents'])
+
+  def testTeamTotal(self):
+    for _ in range(2):
+      self.expectStripe()
+      self.expectSubscribe()
+      self.expectMailSend()
+    self.mockery.ReplayAll()
+
+    resp = self.app.get('/r/total?team=nobody')
+    self.assertEquals(dict(
+      totalCents=self.balance_baseline,
+      team='nobody',
+      teamPledges=0,
+      teamTotalCents=0
+    ), resp.json)
+
+    resp = self.app.get('/r/total?team=rocket')
+    self.assertEquals(dict(
+      totalCents=self.balance_baseline,
+      team='rocket',
+      teamPledges=0,
+      teamTotalCents=0
+    ), resp.json)
+
+    self.app.post_json('/r/pledge', self.pledge)
+
+    resp = self.app.get('/r/total?team=nobody')
+    self.assertEquals(dict(
+      totalCents=self.balance_baseline + 4200,
+      team='nobody',
+      teamPledges=0,
+      teamTotalCents=0
+    ), resp.json)
+
+    resp = self.app.get('/r/total?team=rocket')
+    self.assertEquals(dict(
+      totalCents=self.balance_baseline + 4200,
+      team='rocket',
+      teamPledges=1,
+      teamTotalCents=4200,
+    ), resp.json)
+
+    self.app.post_json('/r/pledge', self.pledge)
+
+    resp = self.app.get('/r/total?team=nobody')
+    self.assertEquals(dict(
+      totalCents=self.balance_baseline + 2 * 4200,
+      team='nobody',
+      teamPledges=0,
+      teamTotalCents=0
+    ), resp.json)
+
+    resp = self.app.get('/r/total?team=rocket')
+    self.assertEquals(dict(
+      totalCents=self.balance_baseline + 2 * 4200,
+      team='rocket',
+      teamPledges=2,
+      teamTotalCents=8400,
+    ), resp.json)
 
   def testReceipt_404(self):
     self.app.get('/receipt/foobar', status=404)

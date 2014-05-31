@@ -239,7 +239,6 @@ class WpPledge(db.Model):
   url_nonce = db.StringProperty(required=True)
 
 
-
 class ChargeStatus(db.Model):
   """Indicates whether a Pledge or WpPledge has been charged or not.
 
@@ -377,13 +376,7 @@ class ShardedCounter(db.Model):
     counter.count += delta
     counter.put()
 
-    # TODO(hjfreyer): Enable memcache increments.
-    #
-    # Memcache increment does nothing if the name is not a key in memcache
-    # memcache.incr(ShardedCounter._get_memcache_key(name), delta=delta)
-
-def increment_donation_total(amount):
-  ShardedCounter.increment('TOTAL-5', amount)
+    cache.IncrementShardedCounterTotal(name, delta)
 
 
 # SECONDARY MODELS
