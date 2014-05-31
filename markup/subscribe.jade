@@ -16,7 +16,8 @@ html
       label(for="zip_input") Zip Code
       input(id="zip_input", type="text", name="zip")
       label(for="volunteer_input") Are You Able to Volunteer?
-      input(id="volunteer_input", type="checkbox", name="volunteer")
-      label(for="skills_input") Do you have any specific skills that can help us with organizing? (Both technical and non-technical!)
-      input(id="skills_input", type="text", name="skills")
+      input(id="volunteer_input", type="checkbox", name="volunteer", onclick="document.getElementById('skills_section').style.display = 'block';")
+      div(id="skills_section", style="display:none")
+        label(for="skills_input") Do you have any specific skills that can help us with organizing? (Both technical and non-technical!)
+        input(id="skills_input", type="text", name="skills")
       button(type="submit") Subscribe
