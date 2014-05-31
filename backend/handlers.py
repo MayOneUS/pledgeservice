@@ -125,7 +125,6 @@ class PledgeHandler(webapp2.RequestHandler):
 
     # Split apart the name into first and last. Yes, this sucks, but adding the
     # name fields makes the form look way more daunting. We may reconsider this.
-    # TODO: replace below with util.SplitName()
     name_parts = data['name'].split(None, 1)
     first_name = name_parts[0]
     if len(name_parts) == 1:
