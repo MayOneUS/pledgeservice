@@ -95,7 +95,7 @@ def _send_mail(to, subject, text_body, html_body):
 
 
 def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
-                            amount, request_ip, source):
+                            amount, request_ip, source, zipcode, volunteer, skills):
   mailchimp_api_key = model.Config.get().mailchimp_api_key
   mailchimp_list_id = model.Config.get().mailchimp_list_id
   mc = mailchimp.Mailchimp(mailchimp_api_key)
