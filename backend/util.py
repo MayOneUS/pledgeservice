@@ -1,6 +1,7 @@
 """General utilities."""
 
 import urlparse
+import logging
 
 def ConstantTimeIsEqual(a, b):
   """Securely compare two strings without leaking timing information."""
