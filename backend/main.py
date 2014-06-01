@@ -139,7 +139,7 @@ class UserInfoHandler(webapp2.RequestHandler):
       self.response.write("user not found")
       return
 
-    stripe.api_key = env.get_env.stripe_backend.stripe_private_key
+    stripe.api_key = env.get_env().stripe_backend.stripe_private_key
     cus = stripe.Customer.retrieve(biggest_pledge.stripeCustomer)
     if len(cus.cards.data) == 0:
       self.error(404)
