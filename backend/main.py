@@ -157,6 +157,7 @@ class UserInfoHandler(webapp2.RequestHandler):
     self.response.write(json.dumps({
         "user": {
           "name": user_name,
+          "email": user.email,
           "pledge_amount_cents": biggest_amount,
           "zip_code": zip_code}}))
 
