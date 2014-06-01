@@ -4,6 +4,8 @@ from collections import namedtuple
 import datetime
 import json
 import logging
+import cgi
+
 
 from google.appengine.ext import db
 from google.appengine.ext import deferred
@@ -155,7 +157,7 @@ class PledgeHandler(webapp2.RequestHandler):
         amount_cents=data['amountCents'],
         ip_addr=self.request.remote_addr,
         time=datetime.datetime.now(),
-        source='pledged')
+        source='pledge')
 
     # Add to the total.
     model.ShardedCounter.increment('TOTAL-5', data['amountCents'])
@@ -186,6 +188,63 @@ class PledgeHandler(webapp2.RequestHandler):
                    auth_token=pledge.url_nonce,
                    receipt_url=receipt_url), self.response)
 
+class SubscribeHandler(webapp2.RequestHandler):
+  """RESTful handler for subscription requests."""
+  # https://www.pivotaltracker.com/s/projects/1075614/stories/71725060
+
+  def post(self):
+    env = self.app.config['env']
+    logging.info('body: %s' % self.request.body)
+    email_input = cgi.escape(self.request.get('email', default_value=None))
+    if email_input is None or len(email_input)==0:
+      logging.warning("Bad Request: required field (email) missing.")
+      self.error(400)
+      return
+
+    first_name = cgi.escape(self.request.get('first_name', default_value=None))
+    last_name = cgi.escape(self.request.get('last_name', default_value=None))
+
+    zipcode_input = cgi.escape(self.request.get('zip', default_value=None))
+    if zipcode_input == '':
+      zipcode_input = None
+    
+    volunteer_input = cgi.escape(self.request.get('volunteer', default_value="")) # "YES" or "NO"
+    if volunteer_input=='on':
+      volunteer_input = 'Yes'
+    elif volunteer_input=='off':
+      volunteer_input = ''
+    
+    skills_input = cgi.escape(self.request.get('skills', default_value=None)) #Free text, limited to 255 char
+    if skills_input =='':
+      skills_input = None
+    
+    rootstrikers_input = cgi.escape(self.request.get('rootstrikers', default_value='')) #Free text, limited to 255 char
+    if rootstrikers_input=='on':
+      rootstrikers_input = 'Yes'
+    elif rootstrikers_input=='off':
+      rootstrikers_input = ''
+    
+    #TODO: rootstrikers (Waiting on details from Aaron re Mailchimp field update)
+    
+    env.mailing_list_subscriber.Subscribe(
+      email=email_input,
+      first_name=first_name, last_name=last_name,
+      amount_cents=None,
+      ip_addr=self.request.remote_addr,
+      time=datetime.datetime.now(),
+      source='subscribe',
+      zipcode=zipcode_input,
+      volunteer=volunteer_input,
+      skills=skills_input,
+      rootstrikers=rootstrikers_input,
+      )
+    
+    util.enable_cors(self)
+    redirect_input = cgi.escape(self.request.get('redirect', default_value=None))
+    if redirect_input and len(redirect_input)>0:
+      self.redirect('%s?email=%s' % (redirect_input, email_input))
+    else:
+      self.redirect('/pledge?email=%s' % email_input)
 
 class ReceiptHandler(webapp2.RequestHandler):
   def get(self, id):
@@ -268,4 +327,5 @@ HANDLERS = [
   ('/receipt/(.+)', ReceiptHandler),
   ('/r/payment_config', PaymentConfigHandler),
   ('/r/total', TotalHandler),
+  ('/r/subscribe', SubscribeHandler),
 ]
