@@ -27,8 +27,8 @@ html
           daysLeftMsg: days_left_message,
           totalCents: 0,
           init: function() {
-            $http.jsonp('/total?callback=JSON_CALLBACK').success(function(data) {
-              $scope.ctrl.totalCents = parseInt(data);
+            $http.get('/r/total').success(function(data) {
+              $scope.ctrl.totalCents = data.totalCents;
             });
           },
           moneyString: function() {
