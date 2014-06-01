@@ -60,11 +60,13 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
         target: $scope.ctrl.form.target,
         subscribe: $scope.ctrl.form.subscribe,
         amountCents: $scope.ctrl.cents(),
+        pledgeType: 'CONDITIONAL',
         team: urlParams['team'] || '',
         payment: payment
       }).success(function(data) {
         location.href = data.receipt_url;
       }).error(function() {
+        $scope.ctrl.loading = false;
         $scope.ctrl.error =
           'Oops, something went wrong. Try again in a few minutes';
       });

@@ -24,7 +24,8 @@ class Error(Exception): pass
 #      they wish to be subscribed to the mailing list.
 #   4: Pledges now have "team"s.
 #   5: Reset the total sharding counter.
-MODEL_VERSION = 5
+#   6: Pledges now have "pledge_type"s.
+MODEL_VERSION = 6
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -176,6 +177,15 @@ class Pledge(db.Model):
   # what the user is pledging for
   amountCents = db.IntegerProperty(required=True)
 
+  # Enum for what kind of pledge this is, represented as a string for
+  # readability. Valid values are:
+  #  - CONDITIONAL: only happens if we meet our goal.
+  #  - DONATION: happens regardless
+  TYPE_CONDITIONAL = 'CONDITIONAL'
+  TYPE_DONATION = 'DONATION'
+  TYPE_VALUES = [TYPE_CONDITIONAL, TYPE_DONATION]
+  pledge_type = db.StringProperty()
+
   note = db.TextProperty(required=False)
 
   # Optionally, a pledge can be assigned to a "team".
@@ -189,18 +199,20 @@ class Pledge(db.Model):
   url_nonce = db.StringProperty(required=True)
 
   @staticmethod
-  def create(email, stripe_customer_id, amount_cents, team):
+  def create(email, stripe_customer_id, amount_cents, pledge_type, team):
+    assert pledge_type in Pledge.TYPE_VALUES
     pledge = Pledge(model_version=MODEL_VERSION,
                     email=email,
                     stripeCustomer=stripe_customer_id,
                     amountCents=amount_cents,
+                    pledge_type=pledge_type,
                     team=team,
                     url_nonce=os.urandom(32).encode("hex"))
     pledge.put()
     return pledge
 
 
-def addPledge(email, stripe_customer_id, amount_cents,
+def addPledge(email, stripe_customer_id, amount_cents, pledge_type,
               first_name=None, last_name=None, occupation=None,
               employer=None, phone=None, target=None, team=None,
               mail_list_optin=None):
@@ -219,6 +231,7 @@ def addPledge(email, stripe_customer_id, amount_cents,
   return Pledge.create(email=email,
                        stripe_customer_id=stripe_customer_id,
                        amount_cents=amount_cents,
+                       pledge_type=pledge_type,
                        team=team)
 
 
@@ -237,7 +250,6 @@ class WpPledge(db.Model):
   target = db.StringProperty(required=False)
 
   url_nonce = db.StringProperty(required=True)
-
 
 
 class ChargeStatus(db.Model):
@@ -377,13 +389,7 @@ class ShardedCounter(db.Model):
     counter.count += delta
     counter.put()
 
-    # TODO(hjfreyer): Enable memcache increments.
-    #
-    # Memcache increment does nothing if the name is not a key in memcache
-    # memcache.incr(ShardedCounter._get_memcache_key(name), delta=delta)
-
-def increment_donation_total(amount):
-  ShardedCounter.increment('TOTAL-5', amount)
+    cache.IncrementShardedCounterTotal(name, delta)
 
 
 # SECONDARY MODELS

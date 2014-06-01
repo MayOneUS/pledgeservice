@@ -2,7 +2,6 @@ import datetime
 import itertools
 import json
 import logging
-import urlparse
 
 from google.appengine.api import mail
 from google.appengine.api import memcache
@@ -13,33 +12,11 @@ import env
 import handlers
 import model
 import templates
+import util
 import wp_import
-
-# These get added to every pledge calculation
-PRE_SHARDING_TOTAL = 59767534  # See model.ShardedCounter
-WP_PLEDGE_TOTAL = 41326868
-DEMOCRACY_DOT_COM_BALANCE = 9036173
-CHECKS_BALANCE = 7655200  # lol US government humor
-
 
 class Error(Exception): pass
 
-
-# Respond to /OPTION requests in a way that allows cross site requests
-# TODO(hjfreyer): Pull into some kind of middleware?
-def enable_cors(handler):
-  if 'Origin' in handler.request.headers:
-    origin = handler.request.headers['Origin']
-    _, netloc, _, _, _, _ = urlparse.urlparse(origin)
-    if not (netloc == 'mayone.us' or netloc.endswith('.mayone.us')):
-      logging.warning('Invalid origin: ' + origin)
-      handler.error(403)
-      return
-
-    handler.response.headers.add_header("Access-Control-Allow-Origin", origin)
-    handler.response.headers.add_header("Access-Control-Allow-Methods", "POST")
-    handler.response.headers.add_header("Access-Control-Allow-Headers",
-                                        "content-type, origin")
 
 # TODO(hjfreyer): Tests!!
 class ContactHandler(webapp2.RequestHandler):
@@ -58,23 +35,23 @@ class ContactHandler(webapp2.RequestHandler):
     message.to = "info@mayone.us"
     message.body = 'FROM: %s\n\n%s' % (ascii_email, ascii_body)
     message.send()
-    enable_cors(self)
+    util.EnableCors(self)
     self.response.write('Ok.')
 
   def options(self):
-    enable_cors(self)
+    util.EnableCors(self)
 
 
-#TODO(jt/hjfreyer): replicate this in handlers as /r/total, with proper JSON
+# DEPRECATED: Remove in favor of handlers.TotalHandler
 class GetTotalHandler(webapp2.RequestHandler):
   def get(self):
     team = self.request.get("team")
     if team:
       return self.getTeamTotal(team)
-    total = (PRE_SHARDING_TOTAL +
-             WP_PLEDGE_TOTAL +
-             DEMOCRACY_DOT_COM_BALANCE +
-             CHECKS_BALANCE)
+    total = (handlers.TotalHandler.PRE_SHARDING_TOTAL +
+             handlers.TotalHandler.WP_PLEDGE_TOTAL +
+             handlers.TotalHandler.DEMOCRACY_DOT_COM_BALANCE +
+             handlers.TotalHandler.CHECKS_BALANCE)
     total += model.ShardedCounter.get_count('TOTAL-5')
     total = int(total/100) * 100
     self.response.headers['Content-Type'] = 'application/javascript'
@@ -140,7 +117,7 @@ class UserUpdateHandler(webapp2.RequestHandler):
 
 class UserInfoHandler(webapp2.RequestHandler):
   def get(self, url_nonce):
-    enable_cors(self)
+    util.EnableCors(self)
     user = model.User.all().filter('url_nonce =', url_nonce).get()
     if user is None:
       self.error(404)
@@ -184,7 +161,7 @@ class UserInfoHandler(webapp2.RequestHandler):
           "zip_code": zip_code}}))
 
   def options(self):
-    enable_cors(self)
+    util.EnableCors(self)
 
 
 app = webapp2.WSGIApplication([

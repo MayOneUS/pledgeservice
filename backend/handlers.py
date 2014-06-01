@@ -4,13 +4,13 @@ from collections import namedtuple
 import datetime
 import json
 import logging
-import cgi
 
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 import validictory
 import webapp2
 
+import cache
 import model
 import templates
 import util
@@ -80,6 +80,7 @@ class PledgeHandler(webapp2.RequestHandler):
       target=_STR,
       subscribe=dict(type='boolean'),
       amountCents=dict(type='integer', minimum=100),
+      pledgeType=dict(enum=model.Pledge.TYPE_VALUES, required=False),
       team=dict(type='string', blank=True),
 
       payment=dict(type='object',
@@ -142,7 +143,9 @@ class PledgeHandler(webapp2.RequestHandler):
                              employer=data['employer'],
                              phone=data['phone'],
                              target=data['target'],
-                             team=data.get('team', ''),
+                             pledge_type=data.get(
+                               'pledgeType', model.Pledge.TYPE_CONDITIONAL),
+                             team=data['team'],
                              mail_list_optin=data['subscribe'])
 
     if data['subscribe']:
@@ -152,11 +155,14 @@ class PledgeHandler(webapp2.RequestHandler):
         amount_cents=data['amountCents'],
         ip_addr=self.request.remote_addr,
         time=datetime.datetime.now(),
-        source='pledge')
+        source='pledged')
 
-    # Add to the total asynchronously.
-    deferred.defer(model.increment_donation_total, data['amountCents'],
-                   _queue='incrementTotal')
+    # Add to the total.
+    model.ShardedCounter.increment('TOTAL-5', data['amountCents'])
+
+    if data['team']:
+      cache.IncrementTeamPledgeCount(data['team'], 1)
+      cache.IncrementTeamTotal(data['team'], data['amountCents'])
 
     format_kwargs = {
       'name': data['name'].encode('utf-8'),
@@ -179,64 +185,6 @@ class PledgeHandler(webapp2.RequestHandler):
     json.dump(dict(id=id,
                    auth_token=pledge.url_nonce,
                    receipt_url=receipt_url), self.response)
-
-class SubscribeHandler(webapp2.RequestHandler):
-  """RESTful handler for subscription requests."""
-  # https://www.pivotaltracker.com/s/projects/1075614/stories/71725060
-
-  def post(self):
-    env = self.app.config['env']
-    logging.info('body: %s' % self.request.body)
-    email_input = cgi.escape(self.request.get('email', default_value=None))
-    if email_input is None or len(email_input)==0:
-      logging.warning("Bad Request: required field (email) missing.")
-      self.error(400)
-      return
-
-    first_name = cgi.escape(self.request.get('first_name', default_value=None))
-    last_name = cgi.escape(self.request.get('last_name', default_value=None))
-
-    zipcode_input = cgi.escape(self.request.get('zip', default_value=None))
-    if zipcode_input == '':
-      zipcode_input = None
-    
-    volunteer_input = cgi.escape(self.request.get('volunteer', default_value="")) # "YES" or "NO"
-    if volunteer_input=='on':
-      volunteer_input = 'Yes'
-    elif volunteer_input=='off':
-      volunteer_input = ''
-    
-    skills_input = cgi.escape(self.request.get('skills', default_value=None)) #Free text, limited to 255 char
-    if skills_input =='':
-      skills_input = None
-    
-    rootstrikers_input = cgi.escape(self.request.get('rootstrikers', default_value='')) #Free text, limited to 255 char
-    if rootstrikers_input=='on':
-      rootstrikers_input = 'Yes'
-    elif rootstrikers_input=='off':
-      rootstrikers_input = ''
-    
-    #TODO: rootstrikers (Waiting on details from Aaron re Mailchimp field update)
-    
-    env.mailing_list_subscriber.Subscribe(
-      email=email_input,
-      first_name=first_name, last_name=last_name,
-      amount_cents=None,
-      ip_addr=self.request.remote_addr,
-      time=datetime.datetime.now(),
-      source='subscribe',
-      zipcode=zipcode_input,
-      volunteer=volunteer_input,
-      skills=skills_input,
-      rootstrikers=rootstrikers_input,
-      )
-    
-    enable_cors(self)
-    redirect_input = cgi.escape(self.request.get('redirect', default_value=None))
-    if redirect_input and len(redirect_input)>0:
-      self.redirect('%s?email=%s' % (redirect_input, email_input))
-    else:
-      self.redirect('/pledge?email=%s' % email_input)
 
 
 class ReceiptHandler(webapp2.RequestHandler):
@@ -276,9 +224,48 @@ class PaymentConfigHandler(webapp2.RequestHandler):
     json.dump(params, self.response)
 
 
+class TotalHandler(webapp2.RequestHandler):
+  # These get added to every pledge calculation
+  PRE_SHARDING_TOTAL = 59767534  # See model.ShardedCounter
+  WP_PLEDGE_TOTAL = 41326868
+  DEMOCRACY_DOT_COM_BALANCE = 9036173
+  CHECKS_BALANCE = 7655200  # lol US government humor
+
+  def get(self):
+    util.EnableCors(self)
+    total = (TotalHandler.PRE_SHARDING_TOTAL +
+             TotalHandler.WP_PLEDGE_TOTAL +
+             TotalHandler.DEMOCRACY_DOT_COM_BALANCE +
+             TotalHandler.CHECKS_BALANCE)
+    total += model.ShardedCounter.get_count('TOTAL-5')
+
+    result = dict(totalCents=total)
+
+    team = self.request.get("team")
+    if team:
+      team_pledges = cache.GetTeamPledgeCount(team) or 0
+      team_total = cache.GetTeamTotal(team) or 0
+
+      if not (team_pledges and team_total):
+        for pledge in model.Pledge.all().filter("team =", team):
+          team_pledges += 1
+          team_total += pledge.amountCents
+        cache.SetTeamPledgeCount(team, team_pledges)
+        cache.SetTeamTotal(team, team_total)
+
+      result['team'] = team
+      result['teamPledges'] = team_pledges
+      result['teamTotalCents'] = team_total
+
+    self.response.headers['Content-Type'] = 'application/json'
+    json.dump(result, self.response)
+
+  def options(self):
+    util.EnableCors(self)
+
 HANDLERS = [
   ('/r/pledge', PledgeHandler),
   ('/receipt/(.+)', ReceiptHandler),
   ('/r/payment_config', PaymentConfigHandler),
-  ('/r/subscribe', SubscribeHandler),
+  ('/r/total', TotalHandler),
 ]
