@@ -45,22 +45,31 @@ class ProdStripe(handlers.StripeBackend):
 
   def Charge(self, customer_id, amount_cents):
     stripe.api_key = self.stripe_private_key
-    charge = stripe.Charge.create(
-      amount=amount_cents,
-      currency='usd',
-      customer=customer_id,
-      statement_description='MayOne.US',
-    )
+    try:
+      charge = stripe.Charge.create(
+        amount=amount_cents,
+        currency='usd',
+        customer=customer_id,
+        statement_description='MayOne.US',
+      )
+    except stripe.CardError, e:
+      raise handlers.PaymentError(str(e))
     return charge.id
 
 
 class FakeStripe(handlers.StripeBackend):
   def CreateCustomer(self, email, card_token):
     logging.error('USING FAKE STRIPE')
-    return 'fake_1234'
+    if email == 'failure@failure.biz':
+      return 'doomed_customer'
+    else:
+      return 'fake_1234'
 
   def Charge(self, customer_id, amount_cents):
     logging.error('USING FAKE STRIPE')
+    if customer_id == 'doomed_customer':
+      raise handlers.PaymentError(
+        'You have no chance to survive make your time')
     logging.error('CHARGED CUSTOMER %s %d cents', customer_id, amount_cents)
     return 'fake_charge_1234'
 

@@ -25,7 +25,9 @@ class Error(Exception): pass
 #   4: Pledges now have "team"s.
 #   5: Reset the total sharding counter.
 #   6: Pledges now have "pledge_type"s.
-MODEL_VERSION = 6
+#   7: Adds Pledge.stripe_charge. Pledges no longer created without a successful
+#      charge. Thus, ChargeStatus is obsolete and deprecated.
+MODEL_VERSION = 7
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -168,6 +170,10 @@ class Pledge(db.Model):
   # doing a whole stripe customer per pledge.
   stripeCustomer = db.StringProperty(required=True)
 
+  # ID of a successful stripe transaction which occurred prior to creating this
+  # pledge.
+  stripe_charge_id = db.StringProperty()
+
   # when the donation occurred
   donationTime = db.DateTimeProperty(auto_now_add=True)
 
@@ -199,11 +205,13 @@ class Pledge(db.Model):
   url_nonce = db.StringProperty(required=True)
 
   @staticmethod
-  def create(email, stripe_customer_id, amount_cents, pledge_type, team):
+  def create(email, stripe_customer_id, stripe_charge_id,
+             amount_cents, pledge_type, team):
     assert pledge_type in Pledge.TYPE_VALUES
     pledge = Pledge(model_version=MODEL_VERSION,
                     email=email,
                     stripeCustomer=stripe_customer_id,
+                    stripe_charge_id=stripe_charge_id,
                     amountCents=amount_cents,
                     pledge_type=pledge_type,
                     team=team,
@@ -212,10 +220,11 @@ class Pledge(db.Model):
     return pledge
 
 
-def addPledge(email, stripe_customer_id, amount_cents, pledge_type,
-              first_name=None, last_name=None, occupation=None,
-              employer=None, phone=None, target=None, team=None,
-              mail_list_optin=None):
+def addPledge(email,
+              stripe_customer_id, stripe_charge_id,
+              amount_cents, pledge_type,
+              first_name, last_name, occupation, employer, phone,
+              target, team, mail_list_optin):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
@@ -230,6 +239,7 @@ def addPledge(email, stripe_customer_id, amount_cents, pledge_type,
 
   return Pledge.create(email=email,
                        stripe_customer_id=stripe_customer_id,
+                       stripe_charge_id=stripe_charge_id,
                        amount_cents=amount_cents,
                        pledge_type=pledge_type,
                        team=team)
