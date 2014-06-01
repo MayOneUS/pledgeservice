@@ -23,11 +23,6 @@ handlers:
   upload: static/*
   secure: always
 
-- url: /subscribe/?
-  static_files: static/subscribe.html
-  upload: static/*
-  secure: always
-
 - url: /privacy/?
   static_files: static/privacy.html
   upload: static/*
