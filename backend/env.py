@@ -114,7 +114,7 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
     amount_dollars = '{0:.02f}'.format(float(amount) / 100.0)
     merge_vars['LASTPLEDGE'] = amount_dollars
 
-  if volunteer in ['YES', 'NO']:
+  if volunteer == 'Yes':
     merge_vars['VOLN'] = volunteer
 
   if skills is not None and len(skills)>0:
