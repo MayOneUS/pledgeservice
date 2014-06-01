@@ -60,6 +60,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
         target: $scope.ctrl.form.target,
         subscribe: $scope.ctrl.form.subscribe,
         amountCents: $scope.ctrl.cents(),
+        pledgeType: 'CONDITIONAL',
         team: urlParams['team'] || '',
         payment: payment
       }).success(function(data) {

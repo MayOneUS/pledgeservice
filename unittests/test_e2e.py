@@ -54,6 +54,7 @@ class PledgeTest(BaseTest):
       target='Republicans Only',
       subscribe=True,
       amountCents=4200,
+      pledgeType='CONDITIONAL',
       team='rocket',
       payment=dict(
         STRIPE=dict(
@@ -312,6 +313,22 @@ www.MayOne.us
       teamPledges=2,
       teamTotalCents=8400,
     ), resp.json)
+
+  def testNoPledgeType(self):
+    del self.pledge['pledgeType']
+    resp = self.makeDefaultRequest()
+    pledge = db.get(resp.json['id'])
+    self.assertEquals('CONDITIONAL', pledge.pledge_type)
+
+  def testDonation(self):
+    self.pledge['pledgeType'] = 'DONATION'
+    resp = self.makeDefaultRequest()
+    pledge = db.get(resp.json['id'])
+    self.assertEquals('DONATION', pledge.pledge_type)
+
+  def testBadType(self):
+    self.pledge['pledgeType'] = 'ALL_FOR_ME'
+    self.app.post_json('/r/pledge', self.pledge, status=400)
 
   def testReceipt_404(self):
     self.app.get('/receipt/foobar', status=404)

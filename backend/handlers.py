@@ -80,6 +80,7 @@ class PledgeHandler(webapp2.RequestHandler):
       target=_STR,
       subscribe=dict(type='boolean'),
       amountCents=dict(type='integer', minimum=100),
+      pledgeType=dict(enum=model.Pledge.TYPE_VALUES, required=False),
       team=dict(type='string', blank=True),
 
       payment=dict(type='object',
@@ -142,6 +143,8 @@ class PledgeHandler(webapp2.RequestHandler):
                              employer=data['employer'],
                              phone=data['phone'],
                              target=data['target'],
+                             pledge_type=data.get(
+                               'pledgeType', model.Pledge.TYPE_CONDITIONAL),
                              team=data['team'],
                              mail_list_optin=data['subscribe'])
 
