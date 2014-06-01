@@ -8,3 +8,4 @@ def ConstantTimeIsEqual(a, b):
   for x, y in zip(a, b):
     acc |= ord(x) ^ ord(y)
   return acc == 0
+  
