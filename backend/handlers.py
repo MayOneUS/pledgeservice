@@ -245,9 +245,10 @@ class SubscribeHandler(webapp2.RequestHandler):
     util.EnableCors(self)
     redirect_input = cgi.escape(self.request.get('redirect', default_value=None))
     if redirect_input and len(redirect_input)>0:
-      self.redirect('%s?email=%s' % (redirect_input, email_input))
+      redirect_url = '%s?email=%s' % (redirect_input, email_input)
     else:
-      self.redirect('/pledge?email=%s' % email_input)
+      redirect_url = '/pledge?email=%s' % email_input
+    self.redirect(str(redirect_url))
 
 class ReceiptHandler(webapp2.RequestHandler):
   def get(self, id):
