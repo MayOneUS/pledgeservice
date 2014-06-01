@@ -65,10 +65,16 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
         payment: payment
       }).success(function(data) {
         location.href = data.receipt_url;
-      }).error(function() {
+      }).error(function(data) {
         $scope.ctrl.loading = false;
-        $scope.ctrl.error =
-          'Oops, something went wrong. Try again in a few minutes';
+
+        if ('paymentError' in data) {
+          $scope.ctrl.error = "We're having trouble charging your card: " +
+            data.paymentError;
+        } else {
+          $scope.ctrl.error =
+            'Oops, something went wrong. Try again in a few minutes';
+        }
       });
     }
   };
