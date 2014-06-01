@@ -243,8 +243,8 @@ class SubscribeHandler(webapp2.RequestHandler):
       )
     
     util.EnableCors(self)
-    redirect_input = cgi.escape(self.request.get('redirect', default_value=None))
-    if redirect_input and len(redirect_input)>0:
+    redirect_input = cgi.escape(self.request.get('redirect'))
+    if len(redirect_input)>0:
       redirect_url = '%s?email=%s' % (redirect_input, email_input)
     else:
       redirect_url = '/pledge?email=%s' % email_input
