@@ -239,7 +239,7 @@ class SubscribeHandler(webapp2.RequestHandler):
       rootstrikers=rootstrikers_input,
       )
     
-    util.enable_cors(self)
+    util.EnableCors(self)
     redirect_input = cgi.escape(self.request.get('redirect', default_value=None))
     if redirect_input and len(redirect_input)>0:
       self.redirect('%s?email=%s' % (redirect_input, email_input))
