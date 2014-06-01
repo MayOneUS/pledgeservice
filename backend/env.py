@@ -70,7 +70,7 @@ class MailchimpSubscriber(handlers.MailingListSubscriber):
                 source, zipcode=None, volunteer=None, skills=None):
     deferred.defer(_subscribe_to_mailchimp,
                    email, first_name, last_name,
-                   amount_cents, ip_addr, 'pledge', zipcode, volunteer, skills)
+                   amount_cents, ip_addr, source, zipcode, volunteer, skills)
 
 
 class FakeSubscriber(handlers.MailingListSubscriber):
