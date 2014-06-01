@@ -210,6 +210,12 @@ class SubscribeHandler(webapp2.RequestHandler):
     if skills_input =='':
       skills_input = None
     
+    rootstrikers_input = cgi.escape(self.request.get('rootstrikers', default_value='')) #Free text, limited to 255 char
+    if rootstrikers_input=='on':
+      rootstrikers_input = 'Yes'
+    elif rootstrikers_input=='off':
+      rootstrikers_input = ''
+    
     #TODO: rootstrikers (Waiting on details from Aaron re Mailchimp field update)
     
     env.mailing_list_subscriber.Subscribe(
@@ -221,10 +227,15 @@ class SubscribeHandler(webapp2.RequestHandler):
       source='subscribe',
       zipcode=zipcode_input,
       volunteer=volunteer_input,
-      skills=skills_input
+      skills=skills_input,
+      rootstrikers=rootstrikers_input,
       )
 
-    self.redirect('/pledge')
+    redirect_input = cgi.escape(self.request.get('redirect', default_value=None))
+    if redirect_input and len(redirect_input)>0:
+      self.redirect(redirect_input)
+    else:
+      self.redirect('/pledge')
 
 
 class ReceiptHandler(webapp2.RequestHandler):

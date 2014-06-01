@@ -67,10 +67,10 @@ class FakeStripe(handlers.StripeBackend):
 
 class MailchimpSubscriber(handlers.MailingListSubscriber):
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
-                source, zipcode=None, volunteer=None, skills=None):
+                source, zipcode=None, volunteer=None, skills=None, rootstrikers=None):
     deferred.defer(_subscribe_to_mailchimp,
                    email, first_name, last_name,
-                   amount_cents, ip_addr, source, zipcode, volunteer, skills)
+                   amount_cents, ip_addr, source, zipcode, volunteer, skills, rootstrikers)
 
 
 class FakeSubscriber(handlers.MailingListSubscriber):
@@ -95,7 +95,7 @@ def _send_mail(to, subject, text_body, html_body):
 
 
 def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
-                            amount, request_ip, source, zipcode=None, volunteer=None, skills=None):
+                            amount, request_ip, source, zipcode=None, volunteer=None, skills=None, rootstrikers=None):
   mailchimp_api_key = model.Config.get().mailchimp_api_key
   mailchimp_list_id = model.Config.get().mailchimp_list_id
   mc = mailchimp.Mailchimp(mailchimp_api_key)
@@ -122,6 +122,9 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
 
   if zipcode is not None:
     merge_vars['ZIPCODE'] = zipcode
+  
+  if rootstrikers is not None:
+    merge_vars['ROOTS'] = rootstrikers
 
   # list ID and email struct
   mc.lists.subscribe(id=mailchimp_list_id,
