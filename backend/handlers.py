@@ -152,7 +152,7 @@ class PledgeHandler(webapp2.RequestHandler):
         amount_cents=data['amountCents'],
         ip_addr=self.request.remote_addr,
         time=datetime.datetime.now(),
-        source='pledged')
+        source='pledge')
 
     # Add to the total asynchronously.
     deferred.defer(model.increment_donation_total, data['amountCents'],
@@ -200,11 +200,11 @@ class SubscribeHandler(webapp2.RequestHandler):
     if zipcode_input == '':
       zipcode_input = None
     
-    volunteer_input = cgi.escape(self.request.get('volunteer', default_value="NO")) # "YES" or "NO"
+    volunteer_input = cgi.escape(self.request.get('volunteer', default_value="")) # "YES" or "NO"
     if volunteer_input=='on':
-      volunteer_input = 'YES'
+      volunteer_input = 'Yes'
     elif volunteer_input=='off':
-      volunteer_input = 'NO'
+      volunteer_input = ''
     
     skills_input = cgi.escape(self.request.get('skills', default_value=None)) #Free text, limited to 255 char
     if skills_input =='':
@@ -218,7 +218,7 @@ class SubscribeHandler(webapp2.RequestHandler):
       amount_cents=None,
       ip_addr=self.request.remote_addr,
       time=datetime.datetime.now(),
-      source='subscribed',
+      source='subscribe',
       zipcode=zipcode_input,
       volunteer=volunteer_input,
       skills=skills_input
