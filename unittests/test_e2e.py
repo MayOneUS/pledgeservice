@@ -94,7 +94,7 @@ class PledgeTest(BaseTest):
                    last_name='Chu',
                    amount_cents=4200, ip_addr=None,  # Not sure why this is None
                                                      # in unittests.
-                   time=mox.IsA(datetime.datetime), source='pledged')
+                   time=mox.IsA(datetime.datetime), source='pledge')
 
   def expectMailSend(self):
     self.mail_sender.Send(to=mox.IsA(str), subject=mox.IsA(str),

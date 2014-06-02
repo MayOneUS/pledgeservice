@@ -1,0 +1,26 @@
+doctype html
+html
+  head
+    include includes/head
+    script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
+  body(ng-app="mayOne", ng-controller="IndexController",ng-init="ctrl.init()")#index
+    include includes/header
+    p Subscribe to the MayDayPAC Mailing List
+    form(name="subscribe", action="/r/subscribe", method="post")
+      input(id="redirect_input", type="hidden", name="redirect", value="https://mayone.us/homepage_redesign/subscribe")
+      label(for="email_input") Email
+      input(id="email_input",type="text", name="email")
+      label(for="first_name_input") First Name
+      input(id="first_name_input", type="text", name="first_name")
+      label(for="last_name_input") Last Name
+      input(id="last_name_input", type="text", name="last_name")
+      label(for="zip_input") Zip Code
+      input(id="zip_input", type="text", name="zip")
+      label(for="volunteer_input") Are You Able to Volunteer?
+      input(id="volunteer_input", type="checkbox", name="volunteer", onclick="document.getElementById('skills_section').style.display = 'block';")
+      div(id="skills_section", style="display:none")
+        label(for="skills_input") Do you have any specific skills that can help us with organizing? (Both technical and non-technical!)
+        input(id="skills_input", type="text", name="skills")
+      label(for="rootstrikers_input") Would you like to also subscribe to the Rootstrikers Mailinglist?
+      input(id="rootstrikers_input", type="checkbox", name="rootstrikers")
+      button(type="submit") Subscribe

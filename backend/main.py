@@ -139,6 +139,7 @@ class UserInfoHandler(webapp2.RequestHandler):
       self.response.write("user not found")
       return
 
+    stripe.api_key = env.get_env().stripe_backend.stripe_private_key
     cus = stripe.Customer.retrieve(biggest_pledge.stripeCustomer)
     if len(cus.cards.data) == 0:
       self.error(404)
@@ -157,6 +158,7 @@ class UserInfoHandler(webapp2.RequestHandler):
     self.response.write(json.dumps({
         "user": {
           "name": user_name,
+          "email": user.email,
           "pledge_amount_cents": biggest_amount,
           "zip_code": zip_code}}))
 
