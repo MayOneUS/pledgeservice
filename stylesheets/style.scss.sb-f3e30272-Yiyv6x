@@ -1,18 +1,18 @@
 @import "_entypo";
 
 html, body {
-    font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    font-family: "Oswald", arial, sans-serif;
     margin: 0;
     -webkit-font-smoothing: antialiased;
     box-sizing: border-box;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    font-family: "Oswald", arial, sans-serif;
 }
 p, div {
-    font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
-    font-size: 16px;
+    font-family: "Lato", arial, sans-serif;
+    font-size: 17px;
 }
 
 .spacing {
@@ -58,7 +58,7 @@ p, div {
         text-align: center;
         margin: 20px auto 20px auto;
 
-        font: 200 25px/29px;
+        font: 200 25px/29px 'Oswald', sans-serif;
         text-shadow: 0px 0px 10px rgba(0,0,0,0.5);
 
         color: #fff9fb;
@@ -359,6 +359,7 @@ header {
 }
 
 footer {
+    font-family: "Oswald", arial, sans-serif;
     text-align: center;
     color: #adadad;
     .social {
