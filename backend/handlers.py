@@ -255,7 +255,7 @@ class SubscribeHandler(webapp2.RequestHandler):
       skills=skills_input,
       rootstrikers=rootstrikers_input,
       )
-    
+
     util.EnableCors(self)
     redirect_input = cgi.escape(self.request.get('redirect'))
     if len(redirect_input)>0:
@@ -279,6 +279,12 @@ class ReceiptHandler(webapp2.RequestHandler):
       self.response.write('Not found')
       return
 
+    user = User.get_by_key_name(pledge.email)
+    if user is None:
+      logging.warning('pledge had missing user: %r, %r', id, pledge.email)
+      self.error(404)
+      self.response.write('Not found')
+
     auth_token = self.request.get('auth_token')
     if not util.ConstantTimeIsEqual(auth_token, pledge.url_nonce):
       self.error(403)
@@ -286,7 +292,7 @@ class ReceiptHandler(webapp2.RequestHandler):
       return
 
     template = templates.GetTemplate('receipt.html')
-    self.response.write(template.render(dict(pledge=pledge)))
+    self.response.write(template.render(dict(pledge=pledge, user=user)))
 
 
 class PaymentConfigHandler(webapp2.RequestHandler):
