@@ -136,6 +136,7 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
     merge_vars['ROOTS'] = rootstrikers
 
   # list ID and email struct
+  logging.info('Subscribing: %', email_to_subscribe)
   mc.lists.subscribe(id=mailchimp_list_id,
                      email=dict(email=email_to_subscribe),
                      merge_vars=merge_vars,
