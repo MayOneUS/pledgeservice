@@ -279,7 +279,7 @@ class ReceiptHandler(webapp2.RequestHandler):
       self.response.write('Not found')
       return
 
-    user = User.get_by_key_name(pledge.email)
+    user = model.User.get_by_key_name(pledge.email)
     if user is None:
       logging.warning('pledge had missing user: %r, %r', id, pledge.email)
       self.error(404)
