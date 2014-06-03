@@ -6,7 +6,7 @@ But may I ask for one more favor?
 
 We will only win if people like you recruit others to join our experiment. Can you create your own personal pledge page on http://MAYDAY.US and recruit five friends to make a pledge?
 
-You can instantly create your personal pledge page by going to https://my.mayday.us/dashboard/new_from_pledge/{{user_url_nonce}}
+You can instantly create your personal pledge page by going to https://my.mayday.us/dashboard/new_from_pledge/{user_url_nonce}
 
 This is just the beginning. But if we can succeed as we have so far, then by 2016, we will have taken the first critical step to getting our democracy back.
 
