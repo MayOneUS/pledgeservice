@@ -17,19 +17,18 @@ html
         .col-md-8
           .row
             .col-md-12
-              h2 Two ways to give
-
-              h3 Pledge
+              h2 We are running an all or nothing campaign.
               p.
-                We are running an all or nothing campaign. If we don't meet our
-                targets, you don't get charged. That way, you know that you will
-                only be charged if there's enough money collected to make a
-                difference. So if we fail to meet our goal of $1M by June 1st
-                for the first round, or $5M by July 1st for the second round,
-                your pledge will not be collected, and your card will not be
-                charged.
+                If we don't meet our target, you don't pay. That way, you know
+                that you will only pledge if there's enough money collected to
+                make a difference. We'll charge your card now, but if we fail to
+                meet our $5M goal by July 4th, your pledge will be refunded, and
+                we go back to the drawing board.
 
-              p Use this form to pledge.
+              p.
+                Some supporters may prefer to pledge regardless of whether we
+                meet our goal or not. If you choose that option below, we'll do
+                our best to make your donation count no matter what happens.
 
               form(role="form", method="POST", ng-submit="ctrl.pledge()")
                 .form-group.col-sm-6
@@ -64,33 +63,19 @@ html
                     span.input-group-addon $
                     input.form-control(type="number", required, min="1",
                       ng-model="ctrl.form.amount")
-
                 .form-group.col-sm-9
+                  .checkbox
+                    label <input type="checkbox" ng-model="ctrl.form.conditional"> Refund my pledge if the $5M goal is not met by July 4th.
                   .checkbox
                     label <input type="checkbox" ng-model="ctrl.form.subscribe"> Want to know how we're using the money? Sign up for emails from us.
                 .form-group.col-sm-3
                   button.form-control.input-lg.btn.btn-lg.btn-danger(
                       ng-disabled="ctrl.loading")
                     .spinner(ng-show="ctrl.loading")
-                    span(ng-show="ctrl.paymentConfig.testMode") TEST&nbsp;
+
                     span(ng-hide="ctrl.loading") Pledge
           .row
             .col-md-12
-              h3 Donate Directly
-              p.
-                Some supporters may prefer to donate.  Donations are
-                collected <em>immediately</em>, whether or not we
-                successfully meet our goal. We use a 3rd party
-                service, Democracy.com, to collect those donations.
-                Donations <em>do</em> add to the pledge total for the
-                purposes of finding out whether we have met our
-                all-or-nothing pledge goals, though they will not show
-                up on the progress bar immediately.
-              p Click this big friendly button to donate directly.
-              a(href="http://democracy.com/MayOne/donate.aspx#form",
-                onClick="ga('send', 'event', 'button', 'click', 'donateDirectly')")
-                img(src="//mayone.us/wp-content/uploads/2014/05/donatebutton2-1.jpg")
-
               h3 Other methods of payment
               p.
                 If you wish to <a
@@ -103,7 +88,7 @@ html
                 and we are currently working on building that
                 infrastructure.  Stay tuned.
 
-        #rules.col-md-4
+        #rules.well.col-md-4
           h2 Contribution Rules:
 
           p In order to contribute, all of the following statements must be true:

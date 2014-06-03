@@ -8,17 +8,17 @@ var LOCAL_CONFIG = {
 
 var DEV_CONFIG = {
   appName: 'pure-spring-568',
-  appVersion: '1',
+  appVersion: 'relaunch',
 };
 
 var STAGING_CONFIG = {
   appName: 'mayday-pac',
-  appVersion: 'staging',
+  appVersion: 'relaunch-staging',
 };
 
 var PROD_CONFIG = {
   appName: 'mayday-pac',
-  appVersion: '1',
+  appVersion: 'relaunch-prod',
 };
 
 var preprocessAppYaml = function(config) {

@@ -75,6 +75,18 @@ class PledgeTest(BaseTest):
       card_token=self.pledge['payment']['STRIPE']['token']) \
                .AndReturn('cust_4321')
 
+    self.stripe.Charge('cust_4321', self.pledge['amountCents']) \
+               .AndReturn('charge_2468')
+
+  def expectStripeDeclined(self):
+    self.stripe.CreateCustomer(
+      email=self.pledge['email'],
+      card_token=self.pledge['payment']['STRIPE']['token']) \
+               .AndReturn('cust_4321')
+
+    self.stripe.Charge('cust_4321', self.pledge['amountCents']) \
+               .AndRaise(handlers.PaymentError('You got no money'))
+
   def expectSubscribe(self):
     self.mailing_list_subscriber \
         .Subscribe(email=self.pledge['email'],
@@ -109,6 +121,7 @@ class PledgeTest(BaseTest):
     self.assertEquals(4200, pledge.amountCents)
     self.assertEquals(resp.json['auth_token'], pledge.url_nonce)
     self.assertEquals('cust_4321', pledge.stripeCustomer)
+    self.assertEquals('charge_2468', pledge.stripe_charge_id)
     self.assertEquals('rocket', pledge.team)
 
     user = model.User.get_by_key_name('pika@pokedex.biz')
@@ -125,6 +138,15 @@ class PledgeTest(BaseTest):
     assertEqualsSampleProperty('subscribe', user.mail_list_optin)
     assert user.url_nonce
     assert not user.from_import
+
+  def testCreateChargeFailure(self):
+    self.assertEquals(0, model.Pledge.all().count())
+
+    self.expectStripeDeclined()
+    self.mockery.ReplayAll()
+
+    resp = self.app.post_json('/r/pledge', self.pledge, status=400)
+    self.assertEquals('You got no money', resp.json['paymentError'])
 
   def testSubscribes(self):
     self.expectStripe()

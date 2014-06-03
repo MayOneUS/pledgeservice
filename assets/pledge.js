@@ -29,6 +29,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       employer: '',
       target: 'Whatever Helps',
       amount: 0,
+      conditional: true,
       subscribe: true
     },
     error: '',
@@ -51,6 +52,9 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
     createPledge: function(name, payment) {
       var urlParams = getUrlParams();
 
+      var pledgeType =
+            $scope.ctrl.form.conditional ? 'CONDITIONAL' : 'DONATION';
+
       $http.post('/r/pledge', {
         email: $scope.ctrl.form.email,
         phone: $scope.ctrl.form.phone,
@@ -60,15 +64,21 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
         target: $scope.ctrl.form.target,
         subscribe: $scope.ctrl.form.subscribe,
         amountCents: $scope.ctrl.cents(),
-        pledgeType: 'CONDITIONAL',
+        pledgeType: pledgeType,
         team: urlParams['team'] || '',
         payment: payment
       }).success(function(data) {
         location.href = data.receipt_url;
-      }).error(function() {
+      }).error(function(data) {
         $scope.ctrl.loading = false;
-        $scope.ctrl.error =
-          'Oops, something went wrong. Try again in a few minutes';
+
+        if ('paymentError' in data) {
+          $scope.ctrl.error = "We're having trouble charging your card: " +
+            data.paymentError;
+        } else {
+          $scope.ctrl.error =
+            'Oops, something went wrong. Try again in a few minutes';
+        }
       });
     }
   };

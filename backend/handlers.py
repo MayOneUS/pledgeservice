@@ -38,6 +38,9 @@ Environment = namedtuple(
     'mail_sender',
   ])
 
+class PaymentError(Exception):
+  pass
+
 
 class StripeBackend(object):
   """Interface which contacts stripe."""
@@ -98,6 +101,7 @@ class PledgeHandler(webapp2.RequestHandler):
 
   def post(self):
     """Create a new pledge, and update user info."""
+    self.response.headers['Content-Type'] = 'application/json'
     env = self.app.config['env']
 
     try:
@@ -118,9 +122,18 @@ class PledgeHandler(webapp2.RequestHandler):
 
     # Do any server-side processing the payment processor needs.
     stripe_customer_id = None
+    stripe_charge_id = None
     if 'STRIPE' in data['payment']:
       stripe_customer_id = env.stripe_backend.CreateCustomer(
         email=data['email'], card_token=data['payment']['STRIPE']['token'])
+      try:
+        stripe_charge_id = env.stripe_backend.Charge(stripe_customer_id,
+                                                     data['amountCents'])
+      except PaymentError, e:
+        logging.warning('Payment error: %s', e)
+        self.error(400)
+        json.dump(dict(paymentError=str(e)), self.response)
+        return
     else:
       logging.warning('No payment processor specified: %s', data)
       self.error(400)
@@ -138,6 +151,7 @@ class PledgeHandler(webapp2.RequestHandler):
 
     pledge = model.addPledge(email=data['email'],
                              stripe_customer_id=stripe_customer_id,
+                             stripe_charge_id=stripe_charge_id,
                              amount_cents=data['amountCents'],
                              first_name=first_name,
                              last_name=last_name,
@@ -183,7 +197,6 @@ class PledgeHandler(webapp2.RequestHandler):
     id = str(pledge.key())
     receipt_url = '/receipt/%s?auth_token=%s' % (id, pledge.url_nonce)
 
-    self.response.headers['Content-Type'] = 'application/json'
     json.dump(dict(id=id,
                    auth_token=pledge.url_nonce,
                    receipt_url=receipt_url), self.response)
