@@ -1,12 +1,12 @@
 Dear {name}:
 
-Thank you for your pledge to the MaydayPAC. We are grateful for the support to make it possible for us to win back our democracy.
+Thank you for your pledge to MAYDAY.US. We are grateful for the support to make it possible for us to win back our democracy.
 
 But may I ask for one more favor?
 
-We will only win if we find 100 people for every person like you. It would be incredibly helpful if you could help us recruit them, ideally by sharing the link to the MayOne.US site. We've crafted something simple to copy and paste below. Or you can like us on our Facebook Page[1], or follow @MayOneUS[2] on Twitter.
+We will only win if people like you recruit others to join our experiment. Can you create your own personal pledge page on http://MAYDAY.US and recruit five friends to make a pledge?
 
-We'd be grateful for your feedback and ideas for how we can spread this message broadly. We're watching the social media space for #MaydayPAC, or you can email your ideas to info@mayone.us.
+You can instantly create your personal pledge page by going to https://my.mayday.us/dashboard/new_from_pledge/{{user_url_nonce}}
 
 This is just the beginning. But if we can succeed as we have so far, then by 2016, we will have taken the first critical step to getting our democracy back.
 
@@ -15,16 +15,12 @@ This email serves as your receipt for your pledge of: {total}
 Thank you again,
 
 Lessig
-lessig@mayone.us
 
-Suggested text:
+P.S. Hee's another really simple way to help -- just share the suggested text below with your Facebook and Twitter following:
 
-I just supported a SuperPAC to end all SuperPACs — the #MaydayPAC, citizen-funded through a crowd-funded campaign. You can check it out here: http://mayone.us.
-
-[1] https://www.facebook.com/mayonedotus
-[2] https://twitter.com/MayOneUS
+I just supported #MAYDAYUS, a crowdfunded, kickstarted campaign to reclaim our democracy. You can check it out here: http://mayday.us.
 
 ----------------------
 Paid for by MayDay PAC
 Not authorized by any candidate or candidate’s committee
-www.MayOne.us
+www.mayday.us

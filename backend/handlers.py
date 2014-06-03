@@ -149,7 +149,7 @@ class PledgeHandler(webapp2.RequestHandler):
     else:
       last_name = name_parts[1]
 
-    pledge = model.addPledge(email=data['email'],
+    user, pledge = model.addPledge(email=data['email'],
                              stripe_customer_id=stripe_customer_id,
                              stripe_charge_id=stripe_charge_id,
                              amount_cents=data['amountCents'],
@@ -183,7 +183,8 @@ class PledgeHandler(webapp2.RequestHandler):
     format_kwargs = {
       'name': data['name'].encode('utf-8'),
       'url_nonce': pledge.url_nonce,
-      'total': '$%d' % int(data['amountCents'] / 100)
+      'total': '$%d' % int(data['amountCents'] / 100),
+      'user_url_nonce': user.url_nonce
     }
 
     text_body = open('email/thank-you.txt').read().format(**format_kwargs)

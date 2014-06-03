@@ -232,12 +232,12 @@ def addPledge(email,
   @return: the pledge
   """
   # first, let's find the user by email
-  User.createOrUpdate(
+  user = User.createOrUpdate(
     email=email, first_name=first_name, last_name=last_name,
     occupation=occupation, employer=employer, phone=phone, target=target,
     mail_list_optin=mail_list_optin)
 
-  return Pledge.create(email=email,
+  return user, Pledge.create(email=email,
                        stripe_customer_id=stripe_customer_id,
                        stripe_charge_id=stripe_charge_id,
                        amount_cents=amount_cents,

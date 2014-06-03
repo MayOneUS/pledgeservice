@@ -435,3 +435,71 @@ body#embed {
 }
 
 @import "responsive";
+
+@media all and (max-width: 650px) {
+  .flag-header h1 {
+    font-size: 45px;
+  }
+}
+
+@media all and (max-width: 650px) {
+  .flag-header {
+    text-align: center;
+  }
+  .flag-header .top-menu {
+    width: 100%;
+  }
+  .flag-header h1 {
+    font-size: 55px;
+  }
+  .flag-header h2 {
+    display:none;
+  }
+}
+.flag-header {
+  background: #204659 url(flag-header.jpg) center top;
+  height: 158px;
+}
+.flag-header * {
+  font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+}
+
+.flag-header h1 {
+  text-transform: uppercase;
+  color: #fff;
+  font-size: 77px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  margin-bottom: 0;
+}
+.flag-header h1 span {
+  font-weight: 300;
+}
+.flag-header h2 {
+  color: #fff;
+  font-size: 25px;
+  font-weight: 300;
+  margin-top: 0;
+}
+.flag-header .top-menu a {
+  color: #FFF;
+  display: inline-block;
+  margin: 1em;
+  font-weight: 900;
+}
+.flag-header .top-menu a span {
+  font-weight: 300;
+}
+.flag-header .top-menu a:hover {
+  color: #FFF;
+  display: inline-block;
+  margin: 1em;
+  font-weight: 900;
+  text-decoration: underline;
+}
+.flag-header .top-menu button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font: inherit;
+}
