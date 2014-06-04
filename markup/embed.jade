@@ -21,7 +21,10 @@ html
       myApp.controller('IndexController',
                        ['$scope', '$http', function($scope, $http) {
 
-        var days_left_message = '18 days early';
+        var date_its_over = Date.UTC(2014,06,05,6,00,00,00);
+        var days_left = Math.floor((date_its_over - Date.now())/(1000*24*60*60));
+
+        var days_left_message = days_left + ' days left';
 
         $scope.ctrl = {
           daysLeftMsg: days_left_message,
@@ -32,7 +35,7 @@ html
             });
           },
           moneyString: function() {
-            return '$' + addCommas(Math.floor($scope.ctrl.totalCents / 100)) +
+            return '$' + addCommas(Math.floor($scope.ctrl.totalCents / 100) - 1000000) +
                 " raised";
           },
           percentFunded: function() {
@@ -40,7 +43,7 @@ html
           },
           percent: function() {
             // Times 100 divided by 100
-            return Math.floor($scope.ctrl.totalCents / 1000000);
+            return Math.floor(($scope.ctrl.totalCents - 100000000) / 5000000);
           },
           percentWidth: function() { return Math.min(100, $scope.ctrl.percent()); }
         };
