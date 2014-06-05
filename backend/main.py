@@ -51,7 +51,8 @@ class GetTotalHandler(webapp2.RequestHandler):
     total = (handlers.TotalHandler.PRE_SHARDING_TOTAL +
              handlers.TotalHandler.WP_PLEDGE_TOTAL +
              handlers.TotalHandler.DEMOCRACY_DOT_COM_BALANCE +
-             handlers.TotalHandler.CHECKS_BALANCE)
+             handlers.TotalHandler.CHECKS_BALANCE +
+             handlers.TotalHandler.STRETCH_GOAL_MATCH)
     total += model.ShardedCounter.get_count('TOTAL-5')
     total = int(total/100) * 100
     self.response.headers['Content-Type'] = 'application/javascript'
