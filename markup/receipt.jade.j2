@@ -10,6 +10,8 @@ html
         revenue: {{pledge.amountCents}} / 100.0,
       });
       ga('ecommerce:send');
+      window.optimizely = window.optimizely || [];
+      window.optimizely.push(['trackEvent', 'pledged', {'revenue': {{pledge.amountCents}}}]);
 
   body#privacy
     include includes/header

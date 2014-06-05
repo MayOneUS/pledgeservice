@@ -309,17 +309,19 @@ class PaymentConfigHandler(webapp2.RequestHandler):
 
 class TotalHandler(webapp2.RequestHandler):
   # These get added to every pledge calculation
+  STRETCH_GOAL_MATCH = 10000000
   PRE_SHARDING_TOTAL = 59767534  # See model.ShardedCounter
   WP_PLEDGE_TOTAL = 41326868
-  DEMOCRACY_DOT_COM_BALANCE = 9036173
-  CHECKS_BALANCE = 7655200  # lol US government humor
+  DEMOCRACY_DOT_COM_BALANCE = 9951173
+  CHECKS_BALANCE = 9065700  # lol US government humor
 
   def get(self):
     util.EnableCors(self)
     total = (TotalHandler.PRE_SHARDING_TOTAL +
              TotalHandler.WP_PLEDGE_TOTAL +
              TotalHandler.DEMOCRACY_DOT_COM_BALANCE +
-             TotalHandler.CHECKS_BALANCE)
+             TotalHandler.CHECKS_BALANCE + 
+             TotalHandler.STRETCH_GOAL_MATCH)
     total += model.ShardedCounter.get_count('TOTAL-5')
 
     result = dict(totalCents=total)
