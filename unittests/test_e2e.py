@@ -66,8 +66,9 @@ class PledgeTest(BaseTest):
     handlers.TotalHandler.WP_PLEDGE_TOTAL = 11
     handlers.TotalHandler.DEMOCRACY_DOT_COM_BALANCE = 12
     handlers.TotalHandler.CHECKS_BALANCE = 13
+    handlers.TotalHandler.STRETCH_GOAL_MATCH = 14
 
-    self.balance_baseline = 46
+    self.balance_baseline = 60
 
   def expectStripe(self):
     self.stripe.CreateCustomer(
