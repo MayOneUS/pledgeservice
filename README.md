@@ -85,3 +85,13 @@ if you're unsure.
 If you're pushing to prod, please tag the commit you're pushing with the next available "v1,v2,v3,..." tag,
 and remember to git push --tags. That way if we need to roll back we have a sense of what used to be in
 production.
+
+Troubleshooting
+---------------
+npm start    generates an out of files error, and prints a lot of messages like this:
+             Warning: EMFILE: Too many opened files.
+
+  You probably have an orphan app engine process running.  Try looking for and
+  killing any child processes.  Worst case, you may need to increase your inotify
+  maximums; you can do that on a Linux system with this command:
+    echo 1024 > /proc/sys/fs/inotify/max_user_instances

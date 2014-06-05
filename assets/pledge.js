@@ -29,7 +29,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       employer: '',
       target: 'Whatever Helps',
       amount: 0,
-      conditional: true,
+      unconditional: false,
       subscribe: true
     },
     error: '',
@@ -53,7 +53,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       var urlParams = getUrlParams();
 
       var pledgeType =
-            $scope.ctrl.form.conditional ? 'CONDITIONAL' : 'DONATION';
+            $scope.ctrl.form.unconditional ? 'DONATION' : 'CONDITIONAL';
 
       $http.post('/r/pledge', {
         email: $scope.ctrl.form.email,
