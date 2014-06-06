@@ -131,7 +131,7 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
     merge_vars['VOLN'] = volunteer
 
   if nonce is not None:
-    merge_vars['NONCE'] = nonce
+    merge_vars['UUT'] = nonce
 
   if skills is not None and len(skills)>0:
     merge_vars['SKILLS'] = skills[0:255]
