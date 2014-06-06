@@ -76,10 +76,12 @@ class FakeStripe(handlers.StripeBackend):
 
 class MailchimpSubscriber(handlers.MailingListSubscriber):
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
-                source, zipcode=None, volunteer=None, skills=None, rootstrikers=None):
+                source, zipcode=None, volunteer=None, skills=None, rootstrikers=None,
+                nonce=None):
     deferred.defer(_subscribe_to_mailchimp,
                    email, first_name, last_name,
-                   amount_cents, ip_addr, source, zipcode, volunteer, skills, rootstrikers)
+                   amount_cents, ip_addr, source, zipcode,
+                   volunteer, skills, rootstrikers, nonce)
 
 
 class FakeSubscriber(handlers.MailingListSubscriber):
@@ -104,7 +106,9 @@ def _send_mail(to, subject, text_body, html_body):
 
 
 def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
-                            amount, request_ip, source, zipcode=None, volunteer=None, skills=None, rootstrikers=None):
+                            amount, request_ip, source, zipcode=None,
+                            volunteer=None, skills=None, rootstrikers=None,
+                            nonce=None):
   mailchimp_api_key = model.Config.get().mailchimp_api_key
   mailchimp_list_id = model.Config.get().mailchimp_list_id
   mc = mailchimp.Mailchimp(mailchimp_api_key)
@@ -125,6 +129,9 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
 
   if volunteer == 'Yes':
     merge_vars['VOLN'] = volunteer
+
+  if nonce is not None:
+    merge_vars['UUT'] = nonce
 
   if skills is not None and len(skills)>0:
     merge_vars['SKILLS'] = skills[0:255]
