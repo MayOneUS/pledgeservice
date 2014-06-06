@@ -172,7 +172,7 @@ class PledgeHandler(webapp2.RequestHandler):
         ip_addr=self.request.remote_addr,
         time=datetime.datetime.now(),
         source='pledge',
-        nonce=pledge.url_nonce)
+        nonce=user.url_nonce)
 
     # Add to the total.
     model.ShardedCounter.increment('TOTAL-5', data['amountCents'])
