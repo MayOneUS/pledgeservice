@@ -286,11 +286,13 @@ class ReceiptHandler(webapp2.RequestHandler):
       self.error(404)
       self.response.write('Not found')
 
-    auth_token = self.request.get('auth_token')
-    if not util.ConstantTimeIsEqual(auth_token, pledge.url_nonce):
-      self.error(403)
-      self.response.write('Access denied')
-      return
+    # allow this one pledge so test receipt can be viewed
+    if (id != 'agxzfm1heWRheS1wYWNyEwsSBlBsZWRnZRiAgICAlZG2CAw'):
+      auth_token = self.request.get('auth_token')
+      if not util.ConstantTimeIsEqual(auth_token, pledge.url_nonce):
+        self.error(403)
+        self.response.write('Access denied')
+        return
 
     template = templates.GetTemplate('receipt.html')
     self.response.write(template.render(dict(pledge=pledge, user=user)))
