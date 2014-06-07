@@ -60,7 +60,8 @@ class StripeBackend(object):
 class MailingListSubscriber(object):
   """Interface which signs folks up for emails."""
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
-                source):
+                source, zipcode=None, volunteer=None, skills=None,
+                rootstrikers=None, nonce=None):
     raise NotImplementedError()
 
 
@@ -321,7 +322,7 @@ class TotalHandler(webapp2.RequestHandler):
     total = (TotalHandler.PRE_SHARDING_TOTAL +
              TotalHandler.WP_PLEDGE_TOTAL +
              TotalHandler.DEMOCRACY_DOT_COM_BALANCE +
-             TotalHandler.CHECKS_BALANCE + 
+             TotalHandler.CHECKS_BALANCE +
              TotalHandler.STRETCH_GOAL_MATCH)
     total += model.ShardedCounter.get_count('TOTAL-5')
 
