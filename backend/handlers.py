@@ -6,7 +6,6 @@ import json
 import logging
 import cgi
 
-
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 import validictory
@@ -332,6 +331,12 @@ class TotalHandler(webapp2.RequestHandler):
     if team:
       team_pledges = cache.GetTeamPledgeCount(team) or 0
       team_total = cache.GetTeamTotal(team) or 0
+      try:
+        # there are some memcache values with string values
+        team_total = int(team_total)
+      except ValueError, e:
+        logging.exception("non-integral team total: %r", team_total)
+        team_total = 0
 
       if not (team_pledges and team_total):
         for pledge in model.Pledge.all().filter("team =", team):
