@@ -6,7 +6,6 @@ import json
 import logging
 import cgi
 
-
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 import validictory
@@ -60,7 +59,8 @@ class StripeBackend(object):
 class MailingListSubscriber(object):
   """Interface which signs folks up for emails."""
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
-                source):
+                source, zipcode=None, volunteer=None, skills=None,
+                rootstrikers=None, nonce=None):
     raise NotImplementedError()
 
 
@@ -323,7 +323,7 @@ class TotalHandler(webapp2.RequestHandler):
     total = (TotalHandler.PRE_SHARDING_TOTAL +
              TotalHandler.WP_PLEDGE_TOTAL +
              TotalHandler.DEMOCRACY_DOT_COM_BALANCE +
-             TotalHandler.CHECKS_BALANCE + 
+             TotalHandler.CHECKS_BALANCE +
              TotalHandler.STRETCH_GOAL_MATCH)
     total += model.ShardedCounter.get_count('TOTAL-5')
 
@@ -333,6 +333,12 @@ class TotalHandler(webapp2.RequestHandler):
     if team:
       team_pledges = cache.GetTeamPledgeCount(team) or 0
       team_total = cache.GetTeamTotal(team) or 0
+      try:
+        # there are some memcache values with string values
+        team_total = int(team_total)
+      except ValueError, e:
+        logging.exception("non-integral team total: %r", team_total)
+        team_total = 0
 
       if not (team_pledges and team_total):
         for pledge in model.Pledge.all().filter("team =", team):
