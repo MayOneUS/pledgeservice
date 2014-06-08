@@ -9,9 +9,6 @@ html
     include includes/header
     script(src="https://checkout.stripe.com/checkout.js")
     .container
-      .row
-        .page-header
-          h1 Pledge Your Support
       .butterbar.row(ng-show="ctrl.error")
         .alert.alert-danger {{ctrl.error}}
       #content.row
