@@ -66,7 +66,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       var pledgeType =
             $scope.ctrl.form.unconditional ? 'DONATION' : 'CONDITIONAL';
 
-      $http.post('/r/pledge', {
+      $http.post(PLEDGE_URL + '/r/pledge', {
         email: $scope.ctrl.form.email,
         phone: $scope.ctrl.form.phone,
         name: name,
@@ -94,14 +94,14 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
     }
   };
 
-  $http.get('/r/payment_config').success(function(config) {
+  $http.get(PLEDGE_URL + '/r/payment_config').success(function(config) {
     $scope.ctrl.paymentConfig = config;
     $scope.ctrl.stripeHandler = StripeCheckout.configure({
       key: config.stripePublicKey,
       name: 'MAYDAY.US',
       panelLabel: 'Pledge',
       billingAddress: true,
-      image: '/static/flag.jpg',
+      image: PLEDGE_URL + '/static/flag.jpg',
       token: function(token, args) {
         $scope.ctrl.onTokenRecv(token, args);
       }
