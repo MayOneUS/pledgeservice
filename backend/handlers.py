@@ -101,6 +101,7 @@ class PledgeHandler(webapp2.RequestHandler):
 
   def post(self):
     """Create a new pledge, and update user info."""
+    util.EnableCors(self)
     self.response.headers['Content-Type'] = 'application/json'
     env = self.app.config['env']
 
@@ -203,6 +204,9 @@ class PledgeHandler(webapp2.RequestHandler):
                    auth_token=pledge.url_nonce,
                    receipt_url=receipt_url), self.response)
 
+  def options(self):
+    util.EnableCors(self)
+
 class SubscribeHandler(webapp2.RequestHandler):
   """RESTful handler for subscription requests."""
   # https://www.pivotaltracker.com/s/projects/1075614/stories/71725060
@@ -300,6 +304,7 @@ class ReceiptHandler(webapp2.RequestHandler):
 
 class PaymentConfigHandler(webapp2.RequestHandler):
   def get(self):
+    util.EnableCors(self)
     env = self.app.config['env']
     if not env.stripe_public_key:
       raise Error('No stripe public key in DB')
