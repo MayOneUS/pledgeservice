@@ -98,7 +98,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
     $scope.ctrl.paymentConfig = config;
     $scope.ctrl.stripeHandler = StripeCheckout.configure({
       key: config.stripePublicKey,
-      name: 'MayOne.US',
+      name: 'MAYDAY.US',
       panelLabel: 'Pledge',
       billingAddress: true,
       image: '/static/flag.jpg',
