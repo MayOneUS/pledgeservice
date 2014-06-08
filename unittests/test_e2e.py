@@ -32,7 +32,9 @@ class BaseTest(unittest.TestCase):
       stripe_backend=self.stripe,
       mailing_list_subscriber=self.mailing_list_subscriber,
       mail_sender=self.mail_sender)
-    self.wsgi_app = webapp2.WSGIApplication(handlers.HANDLERS,
+
+    from main import HANDLERS  # main import must come after other init
+    self.wsgi_app = webapp2.WSGIApplication(HANDLERS + handlers.HANDLERS,
                                             config=dict(env=self.env))
 
     self.app = webtest.TestApp(self.wsgi_app)
@@ -338,6 +340,18 @@ class PledgeTest(BaseTest):
       teamPledges=2,
       teamTotalCents=8400,
     ), resp.json)
+
+  def testUserInfoNotFound(self):
+    resp = self.app.get('/user-info/nouserhere', status=404)
+    self.assertEquals('user not found', resp.body)
+
+  def testUserInfoNoPledge(self):
+    self.makeDefaultRequest()
+    self.assertEquals(1, model.Pledge.all().count())
+    user = model.User.get_by_key_name('pika@pokedex.biz')
+    model.Pledge.all().filter('email =', user.email)[0].delete()
+    resp = self.app.get('/user-info/%s' % user.url_nonce, status=404)
+    self.assertEquals('user not found', resp.body)
 
   def testNoPledgeType(self):
     del self.pledge['pledgeType']

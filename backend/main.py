@@ -167,7 +167,7 @@ class UserInfoHandler(webapp2.RequestHandler):
     util.EnableCors(self)
 
 
-app = webapp2.WSGIApplication([
+HANDLERS = [
   ('/total', GetTotalHandler),
   (r'/user-update/(\w+)', UserUpdateHandler),
   (r'/user-info/(\w+)', UserInfoHandler),
@@ -175,4 +175,6 @@ app = webapp2.WSGIApplication([
   ('/contact.do', ContactHandler),
   # See wp_import
   # ('/import.do', wp_import.ImportHandler),
-] + handlers.HANDLERS, debug=False, config=dict(env=env.get_env()))
+]
+app = webapp2.WSGIApplication(HANDLERS + handlers.HANDLERS, debug=False,
+                              config=dict(env=env.get_env()))
