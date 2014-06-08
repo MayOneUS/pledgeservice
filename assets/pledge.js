@@ -79,7 +79,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
         team: urlParams['team'] || readCookie("last_team_key") || '',
         payment: payment
       }).success(function(data) {
-        location.href = data.receipt_url;
+        location.href = PLEDGE_URL + data.receipt_url;
       }).error(function(data) {
         $scope.ctrl.loading = false;
 
