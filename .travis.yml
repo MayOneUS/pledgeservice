@@ -10,8 +10,7 @@ before_script:
   #   https://github.com/travis-ci/travis-ci/issues/738
   - wget http://googleappengine.googlecode.com/files/google_appengine_1.8.9.zip -nv
   - unzip -q google_appengine_1.8.9.zip
-  - npm install grunt
-  - node_modules/.bin/grunt file-creator:local
+  - npm install -g grunt-cli
   - cp build/config.json backend/
 script:
   - coverage run --branch testrunner.py `pwd`/google_appengine/
