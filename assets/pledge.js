@@ -28,6 +28,11 @@ var readCookie = function(name) {
   return null;
 };
 
+var validateEmail = function(email) {
+    var re = /\S+@\S+\.\S+/;
+    return re.test(email);
+};
+
 var PledgeController = ['$scope', '$http', function($scope, $http) {
   $scope.ctrl = {
     paymentConfig: null,
@@ -48,12 +53,34 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
     cents: function() {
       return Math.floor($scope.ctrl.form.amount * 100);
     },
+    validateForm: function() {
+      var email = $scope.ctrl.form.email || null;
+      var occ = $scope.ctrl.form.occupation || null;
+      var emp = $scope.ctrl.form.employer || null;
+      
+      if (!occ) {
+        $scope.ctrl.error = "Please enter occupation";
+        return false;
+      } else if (!emp) {
+        $scope.ctrl.error = "Please enter employer";
+        return false;
+      } else if (!email) {
+        $scope.ctrl.error = "Please enter email"; 
+        return false;
+      } else if (!validateEmail(email)) {
+        $scope.ctrl.error = "Please enter a valid email";
+        return false;
+      }
+      return true;
+    },
     pledge: function() {
-      var cents = $scope.ctrl.cents();
-      $scope.ctrl.stripeHandler.open({
-        email: $scope.ctrl.form.email,
-        amount: cents
-      });
+      if ($scope.ctrl.validateForm()) {
+        var cents = $scope.ctrl.cents();
+        $scope.ctrl.stripeHandler.open({
+          email: $scope.ctrl.form.email,
+          amount: cents
+        });        
+      }
     },
     onTokenRecv: function(token, args) {
       $scope.ctrl.loading = true;

@@ -62,13 +62,13 @@ html
                     span.input-group-addon $
                     input.form-control(type="number", required, min="1",
                       ng-model="ctrl.form.amount")
-                .form-group.col-sm-9
+                .form-group.col-sm-12
                   .checkbox
                     label <input type="checkbox" ng-model="ctrl.form.unconditional"> I want my donation to be used to support MAYDAY.US, even if the goal has not been met by July 4th.
                   .checkbox
                     label <input type="checkbox" ng-model="ctrl.form.subscribe"> Want to know how we're using the money? Sign up for emails from us.
-                .form-group.col-sm-3
-                  button.form-control.input-lg.btn.btn-lg.btn-danger(
+                .form-group.col-sm-12
+                  button.form-control.input-lg.btn.btn-lg.btn-danger#pledgeButton(
                       ng-disabled="ctrl.loading")
                     .spinner(ng-show="ctrl.loading")
 
