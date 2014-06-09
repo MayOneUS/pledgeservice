@@ -60,16 +60,21 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       
       if (!occ) {
         $scope.ctrl.error = "Please enter occupation";
+        return false;
       } else if (!emp) {
         $scope.ctrl.error = "Please enter employer";
+        return false;
       } else if (!email) {
         $scope.ctrl.error = "Please enter email"; 
+        return false;
       } else if (!validateEmail(email)) {
         $scope.ctrl.error = "Please enter a valid email";
+        return false;
       }
+      return true;
     },
     pledge: function() {
-      if ($scope.ctrl.validateForm($scope.ctrl.form)) {
+      if ($scope.ctrl.validateForm()) {
         var cents = $scope.ctrl.cents();
         $scope.ctrl.stripeHandler.open({
           email: $scope.ctrl.form.email,
