@@ -31,7 +31,7 @@ def get_env():
     stripe_public_key=model.Config.get().stripe_public_key,
     stripe_backend=stripe_backend,
     mailing_list_subscriber=mailing_list_subscriber,
-    mail_sender=ProdMailSender())
+    mail_sender=MailSender())
 
 
 class ProdStripe(handlers.StripeBackend):
@@ -89,8 +89,9 @@ class FakeSubscriber(handlers.MailingListSubscriber):
     logging.info('Subscribing %s', kwargs)
 
 
-class ProdMailSender(handlers.MailSender):
+class MailSender(handlers.MailSender):
   def __init__(self, defer=True):
+    # this can 
     self.defer = defer
 
   def Send(self, to, subject, text_body, html_body, reply_to=None):

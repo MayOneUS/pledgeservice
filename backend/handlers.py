@@ -40,7 +40,6 @@ Environment = namedtuple(
   ])
 
 
-
 class PaymentError(Exception):
   pass
 
@@ -373,8 +372,6 @@ class TotalHandler(webapp2.RequestHandler):
     util.EnableCors(self)
 
 class ThankTeamHandler(webapp2.RequestHandler):
-  """
-  """
   def post(self):
     env = self.app.config['env']
     util.EnableCors(self)
@@ -385,13 +382,15 @@ class ThankTeamHandler(webapp2.RequestHandler):
         logging.warning(msg)
         self.error(400)
         self.response.write(msg)
-        return
+        return self.response
 
+    # get the pldedges for this team, excluding the team owner
     pledges = model.Pledge.all().filter(
       'team =',self.request.POST['team']).filter(
       'email !=', self.request.POST['team_leader_email'])
 
     for pledge in pledges:
+      # if only sending to new members, skip those that have a thank_you_sent_at
       if self.request.POST['new_members'] and pledge.thank_you_sent_at:
         continue
 
@@ -401,10 +400,12 @@ class ThankTeamHandler(webapp2.RequestHandler):
                      html_body=self.request.POST['message_body'],
                      reply_to=self.request.POST['reply_to'])
 
+      # set the thank_you_sent_at for users after sending
+      # FIXME: make sure the send was successful
       pledge.thank_you_sent_at = datetime.datetime.now()
       pledge.put()
 
-    # TODO: respond back with the number of messages sent
+    # FIXME: respond back with the number of messages sent
 
   def options(self):
     util.EnableCors(self)

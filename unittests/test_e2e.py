@@ -29,9 +29,7 @@ class BaseTest(unittest.TestCase):
     self.stripe = self.mockery.CreateMock(handlers.StripeBackend)
     self.mailing_list_subscriber = self.mockery.CreateMock(
       handlers.MailingListSubscriber)
-    self.mail_sender = env.ProdMailSender(defer=False)
-
-    # self.mockery.CreateMock(env.ProdMailSender)
+    self.mail_sender = env.MailSender(defer=False)
 
     self.env = handlers.Environment(
       app_name='unittest',
@@ -108,25 +106,16 @@ class PledgeTest(BaseTest):
                    time=mox.IsA(datetime.datetime),
                    source='pledge', nonce=mox.Regex('.*'))
 
-  def expectMailSend(self):
-    # i don't think was doing what was expected
-    pass
-
-
-
   def makeDefaultRequest(self):
     self.expectStripe()
     self.expectSubscribe()
-    self.expectMailSend()
     self.mockery.ReplayAll()
 
     return self.app.post_json('/r/pledge', self.pledge)
 
   def testMailOnCreatePledge(self):
-    self.expectStripe()
-    self.expectSubscribe()
-    self.mockery.ReplayAll()
-    self.app.post_json('/r/pledge', self.pledge)
+    self.makeDefaultRequest()
+
     messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
     self.assertEquals(1, len(messages))
     self.assertEquals(self.pledge["email"], messages[0].to)
@@ -175,7 +164,7 @@ class PledgeTest(BaseTest):
   def testSubscribes(self):
     self.expectStripe()
     self.expectSubscribe()
-    self.expectMailSend()
+    # self.expectMailSend()
 
     self.mockery.ReplayAll()
 
@@ -187,7 +176,7 @@ class PledgeTest(BaseTest):
     self.pledge['subscribe'] = False
 
     self.expectStripe()
-    self.expectMailSend()
+    # self.expectMailSend()
 
     # Don't subscribe.
 
@@ -306,7 +295,7 @@ class PledgeTest(BaseTest):
     for _ in range(2):
       self.expectStripe()
       self.expectSubscribe()
-      self.expectMailSend()
+      # self.expectMailSend()
     self.mockery.ReplayAll()
 
     resp = self.app.get('/r/total?team=nobody')
