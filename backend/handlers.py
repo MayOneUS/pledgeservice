@@ -213,7 +213,9 @@ class SubscribeHandler(webapp2.RequestHandler):
 
   def post(self):
     env = self.app.config['env']
+        
     logging.info('body: %s' % self.request.body)
+    
     email_input = cgi.escape(self.request.get('email'))
     if len(email_input) == 0:
       logging.warning("Bad Request: required field (email) missing.")
@@ -247,6 +249,10 @@ class SubscribeHandler(webapp2.RequestHandler):
       rootstrikers_input = 'Yes'
     elif rootstrikers_input=='off':
       rootstrikers_input = ''
+      
+    source_input = cgi.escape(self.request.get('source'))
+    if len(source_input) == 0:
+      source_input = 'subscribe'
 
     env.mailing_list_subscriber.Subscribe(
       email=email_input,
@@ -254,7 +260,7 @@ class SubscribeHandler(webapp2.RequestHandler):
       amount_cents=None,
       ip_addr=self.request.remote_addr,
       time=datetime.datetime.now(),
-      source='subscribe',
+      source=source_input,
       zipcode=zipcode_input,
       volunteer=volunteer_input,
       skills=skills_input,
@@ -264,7 +270,7 @@ class SubscribeHandler(webapp2.RequestHandler):
     util.EnableCors(self)
     redirect_input = cgi.escape(self.request.get('redirect'))
     if len(redirect_input)>0:
-      redirect_url = '%s?email=%s' % (redirect_input, email_input)
+      redirect_url = '%s?email=%s&source=%s' % (redirect_input, email_input, source_input)
     else:
       redirect_url = '/pledge?email=%s' % email_input
     self.redirect(str(redirect_url))
