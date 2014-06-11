@@ -341,6 +341,22 @@ class PledgeTest(BaseTest):
       teamTotalCents=8400,
     ), resp.json)
 
+  def testThankYou(self):
+    form_data = {'team': 'rocket', 'reply_to': 'the reply to',
+      'subject': 'the email subject', 'message_body': 'the message body',
+      'new_members': False}
+    resp = self.app.post('/r/thank', form_data)
+    print resp
+    # self.assertEquals(1,2)
+
+    # resp = self.app.get('/r/contributors?team=rocket')
+    # self.assertEquals(dict(
+    #   totalCents=self.balance_baseline + 2 * 4200,
+    #   team='rocket',
+    #   teamPledges=2,
+    #   teamTotalCents=8400,
+    # ), resp.json)
+
   def testUserInfoNotFound(self):
     resp = self.app.get('/user-info/nouserhere', status=404)
     self.assertEquals('user not found', resp.body)

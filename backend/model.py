@@ -204,6 +204,8 @@ class Pledge(db.Model):
   # specific pledge. if so, this is their site-management password.
   url_nonce = db.StringProperty(required=True)
 
+  thank_you_sent_at = db.DateTimeProperty(required=False)
+
   @staticmethod
   def create(email, stripe_customer_id, stripe_charge_id,
              amount_cents, pledge_type, team):
