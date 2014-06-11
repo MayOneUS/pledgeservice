@@ -17,6 +17,7 @@ import model
 import templates
 import util
 
+
 # Immutable environment with both configuration variables, and backends to be
 # mocked out in tests.
 Environment = namedtuple(
@@ -37,6 +38,8 @@ Environment = namedtuple(
     # MailSender
     'mail_sender',
   ])
+
+
 
 class PaymentError(Exception):
   pass
@@ -214,9 +217,9 @@ class SubscribeHandler(webapp2.RequestHandler):
 
   def post(self):
     env = self.app.config['env']
-        
+
     logging.info('body: %s' % self.request.body)
-    
+
     email_input = cgi.escape(self.request.get('email'))
     if len(email_input) == 0:
       logging.warning("Bad Request: required field (email) missing.")
@@ -250,7 +253,7 @@ class SubscribeHandler(webapp2.RequestHandler):
       rootstrikers_input = 'Yes'
     elif rootstrikers_input=='off':
       rootstrikers_input = ''
-      
+
     source_input = cgi.escape(self.request.get('source'))
     if len(source_input) == 0:
       source_input = 'subscribe'
@@ -369,12 +372,14 @@ class TotalHandler(webapp2.RequestHandler):
   def options(self):
     util.EnableCors(self)
 
-class ThankYouHandler(webapp2.RequestHandler):
+class ThankTeamHandler(webapp2.RequestHandler):
   """
   """
   def post(self):
+    env = self.app.config['env']
     util.EnableCors(self)
-    for field in ['team', 'reply_to', 'subject', 'message_body', 'new_members']:
+
+    for field in ['team', 'team_leader_email', 'reply_to', 'subject', 'message_body', 'new_members']:
       if not field in self.request.POST:
         msg = "Bad Request: required field %s missing." % field
         logging.warning(msg)
@@ -382,21 +387,24 @@ class ThankYouHandler(webapp2.RequestHandler):
         self.response.write(msg)
         return
 
-    pledges = model.Pledge.all().filter('email =',self.request.POST['team'])
+    pledges = model.Pledge.all().filter(
+      'team =',self.request.POST['team']).filter(
+      'email !=', self.request.POST['team_leader_email'])
 
     for pledge in pledges:
       if self.request.POST['new_members'] and pledge.thank_you_sent_at:
         continue
 
-      replyto = '%s <%s>' % (ascii_name, ascii_email)
-      message = mail.EmailMessage(sender=('MayOne no-reply <noreply@%s.appspotmail.com>' %
-                                             model.Config.get().app_name),
-                                  reply_to=self.request.POST["reply_to"],
-                                  subject=self.request.POST["subject"])
-      message.to = pledge.email
-      message.body = self.request.POST["message_body"]
-      message.send()
+      env.mail_sender.Send(to=pledge.email,
+                     subject=self.request.POST['subject'],
+                     text_body=self.request.POST['message_body'],
+                     html_body=self.request.POST['message_body'],
+                     reply_to=self.request.POST['reply_to'])
+
       pledge.thank_you_sent_at = datetime.datetime.now()
+      pledge.put()
+
+    # TODO: respond back with the number of messages sent
 
   def options(self):
     util.EnableCors(self)
@@ -407,6 +415,6 @@ HANDLERS = [
   ('/receipt/(.+)', ReceiptHandler),
   ('/r/payment_config', PaymentConfigHandler),
   ('/r/total', TotalHandler),
-  ('/r/thank', ThankYouHandler),
+  ('/r/thank', ThankTeamHandler),
   ('/r/subscribe', SubscribeHandler),
 ]

@@ -2,6 +2,7 @@ import unittest
 import logging
 import datetime
 
+from google.appengine.api import mail_stub
 from google.appengine.ext import db
 from google.appengine.ext import testbed
 import mox
@@ -10,6 +11,7 @@ import webtest
 
 import handlers
 import model
+import env
 
 
 class BaseTest(unittest.TestCase):
@@ -20,11 +22,16 @@ class BaseTest(unittest.TestCase):
     self.testbed.init_datastore_v3_stub()
     self.testbed.init_memcache_stub()
 
+    self.testbed.init_mail_stub()
+    self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+
     self.mockery = mox.Mox()
     self.stripe = self.mockery.CreateMock(handlers.StripeBackend)
     self.mailing_list_subscriber = self.mockery.CreateMock(
       handlers.MailingListSubscriber)
-    self.mail_sender = self.mockery.CreateMock(handlers.MailSender)
+    self.mail_sender = env.ProdMailSender(defer=False)
+
+    # self.mockery.CreateMock(env.ProdMailSender)
 
     self.env = handlers.Environment(
       app_name='unittest',
@@ -58,6 +65,7 @@ class PledgeTest(BaseTest):
       amountCents=4200,
       pledgeType='CONDITIONAL',
       team='rocket',
+      thank_you_sent_at=None,
       payment=dict(
         STRIPE=dict(
           token='tok_1234',
@@ -101,9 +109,10 @@ class PledgeTest(BaseTest):
                    source='pledge', nonce=mox.Regex('.*'))
 
   def expectMailSend(self):
-    self.mail_sender.Send(to=mox.IsA(str), subject=mox.IsA(str),
-                          text_body=mox.IsA(str),
-                          html_body=mox.IsA(str))
+    # i don't think was doing what was expected
+    pass
+
+
 
   def makeDefaultRequest(self):
     self.expectStripe()
@@ -112,6 +121,17 @@ class PledgeTest(BaseTest):
     self.mockery.ReplayAll()
 
     return self.app.post_json('/r/pledge', self.pledge)
+
+  def testMailOnCreatePledge(self):
+    self.expectStripe()
+    self.expectSubscribe()
+    self.mockery.ReplayAll()
+    self.app.post_json('/r/pledge', self.pledge)
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
+    self.assertEquals(1, len(messages))
+    self.assertEquals(self.pledge["email"], messages[0].to)
+    self.assertTrue('MayOne no-reply' in messages[0].sender)
+    self.assertEquals('Thank you for your pledge', messages[0].subject)
 
   def testBadJson(self):
     self.app.post('/r/pledge', '{foo', status=400)
@@ -341,21 +361,38 @@ class PledgeTest(BaseTest):
       teamTotalCents=8400,
     ), resp.json)
 
-  def testThankYou(self):
-    form_data = {'team': 'rocket', 'reply_to': 'the reply to',
-      'subject': 'the email subject', 'message_body': 'the message body',
-      'new_members': False}
-    resp = self.app.post('/r/thank', form_data)
-    print resp
-    # self.assertEquals(1,2)
+  def testThankTeam(self):
+    self.makeDefaultRequest()
 
-    # resp = self.app.get('/r/contributors?team=rocket')
-    # self.assertEquals(dict(
-    #   totalCents=self.balance_baseline + 2 * 4200,
-    #   team='rocket',
-    #   teamPledges=2,
-    #   teamTotalCents=8400,
-    # ), resp.json)
+    post_data = {'team': 'rocket', 'team_leader_email': self.pledge["email"],
+      'reply_to': 'the reply to', 'subject': 'the email subject',
+      'message_body': 'the message body', 'new_members': False}
+
+    # fails with a 400 error if the post request is missing any keys
+    with self.assertRaises(Exception):
+      resp = self.app.post('/r/thank', {})
+
+    # pledge doesn't get the email if they are the team leader
+    resp = self.app.post('/r/thank', post_data)
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
+    self.assertEquals(len(messages), 1)
+
+    # this is the happy path
+    self.assertEquals(model.Pledge.all()[0].thank_you_sent_at, None)
+    post_data['team_leader_email'] = 'bob.loblaw@gmail.com'
+    resp = self.app.post('/r/thank', post_data)
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
+    self.assertEquals(len(messages), 2)
+    self.assertEquals(messages[1].reply_to, post_data["reply_to"])
+    self.assertEquals(messages[1].subject, post_data["subject"])
+    self.assertEquals(type(model.Pledge.all()[0].thank_you_sent_at), datetime.datetime)
+
+    # make sure it isn't sent a message again when new_member is set to true
+    post_data['new_members'] = True
+    resp = self.app.post('/r/thank', post_data)
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
+    self.assertEquals(len(messages), 2)
+
 
   def testUserInfoNotFound(self):
     resp = self.app.get('/user-info/nouserhere', status=404)

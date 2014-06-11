@@ -90,11 +90,17 @@ class FakeSubscriber(handlers.MailingListSubscriber):
 
 
 class ProdMailSender(handlers.MailSender):
-  def Send(self, to, subject, text_body, html_body):
-    deferred.defer(_send_mail, to, subject, text_body, html_body)
+  def __init__(self, defer=True):
+    self.defer = defer
+
+  def Send(self, to, subject, text_body, html_body, reply_to=None):
+    if self.defer:
+      deferred.defer(_send_mail, to, subject, text_body, html_body)
+    else:
+      _send_mail(to, subject, text_body, html_body, reply_to)
 
 
-def _send_mail(to, subject, text_body, html_body):
+def _send_mail(to, subject, text_body, html_body, reply_to=None):
   """Deferred email task"""
   sender = ('MayOne no-reply <noreply@%s.appspotmail.com>' %
             model.Config.get().app_name)
@@ -102,6 +108,8 @@ def _send_mail(to, subject, text_body, html_body):
   message.to = to
   message.body = text_body
   message.html = html_body
+  if reply_to:
+    message.reply_to = reply_to
   message.send()
 
 
