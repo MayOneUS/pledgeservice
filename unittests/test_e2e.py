@@ -164,7 +164,6 @@ class PledgeTest(BaseTest):
   def testSubscribes(self):
     self.expectStripe()
     self.expectSubscribe()
-    # self.expectMailSend()
 
     self.mockery.ReplayAll()
 
@@ -176,7 +175,6 @@ class PledgeTest(BaseTest):
     self.pledge['subscribe'] = False
 
     self.expectStripe()
-    # self.expectMailSend()
 
     # Don't subscribe.
 
@@ -295,7 +293,6 @@ class PledgeTest(BaseTest):
     for _ in range(2):
       self.expectStripe()
       self.expectSubscribe()
-      # self.expectMailSend()
     self.mockery.ReplayAll()
 
     resp = self.app.get('/r/total?team=nobody')
