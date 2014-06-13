@@ -173,6 +173,7 @@ class PledgeHandler(webapp2.RequestHandler):
         ip_addr=self.request.remote_addr,
         time=datetime.datetime.now(),
         source='pledge',
+        phone=data['phone'],
         nonce=user.url_nonce)
 
     # Add to the total.
