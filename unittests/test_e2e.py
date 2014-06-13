@@ -90,7 +90,9 @@ class PledgeTest(BaseTest):
     self.stripe.Charge('cust_4321', self.pledge['amountCents']) \
                .AndRaise(handlers.PaymentError('You got no money'))
 
-  def expectSubscribe(self):
+  def expectSubscribe(self, phone=None):
+    if phone is None:
+      phone = '212-234-5432'
     self.mailing_list_subscriber \
         .Subscribe(email=self.pledge['email'],
                    first_name=u'Pik\u00E1',
@@ -98,6 +100,7 @@ class PledgeTest(BaseTest):
                    amount_cents=4200, ip_addr=None,  # Not sure why this is None
                                                      # in unittests.
                    time=mox.IsA(datetime.datetime),
+                   phone=phone,
                    source='pledge', nonce=mox.Regex('.*'))
 
   def expectMailSend(self):
@@ -105,9 +108,9 @@ class PledgeTest(BaseTest):
                           text_body=mox.IsA(str),
                           html_body=mox.IsA(str))
 
-  def makeDefaultRequest(self):
+  def makeDefaultRequest(self, phone=None):
     self.expectStripe()
-    self.expectSubscribe()
+    self.expectSubscribe(phone=phone)
     self.expectMailSend()
     self.mockery.ReplayAll()
 
@@ -179,7 +182,7 @@ class PledgeTest(BaseTest):
 
   def testNoPhone(self):
     self.pledge['phone'] = ''
-    self.makeDefaultRequest()
+    self.makeDefaultRequest(phone='')
 
   def testNoName(self):
     self.pledge['name'] = ''
