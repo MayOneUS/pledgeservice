@@ -98,6 +98,7 @@ class PledgeTest(BaseTest):
                    amount_cents=4200, ip_addr=None,  # Not sure why this is None
                                                      # in unittests.
                    time=mox.IsA(datetime.datetime),
+                   phone='555-123-4567',
                    source='pledge', nonce=mox.Regex('.*'))
 
   def expectMailSend(self):
