@@ -59,7 +59,7 @@ class StripeBackend(object):
 class MailingListSubscriber(object):
   """Interface which signs folks up for emails."""
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
-                source, zipcode=None, volunteer=None, skills=None,
+                source, phone=None, zipcode=None, volunteer=None, skills=None,
                 rootstrikers=None, nonce=None):
     raise NotImplementedError()
 
