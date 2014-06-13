@@ -34,10 +34,11 @@ var validateEmail = function(email) {
 };
 
 var PledgeController = ['$scope', '$http', function($scope, $http) {
+  
   $scope.ctrl = {
     paymentConfig: null,
     stripeHandler: null,
-
+    
     form: {
       email: '',
       phone: '',
@@ -48,6 +49,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       unconditional: false,
       subscribe: true
     },
+    header:header,
     error: '',
     loading: false,
     cents: function() {
@@ -120,6 +122,12 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       });
     }
   };
+  
+  var urlParams = getUrlParams(); 
+  var passedEmail = urlParams['email'] || '';
+  var header = urlParams['header'] || '';
+        
+  $scope.ctrl.form.email = passedEmail;
 
   $http.get(PLEDGE_URL + '/r/payment_config').success(function(config) {
     $scope.ctrl.paymentConfig = config;

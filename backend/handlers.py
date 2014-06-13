@@ -238,6 +238,10 @@ class SubscribeHandler(webapp2.RequestHandler):
     zipcode_input = cgi.escape(self.request.get('zipcode'))
     if len(zipcode_input) == 0:
       zipcode_input = None
+      
+    phone_input = cgi.escape(self.request.get('phone'))
+    if len(phone_input) == 0:
+      phone_input = None
 
     volunteer_input = cgi.escape(self.request.get('volunteer')) # "YES" or "NO"
     if volunteer_input == 'on':
