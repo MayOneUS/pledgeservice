@@ -227,7 +227,8 @@ class Pledge(db.Model):
                     url_nonce=os.urandom(32).encode("hex"),
                     anonymous=anonymous)
     pledge.put()
-    TeamTotal.add(team, amount_cents)
+    if team:
+      TeamTotal.add(team, amount_cents)
     return pledge
 
 
