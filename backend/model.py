@@ -269,7 +269,7 @@ class TeamTotal(db.Model):
 
   @classmethod
   @db.transactional
-  def _add(cls, team_id, amount_cents)
+  def _add(cls, team_id, amount_cents):
     tt = cls.get_by_key_name(team_id)
     tt.totalCents += amount_cents
     tt.put()
