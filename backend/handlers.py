@@ -461,7 +461,30 @@ class PledgersHandler(webapp2.RequestHandler):
   options = util.EnableCors
 
 
+class LeaderboardHandler(webapp2.RequestHandler):
+
+  def get(self):
+    util.EnableCors(self)
+
+    offset = int(self.request.get("offset") or 0)
+    limit = int(self.request.get("limit") or 25)
+
+    teams = []
+
+    for tt in model.TeamTotal.all().order("-totalCents").run(
+        offset=offset, limit=limit):
+      teams.append({
+          "team": tt.team,
+          "total_cents": tt.totalCents})
+
+    self.response.headers['Content-Type'] = 'application/json'
+    json.dump({"teams": teams}, self.response)
+
+  options = util.EnableCors
+
+
 HANDLERS = [
+  ('/r/leaderboard', LeaderboardHandler),
   ('/r/pledgers', PledgersHandler),
   ('/r/pledge', PledgeHandler),
   ('/receipt/(.+)', ReceiptHandler),
