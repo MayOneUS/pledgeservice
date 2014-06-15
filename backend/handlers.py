@@ -1,6 +1,6 @@
 """Handlers for MayOne.US."""
 
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import datetime
 import json
 import logging
@@ -237,7 +237,7 @@ class SubscribeHandler(webapp2.RequestHandler):
     zipcode_input = cgi.escape(self.request.get('zipcode'))
     if len(zipcode_input) == 0:
       zipcode_input = None
-      
+
     phone_input = cgi.escape(self.request.get('phone'))
     if len(phone_input) == 0:
       phone_input = None
@@ -265,7 +265,7 @@ class SubscribeHandler(webapp2.RequestHandler):
     pledgePageSlug_input = cgi.escape(self.request.get('pledgePageSlug'))
     if len(pledgePageSlug_input) == 0:
       pledgePageSlug_input = ''
-      
+
     env.mailing_list_subscriber.Subscribe(
       email=email_input,
       first_name=first_name, last_name=last_name,
@@ -379,8 +379,8 @@ class TotalHandler(webapp2.RequestHandler):
     self.response.headers['Content-Type'] = 'application/json'
     json.dump(result, self.response)
 
-  def options(self):
-    util.EnableCors(self)
+  options = util.EnableCors
+
 
 class ThankTeamHandler(webapp2.RequestHandler):
   def post(self):
@@ -404,7 +404,7 @@ class ThankTeamHandler(webapp2.RequestHandler):
 
     if self.request.POST['new_members'] == 'True':
       pledges = pledges.filter('thank_you_sent_at =', None)
-    
+
     i = 0
     for pledge in pledges:
       env.mail_sender.Send(to=pledge.email,
@@ -421,11 +421,48 @@ class ThankTeamHandler(webapp2.RequestHandler):
     logging.info('THANKING: %d PLEDGERS!!' % i)
     self.response.write(i)
 
-  def options(self):
+  options = util.EnableCors
+
+
+class PledgersHandler(webapp2.RequestHandler):
+
+  def get(self):
     util.EnableCors(self)
+
+    team = self.request.get("team")
+    if not team:
+      self.error(400)
+      self.response.write('team required')
+      return
+
+    pledgers = defaultdict(lambda: 0)
+
+    for pledge in model.Pledge.all().filter("team =", team):
+      if pledge.anonymous:
+        pledgers["Anonymous"] += pledge.amountCents
+        continue
+      user = model.User.get_by_key_name(pledge.email)
+      if user is None or (not user.first_name and not user.last_name):
+        pledgers["Anonymous"] += pledge.amountCents
+        continue
+      name = ("%s %s" % (user.first_name or "", user.last_name or "")).strip()
+      pledgers[name] += pledge.amountCents
+
+    pledgers_by_amount = []
+    for name, amount in pledgers.iteritems():
+      pledgers_by_amount.append((amount, name))
+    pledgers_by_amount.sort(reverse=True)
+
+    result = {"pledgers": [name for _, name in pledgers_by_amount]}
+
+    self.response.headers['Content-Type'] = 'application/json'
+    json.dump(result, self.response)
+
+  options = util.EnableCors
 
 
 HANDLERS = [
+  ('/r/pledgers', PledgersHandler),
   ('/r/pledge', PledgeHandler),
   ('/receipt/(.+)', ReceiptHandler),
   ('/r/payment_config', PaymentConfigHandler),
