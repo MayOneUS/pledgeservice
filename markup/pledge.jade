@@ -53,6 +53,8 @@ html
                 label <input type="checkbox" ng-model="ctrl.form.unconditional"> I want my donation to be used to support MAYDAY.US, even if the goal has not been met by July 4th.
               .checkbox
                 label <input type="checkbox" ng-model="ctrl.form.subscribe"> Want to know how we're using the money? Sign up for emails from us.
+              .checkbox
+                label <input type="checkbox" ng-model="ctrl.form.anonymous"> Keep your donation anonymous
             .form-group.col-sm-12
               button.form-control.input-lg.btn.btn-lg.btn-danger#pledgeButton(
                   ng-disabled="ctrl.loading")
@@ -76,7 +78,7 @@ html
               check</A>, we have instructions on the <a
               href="https://mayday.us/faq/#is-there-a-physical-mailing-address-that-i-can-send-a-check-to-i-dont-give-money-over-the-internet">FAQ page</A>.
 
-           
+
       #rules.well.row
         h2 Contribution Rules:
 

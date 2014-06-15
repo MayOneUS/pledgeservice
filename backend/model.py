@@ -27,7 +27,8 @@ class Error(Exception): pass
 #   6: Pledges now have "pledge_type"s.
 #   7: Adds Pledge.stripe_charge. Pledges no longer created without a successful
 #      charge. Thus, ChargeStatus is obsolete and deprecated.
-MODEL_VERSION = 7
+#   8: Adds whether or not pledges are anonymous
+MODEL_VERSION = 8
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -197,6 +198,10 @@ class Pledge(db.Model):
   # Optionally, a pledge can be assigned to a "team".
   team = db.StringProperty()
 
+  # If anonymous, the pledge shouldn't be displayed along with the user's name
+  # publically
+  anonymous = db.BooleanProperty(required=False, default=True)
+
   # it's possible we'll want to let people change just their pledge. i can't
   # imagine a bunch of people pledging with the same email address and then
   # getting access to change a bunch of other people's credit card info, but
@@ -208,7 +213,7 @@ class Pledge(db.Model):
 
   @staticmethod
   def create(email, stripe_customer_id, stripe_charge_id,
-             amount_cents, pledge_type, team):
+             amount_cents, pledge_type, team, anonymous):
     assert pledge_type in Pledge.TYPE_VALUES
     pledge = Pledge(model_version=MODEL_VERSION,
                     email=email,
@@ -217,7 +222,8 @@ class Pledge(db.Model):
                     amountCents=amount_cents,
                     pledge_type=pledge_type,
                     team=team,
-                    url_nonce=os.urandom(32).encode("hex"))
+                    url_nonce=os.urandom(32).encode("hex"),
+                    anonymous=anonymous)
     pledge.put()
     return pledge
 
@@ -226,7 +232,7 @@ def addPledge(email,
               stripe_customer_id, stripe_charge_id,
               amount_cents, pledge_type,
               first_name, last_name, occupation, employer, phone,
-              target, team, mail_list_optin):
+              target, team, mail_list_optin, anonymous):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
@@ -244,7 +250,8 @@ def addPledge(email,
                        stripe_charge_id=stripe_charge_id,
                        amount_cents=amount_cents,
                        pledge_type=pledge_type,
-                       team=team)
+                       team=team,
+                       anonymous=anonymous)
 
 
 class WpPledge(db.Model):

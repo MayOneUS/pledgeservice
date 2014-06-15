@@ -81,6 +81,7 @@ class PledgeHandler(webapp2.RequestHandler):
       employer=_STR,
       target=_STR,
       subscribe=dict(type='boolean'),
+      anonymous=dict(type='boolean'),
       amountCents=dict(type='integer', minimum=100),
       pledgeType=dict(enum=model.Pledge.TYPE_VALUES, required=False),
       team=dict(type='string', blank=True),
@@ -160,7 +161,8 @@ class PledgeHandler(webapp2.RequestHandler):
                              pledge_type=data.get(
                                'pledgeType', model.Pledge.TYPE_CONDITIONAL),
                              team=data['team'],
-                             mail_list_optin=data['subscribe'])
+                             mail_list_optin=data['subscribe'],
+                             anonymous=data['anonymous'])
 
     if data['subscribe']:
       env.mailing_list_subscriber.Subscribe(
