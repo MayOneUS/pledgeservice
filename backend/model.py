@@ -28,7 +28,9 @@ class Error(Exception): pass
 #   7: Adds Pledge.stripe_charge. Pledges no longer created without a successful
 #      charge. Thus, ChargeStatus is obsolete and deprecated.
 #   8: Adds whether or not pledges are anonymous
-MODEL_VERSION = 8
+#   9: Previous versions were not summed on demand into TeamTotal objects.
+#      Model 9 and newer pledges are.
+MODEL_VERSION = 9
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -225,7 +227,59 @@ class Pledge(db.Model):
                     url_nonce=os.urandom(32).encode("hex"),
                     anonymous=anonymous)
     pledge.put()
+    TeamTotal.add(team, amount_cents)
     return pledge
+
+
+class TeamTotal(db.Model):
+  # this is also the model key
+  team = db.StringProperty(required=True)
+
+  totalCents = db.IntegerProperty(required=False)
+
+  @classmethod
+  @db.transactional
+  def _create(cls, team_id, pledge_8_count):
+    tt = cls.get_by_key_name(team_id)
+    if tt is not None:
+      return tt
+    tt = cls(key_name=team_id, team=team_id, totalCents=pledge_8_count)
+    tt.put()
+    return tt
+
+  @staticmethod
+  def _pledge8Count(team_id):
+    """do this outside of a transaction"""
+    total = 0
+    for pledge in Pledge.all().filter("team =", team_id).filter(
+        "model_version <", 9):
+      total += pledge.amountCents
+    return total
+
+  @classmethod
+  def _get(cls, team_id):
+    tt = cls.get_by_key_name(team_id)
+    if tt is None:
+      tt = cls._create(team_id, cls._pledge8Count(team_id))
+    return tt
+
+  @classmethod
+  def get(cls, team_id):
+    return cls._get(team_id).totalCents
+
+  @classmethod
+  @db.transactional
+  def _add(cls, team_id, amount_cents)
+    tt = cls.get_by_key_name(team_id)
+    tt.totalCents += amount_cents
+    tt.put()
+
+  @classmethod
+  def add(cls, team_id, amount_cents):
+    # make sure the team total exists first before we add
+    cls._get(team_id)
+    # okay safe to add
+    cls._add(team_id, amount_cents)
 
 
 def addPledge(email,
