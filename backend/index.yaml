@@ -13,6 +13,11 @@ indexes:
 - kind: Pledge
   properties:
   - name: team
+  - name: email
+
+- kind: Pledge
+  properties:
+  - name: team
   - name: thank_you_sent_at
   - name: email
   
