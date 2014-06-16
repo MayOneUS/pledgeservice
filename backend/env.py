@@ -89,9 +89,9 @@ class FakeSubscriber(handlers.MailingListSubscriber):
     logging.info('Subscribing %s', kwargs)
 
 
-class MailSender(handlers.MailSender):
+class MailSender(object):
   def __init__(self, defer=True):
-    # this can 
+    # this can
     self.defer = defer
 
   def Send(self, to, subject, text_body, html_body, reply_to=None):

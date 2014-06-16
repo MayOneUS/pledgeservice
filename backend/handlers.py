@@ -67,12 +67,6 @@ class MailingListSubscriber(object):
     raise NotImplementedError()
 
 
-class MailSender(object):
-  """Interface which sends mail."""
-  def Send(self, to, subject, text_body, html_body):
-    raise NotImplementedError()
-
-
 _STR = dict(type='string')
 class PledgeHandler(webapp2.RequestHandler):
   """RESTful handler for pledge objects."""
@@ -376,7 +370,7 @@ class ThankTeamHandler(webapp2.RequestHandler):
     env = self.app.config['env']
     util.EnableCors(self)
 
-    for field in ['team', 'team_leader_email', 'reply_to', 'subject', 'message_body', 'new_members']:
+    for field in ['team', 'reply_to', 'subject', 'message_body', 'new_members']:
       if not field in self.request.POST:
         msg = "Bad Request: required field %s missing." % field
         logging.warning(msg)
@@ -384,16 +378,17 @@ class ThankTeamHandler(webapp2.RequestHandler):
         self.response.write(msg)
         return self.response
 
-    # get the pldedges for this team, excluding the team owner
+    # get the pldedges for this team, excluding the reply_to
     pledges = model.Pledge.all().filter(
       'team =',self.request.POST['team']).filter(
-      'email !=', self.request.POST['team_leader_email'])
+      'email !=', self.request.POST['reply_to'])
+
+    # if only sending to new members, filter out those that have already received emails
+
+    if self.request.POST['new_members'] == 'True':
+      pledges = pledges.filter('thank_you_sent_at =', None)
 
     for pledge in pledges:
-      # if only sending to new members, skip those that have a thank_you_sent_at
-      if self.request.POST['new_members'] and pledge.thank_you_sent_at:
-        continue
-
       env.mail_sender.Send(to=pledge.email,
                      subject=self.request.POST['subject'],
                      text_body=self.request.POST['message_body'],
@@ -405,7 +400,8 @@ class ThankTeamHandler(webapp2.RequestHandler):
       pledge.thank_you_sent_at = datetime.datetime.now()
       pledge.put()
 
-    # FIXME: respond back with the number of messages sent
+    self.response.write(pledges.count())
+
 
   def options(self):
     util.EnableCors(self)
