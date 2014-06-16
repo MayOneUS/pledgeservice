@@ -105,13 +105,13 @@ class PledgeTest(BaseTest):
         .Subscribe(email=self.pledge['email'],
                    first_name=u'Pik\u00E1',
                    last_name='Chu',
-                   amount_cents=4200, ip_addr=None,  # Not sure why this is None
-                                                     # in unittests.
+                   amount_cents=4200,
+                   ip_addr=None,  # Not sure why this is None in unittests
                    time=mox.IsA(datetime.datetime),
                    phone=phone,
                    source='pledge',
-                   nonce=mox.Regex('.*'),
-                   pledgePageSlug=pledgePageSlug)
+                   nonce=mox.Regex('.*'),)
+                   # pledgePageSlug=pledgePageSlug)
 
 
   def makeDefaultRequest(self, phone=None, pledgePageSlug=None):
