@@ -96,7 +96,11 @@ class PledgeTest(BaseTest):
     self.stripe.Charge('cust_4321', self.pledge['amountCents']) \
                .AndRaise(handlers.PaymentError('You got no money'))
 
-  def expectSubscribe(self):
+  def expectSubscribe(self, phone=None, pledgePageSlug=None):
+    if phone is None:
+      phone = '212-234-5432'
+    if pledgePageSlug is None:
+      pledgePageSlug = '28e9-Team-Shant-is-Shant'
     self.mailing_list_subscriber \
         .Subscribe(email=self.pledge['email'],
                    first_name=u'Pik\u00E1',
@@ -104,11 +108,15 @@ class PledgeTest(BaseTest):
                    amount_cents=4200, ip_addr=None,  # Not sure why this is None
                                                      # in unittests.
                    time=mox.IsA(datetime.datetime),
-                   source='pledge', nonce=mox.Regex('.*'))
+                   phone=phone,
+                   source='pledge',
+                   nonce=mox.Regex('.*'),
+                   pledgePageSlug=pledgePageSlug)
 
-  def makeDefaultRequest(self):
+
+  def makeDefaultRequest(self, phone=None, pledgePageSlug=None):
     self.expectStripe()
-    self.expectSubscribe()
+    self.expectSubscribe(phone=phone,pledgePageSlug=pledgePageSlug)
     self.mockery.ReplayAll()
 
     return self.app.post_json('/r/pledge', self.pledge)
@@ -186,7 +194,7 @@ class PledgeTest(BaseTest):
 
   def testNoPhone(self):
     self.pledge['phone'] = ''
-    self.makeDefaultRequest()
+    self.makeDefaultRequest(phone='', pledgePageSlug='')
 
   def testNoName(self):
     self.pledge['name'] = ''

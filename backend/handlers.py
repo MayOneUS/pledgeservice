@@ -62,8 +62,8 @@ class StripeBackend(object):
 class MailingListSubscriber(object):
   """Interface which signs folks up for emails."""
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
-                source, zipcode=None, volunteer=None, skills=None,
-                rootstrikers=None, nonce=None):
+                source, phone=None, zipcode=None, volunteer=None, skills=None,
+                rootstrikers=None, nonce=None, pledgePageSlug=None):
     raise NotImplementedError()
 
 
@@ -170,7 +170,9 @@ class PledgeHandler(webapp2.RequestHandler):
         ip_addr=self.request.remote_addr,
         time=datetime.datetime.now(),
         source='pledge',
-        nonce=user.url_nonce)
+        phone=data['phone'],
+        nonce=user.url_nonce,
+        pledgePageSlug=data['pledgePageSlug'])
 
     # Add to the total.
     model.ShardedCounter.increment('TOTAL-5', data['amountCents'])
@@ -227,9 +229,17 @@ class SubscribeHandler(webapp2.RequestHandler):
     if len(last_name) == 0:
       last_name = None
 
+    phone_input = cgi.escape(self.request.get('phone'))
+    if len(phone_input) == 0:
+      phone_input = None
+
     zipcode_input = cgi.escape(self.request.get('zipcode'))
     if len(zipcode_input) == 0:
       zipcode_input = None
+      
+    phone_input = cgi.escape(self.request.get('phone'))
+    if len(phone_input) == 0:
+      phone_input = None
 
     volunteer_input = cgi.escape(self.request.get('volunteer')) # "YES" or "NO"
     if volunteer_input == 'on':
@@ -251,6 +261,10 @@ class SubscribeHandler(webapp2.RequestHandler):
     if len(source_input) == 0:
       source_input = 'subscribe'
 
+    pledgePageSlug_input = cgi.escape(self.request.get('pledgePageSlug'))
+    if len(pledgePageSlug_input) == 0:
+      pledgePageSlug_input = ''
+      
     env.mailing_list_subscriber.Subscribe(
       email=email_input,
       first_name=first_name, last_name=last_name,
@@ -258,10 +272,12 @@ class SubscribeHandler(webapp2.RequestHandler):
       ip_addr=self.request.remote_addr,
       time=datetime.datetime.now(),
       source=source_input,
+      phone=phone_input,
       zipcode=zipcode_input,
       volunteer=volunteer_input,
       skills=skills_input,
       rootstrikers=rootstrikers_input,
+      pledgePageSlug=pledgePageSlug_input
       )
 
     util.EnableCors(self)

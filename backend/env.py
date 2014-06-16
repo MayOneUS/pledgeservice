@@ -76,12 +76,12 @@ class FakeStripe(handlers.StripeBackend):
 
 class MailchimpSubscriber(handlers.MailingListSubscriber):
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
-                source, zipcode=None, volunteer=None, skills=None, rootstrikers=None,
-                nonce=None):
+                source, phone=None, zipcode=None, volunteer=None, skills=None, rootstrikers=None,
+                nonce=None, pledgePageSlug=None):
     deferred.defer(_subscribe_to_mailchimp,
                    email, first_name, last_name,
-                   amount_cents, ip_addr, source, zipcode,
-                   volunteer, skills, rootstrikers, nonce)
+                   amount_cents, ip_addr, source, phone, zipcode,
+                   volunteer, skills, rootstrikers, nonce, pledgePageSlug)
 
 
 class FakeSubscriber(handlers.MailingListSubscriber):
@@ -115,9 +115,9 @@ def _send_mail(to, subject, text_body, html_body, reply_to=None):
 
 
 def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
-                            amount, request_ip, source, zipcode=None,
+                            amount, request_ip, source, phone=None, zipcode=None,
                             volunteer=None, skills=None, rootstrikers=None,
-                            nonce=None):
+                            nonce=None, pledgePageSlug=None):
   mailchimp_api_key = model.Config.get().mailchimp_api_key
   mailchimp_list_id = model.Config.get().mailchimp_list_id
   mc = mailchimp.Mailchimp(mailchimp_api_key)
@@ -145,11 +145,17 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
   if skills is not None and len(skills)>0:
     merge_vars['SKILLS'] = skills[0:255]
 
+  if phone is not None:
+    merge_vars['PHONE'] = phone
+
   if zipcode is not None:
     merge_vars['ZIPCODE'] = zipcode
   
   if rootstrikers is not None:
     merge_vars['ROOTS'] = rootstrikers
+    
+  if pledgePageSlug is not None:
+    merge_vars['PPURL'] = pledgePageSlug
 
   # list ID and email struct
   logging.info('Subscribing: %s', email_to_subscribe)

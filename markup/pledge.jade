@@ -4,7 +4,7 @@ html
     include includes/head
     script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
     script(src="//cdn.optimizely.com/js/210578001.js")
-    script PLEDGE_URL = 'https://pledge.mayday.us';
+    script PLEDGE_URL = '//' + window.location.host;
     script(src="/static/pledge.js")
   body#pledge(ng-app="mayOne", ng-controller="PledgeController")
     include includes/header
@@ -13,91 +13,82 @@ html
       .butterbar.row(ng-show="ctrl.error")
         .alert.alert-danger {{ctrl.error}}
       #content.row
-        .col-md-8
-          .row
-            .col-md-12
-              h2 We are running an all or nothing campaign.
-              form(role="form", method="POST", ng-submit="ctrl.pledge()")
-                .form-group.col-sm-6
-                  label.control-label Email
-                  input.form-control.input-lg(type="email", required,
-                    placeholder="smith@example.com", ng-model="ctrl.form.email")
-                .form-group.col-sm-6
-                  label.control-label Phone Number <span class="label label-default">Optional</span>
-                  input.form-control.input-lg(type="tel",
-                    placeholder="(212) 867-5309", ng-model="ctrl.form.phone")
+        .col-md-12
+          h2 We are running an all or nothing campaign.
+          form(role="form", method="POST", ng-submit="ctrl.pledge()")
+            .form-group.col-sm-6
+              label.control-label Email
+              input.form-control.input-lg(type="email", required,
+                placeholder="smith@example.com", ng-model="ctrl.form.email")
+            .form-group.col-sm-6
+              label.control-label Phone Number <span class="label label-default">Optional</span>
+              input.form-control.input-lg(type="tel",
+                placeholder="(212) 867-5309", ng-model="ctrl.form.phone")
 
-                .form-group.col-sm-6
-                  label.control-label Occupation
-                  input.form-control.input-lg(type="text", required,
-                    placeholder="Gardener, Railroad Worker, etc",
-                    ng-model="ctrl.form.occupation")
-                .form-group.col-sm-6
-                  label.control-label Employer
-                  input.form-control.input-lg(type="text", required,
-                    placeholder="Nintendo, UPS, Self, etc",
-                    ng-model="ctrl.form.employer")
+            .form-group.col-sm-6
+              label.control-label Occupation
+              input.form-control.input-lg(type="text", required,
+                placeholder="Gardener, Railroad Worker, etc",
+                ng-model="ctrl.form.occupation")
+            .form-group.col-sm-6
+              label.control-label Employer
+              input.form-control.input-lg(type="text", required,
+                placeholder="Nintendo, UPS, Self, etc",
+                ng-model="ctrl.form.employer")
 
-                .form-group.col-sm-6
-                  label.control-label Who to Fund?
-                  select.form-control.input-lg(ng-model="ctrl.form.target")
-                    option Whatever Helps
-                    option Democrats Only
-                    option Republicans Only
-                .form-group.col-sm-6
-                  label.control-label How Much to Fund?
-                  .input-group.input-group-lg
-                    span.input-group-addon $
-                    input.form-control(type="number", required, min="1",
-                      ng-model="ctrl.form.amount")
-                .form-group.col-sm-12
-                  .checkbox
-                    label <input type="checkbox" ng-model="ctrl.form.unconditional"> I want my donation to be used to support MAYDAY.US, even if the goal has not been met by July 4th.
-                  .checkbox
-                    label <input type="checkbox" ng-model="ctrl.form.subscribe"> Want to know how we're using the money? Sign up for emails from us.
-                .form-group.col-sm-12
-                  button.form-control.input-lg.btn.btn-lg.btn-danger#pledgeButton(
-                      ng-disabled="ctrl.loading")
-                    .spinner(ng-show="ctrl.loading")
+            .form-group.col-sm-6
+              label.control-label Who to Fund?
+              select.form-control.input-lg(ng-model="ctrl.form.target")
+                option Whatever Helps
+                option Democrats Only
+                option Republicans Only
+            .form-group.col-sm-6
+              label.control-label How Much to Fund?
+              .input-group.input-group-lg
+                span.input-group-addon $
+                input.form-control(type="number", required, min="1",
+                  ng-model="ctrl.form.amount")
+            .form-group.col-sm-12
+              .checkbox
+                label <input type="checkbox" ng-model="ctrl.form.unconditional"> I want my donation to be used to support MAYDAY.US, even if the goal has not been met by July 4th.
+              .checkbox
+                label <input type="checkbox" ng-model="ctrl.form.subscribe"> Want to know how we're using the money? Sign up for emails from us.
+            .form-group.col-sm-12
+              button.form-control.input-lg.btn.btn-lg.btn-danger#pledgeButton(
+                  ng-disabled="ctrl.loading")
+                .spinner(ng-show="ctrl.loading")
 
-                    span(ng-hide="ctrl.loading") Pledge
-              p.
-                If we don't meet our target, you don't pay. That way, you know
-                that you will only pledge if there's enough money collected to
-                make a difference. We'll charge your card now, but if we fail to
-                meet our $5M goal by July 4th, your pledge will be refunded, and
-                we go back to the drawing board.
+                span(ng-hide="ctrl.loading") Pledge
+            p.
+              If we don't meet our target, you don't pay. That way, you know
+              that you will only pledge if there's enough money collected to
+              make a difference. We'll charge your card now, but if we fail to
+              meet our $5M goal by July 4th, your pledge will be refunded, and
+              we go back to the drawing board.
 
-              p.
-                Some supporters prefer to donate regardless of whether we
-                meet our goal or not. If you choose that option below, we'll do
-                our best to make your donation count no matter what happens.
-          .row
-            .col-md-12
-              h3 Other methods of payment
-              p.
-                If you wish to <a
-                href="https://mayday.us/faq/#is-there-a-physical-mailing-address-that-i-can-send-a-check-to--i-dont-give-money-over-the-internet">pledge by
-                check</A>, we have instructions on the <a
-                href="https://mayday.us/faq/#is-there-a-physical-mailing-address-that-i-can-send-a-check-to--i-dont-give-money-over-the-internet">FAQ page</A>.
+            p.
+              Some supporters prefer to donate regardless of whether we
+              meet our goal or not. If you choose that option above, we'll do
+              our best to make your donation count no matter what happens.
+            p.
+              If you wish to <a
+              href="https://mayday.us/faq/#is-there-a-physical-mailing-address-that-i-can-send-a-check-to-i-dont-give-money-over-the-internet">donate by
+              check</A>, we have instructions on the <a
+              href="https://mayday.us/faq/#is-there-a-physical-mailing-address-that-i-can-send-a-check-to-i-dont-give-money-over-the-internet">FAQ page</A>.
 
-              p.
-                Some users have expressed an interest in using PayPal,
-                and we are currently working on building that
-                infrastructure.  Stay tuned.
+           
+      #rules.well.row
+        h2 Contribution Rules:
 
-        #rules.well.col-md-4
-          h2 Contribution Rules:
-
-          p In order to contribute, all of the following statements must be true:
-          ul
-            li I am a United States citizen or a permanent resident alien.
-            li This contribution is made from my own funds, and funds are not being provided to me by another person or entity for the purpose of making this contribution.
-            li I am making this contribution with my own personal credit card and not with a corporate or business credit card or a card issued to another person.
-            li I am at least eighteen years old.
-            li I am not a foreign national, federal contractor, national bank, or corporation chartered by an act of Congress
-          p MayDay PAC must use its best efforts to obtain and report the name, address, occupation, and employer of individual contributors.
-          p Contributions are not tax deductible.
-          p <a href="//mayday.us/privacy-policy">Our Privacy Policy</a>
+        p In order to contribute, all of the following statements must be true:
+        ul
+          li I am a United States citizen or a permanent resident alien.
+          li This contribution is made from my own funds, and funds are not being provided to me by another person or entity for the purpose of making this contribution.
+          li I am making this contribution with my own personal credit card and not with a corporate or business credit card or a card issued to another person.
+          li I am at least eighteen years old.
+          li I am not a foreign national, federal contractor, national bank, or corporation chartered by an act of Congress
+        p MayDay PAC must use its best efforts to obtain and report the name, address, occupation, and employer of individual contributors.
+        p Contributions are not tax deductible.
+        p <a href="//mayday.us/privacy-policy">Our Privacy Policy</a>
       .row.spacing
     include includes/footer

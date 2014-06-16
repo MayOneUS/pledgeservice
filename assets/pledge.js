@@ -34,10 +34,11 @@ var validateEmail = function(email) {
 };
 
 var PledgeController = ['$scope', '$http', function($scope, $http) {
+  
   $scope.ctrl = {
     paymentConfig: null,
     stripeHandler: null,
-
+    
     form: {
       email: '',
       phone: '',
@@ -48,6 +49,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       unconditional: false,
       subscribe: true
     },
+    header:header,
     error: '',
     loading: false,
     cents: function() {
@@ -57,6 +59,8 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       var email = $scope.ctrl.form.email || null;
       var occ = $scope.ctrl.form.occupation || null;
       var emp = $scope.ctrl.form.employer || null;
+      var amount = $scope.ctrl.form.amount || null;
+      
       
       if (!occ) {
         $scope.ctrl.error = "Please enter occupation";
@@ -69,6 +73,9 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
         return false;
       } else if (!validateEmail(email)) {
         $scope.ctrl.error = "Please enter a valid email";
+        return false;
+      } else if (amount && amount < 1) {
+        $scope.ctrl.error = "Please enter an amount of $1 or more";
         return false;
       }
       return true;
@@ -120,6 +127,12 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       });
     }
   };
+  
+  var urlParams = getUrlParams(); 
+  var passedEmail = urlParams['email'] || '';
+  var header = urlParams['header'] || '';
+        
+  $scope.ctrl.form.email = passedEmail;
 
   $http.get(PLEDGE_URL + '/r/payment_config').success(function(config) {
     $scope.ctrl.paymentConfig = config;
