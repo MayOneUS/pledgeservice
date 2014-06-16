@@ -60,7 +60,7 @@ class MailingListSubscriber(object):
   """Interface which signs folks up for emails."""
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
                 source, phone=None, zipcode=None, volunteer=None, skills=None,
-                rootstrikers=None, nonce=None):
+                rootstrikers=None, nonce=None, pledgePageSlug=None):
     raise NotImplementedError()
 
 
@@ -174,7 +174,8 @@ class PledgeHandler(webapp2.RequestHandler):
         time=datetime.datetime.now(),
         source='pledge',
         phone=data['phone'],
-        nonce=user.url_nonce)
+        nonce=user.url_nonce,
+        pledgePageSlug=data['pledgePageSlug'])
 
     # Add to the total.
     model.ShardedCounter.increment('TOTAL-5', data['amountCents'])
@@ -263,6 +264,10 @@ class SubscribeHandler(webapp2.RequestHandler):
     if len(source_input) == 0:
       source_input = 'subscribe'
 
+    pledgePageSlug_input = cgi.escape(self.request.get('pledgePageSlug'))
+    if len(pledgePageSlug_input) == 0:
+      pledgePageSlug_input = ''
+      
     env.mailing_list_subscriber.Subscribe(
       email=email_input,
       first_name=first_name, last_name=last_name,
@@ -275,6 +280,7 @@ class SubscribeHandler(webapp2.RequestHandler):
       volunteer=volunteer_input,
       skills=skills_input,
       rootstrikers=rootstrikers_input,
+      pledgePageSlug=pledgePageSlug_input
       )
 
     util.EnableCors(self)
