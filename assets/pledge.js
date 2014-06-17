@@ -57,7 +57,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       return Math.floor($scope.ctrl.form.amount * 100);
     },
     validateForm: function() {
-      var email = $scope.ctrl.form.email || null;
+      var email = $('input[type="email"]').val() || null;
       var occ = $scope.ctrl.form.occupation || null;
       var emp = $scope.ctrl.form.employer || null;
       var amount = $scope.ctrl.form.amount || null;
@@ -70,7 +70,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
         $scope.ctrl.error = "Please enter employer";
         return false;
       } else if (!email) {
-        $scope.ctrl.error = "Please enter email"; 
+        $scope.ctrl.error = "Sorry, we are having trouble accepting pledges right now.  Please come back in 10 minutes"; 
         return false;
       } else if (!validateEmail(email)) {
         $scope.ctrl.error = "Please enter a valid email";
@@ -85,7 +85,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       if ($scope.ctrl.validateForm()) {
         var cents = $scope.ctrl.cents();
         $scope.ctrl.stripeHandler.open({
-          email: $scope.ctrl.form.email,
+          email: $('input[type="email"]').val(),
           amount: cents
         });        
       }
@@ -102,7 +102,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
             $scope.ctrl.form.unconditional ? 'DONATION' : 'CONDITIONAL';
 
       $http.post(PLEDGE_URL + '/r/pledge', {
-        email: $scope.ctrl.form.email,
+        email: $('input[type="email"]').val(),
         phone: $scope.ctrl.form.phone,
         name: name,
         occupation: $scope.ctrl.form.occupation,
@@ -134,7 +134,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
   var passedEmail = urlParams['email'] || '';
   var header = urlParams['header'] || '';
         
-  $scope.ctrl.form.email = passedEmail;
+  $('input[type="email"]').val(passedEmail);
 
   $http.get(PLEDGE_URL + '/r/payment_config').success(function(config) {
     $scope.ctrl.paymentConfig = config;
