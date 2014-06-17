@@ -127,7 +127,7 @@ class PledgeTest(BaseTest):
     messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
     self.assertEquals(1, len(messages))
     self.assertEquals(self.pledge["email"], messages[0].to)
-    self.assertTrue('MayOne no-reply' in messages[0].sender)
+    self.assertTrue('Mayday PAC' in messages[0].sender)
     self.assertEquals('Thank you for your pledge', messages[0].subject)
 
   def testBadJson(self):
