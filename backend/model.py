@@ -252,9 +252,9 @@ class TeamTotal(db.Model):
   def _pledge8Count(team_id):
     """do this outside of a transaction"""
     total = 0
-    for pledge in Pledge.all().filter("team =", team_id).filter(
-        "model_version <", 9):
-      total += pledge.amountCents
+    for pledge in Pledge.all().filter("team =", team_id):
+      if pledge.model_version < 9:
+        total += pledge.amountCents
     return total
 
   @classmethod
