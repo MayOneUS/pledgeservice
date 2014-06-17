@@ -47,7 +47,8 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
       target: 'Whatever Helps',
       amount: 0,
       unconditional: false,
-      subscribe: true
+      subscribe: true,
+      anonymous: false
     },
     header:header,
     error: '',
@@ -108,6 +109,7 @@ var PledgeController = ['$scope', '$http', function($scope, $http) {
         employer: $scope.ctrl.form.employer,
         target: $scope.ctrl.form.target,
         subscribe: $scope.ctrl.form.subscribe,
+        anonymous: $scope.ctrl.form.anonymous,
         amountCents: $scope.ctrl.cents(),
         pledgeType: pledgeType,
         team: urlParams['team'] || readCookie("last_team_key") || '',
