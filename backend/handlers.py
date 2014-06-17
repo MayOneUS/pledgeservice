@@ -402,21 +402,22 @@ class ThankTeamHandler(webapp2.RequestHandler):
 
     if self.request.POST['new_members'] == 'True':
       pledges = pledges.filter('thank_you_sent_at =', None)
-
+    
+    i = 0
     for pledge in pledges:
       env.mail_sender.Send(to=pledge.email,
                      subject=self.request.POST['subject'],
                      text_body=self.request.POST['message_body'],
                      html_body=self.request.POST['message_body'],
                      reply_to=self.request.POST['reply_to'])
-
+      i += 1
       # set the thank_you_sent_at for users after sending
       # FIXME: make sure the send was successful
       pledge.thank_you_sent_at = datetime.datetime.now()
       pledge.put()
 
-    self.response.write(pledges.count())
-
+    logging.info('THANKING: %d PLEDGERS!!' % i)
+    self.response.write(i)
 
   def options(self):
     util.EnableCors(self)

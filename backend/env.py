@@ -96,14 +96,14 @@ class MailSender(object):
 
   def Send(self, to, subject, text_body, html_body, reply_to=None):
     if self.defer:
-      deferred.defer(_send_mail, to, subject, text_body, html_body)
+      deferred.defer(_send_mail, to, subject, text_body, html_body, reply_to)
     else:
       _send_mail(to, subject, text_body, html_body, reply_to)
 
 
 def _send_mail(to, subject, text_body, html_body, reply_to=None):
   """Deferred email task"""
-  sender = ('MayOne no-reply <noreply@%s.appspotmail.com>' %
+  sender = ('Mayday PAC <noreply@%s.appspotmail.com>' %
             model.Config.get().app_name)
   message = mail.EmailMessage(sender=sender, subject=subject)
   message.to = to
@@ -111,6 +111,8 @@ def _send_mail(to, subject, text_body, html_body, reply_to=None):
   message.html = html_body
   if reply_to:
     message.reply_to = reply_to
+  else:
+    message.reply_to = 'info@mayday.us'
   message.send()
 
 
