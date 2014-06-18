@@ -3,6 +3,7 @@
 //
 // NOTE: This could be made more efficient by caching the result (and then
 // killing the cache on URL changes, but we only call it once, so meh.
+
 var getUrlParams = function() {
   var match,
   pl     = /\+/g,  // Regex for replacing addition symbol with a space
@@ -33,123 +34,135 @@ var validateEmail = function(email) {
     return re.test(email);
 };
 
-var PledgeController = ['$scope', '$http', function($scope, $http) {
-  
-  $scope.ctrl = {
-    paymentConfig: null,
-    stripeHandler: null,
-    
-    form: {
-      email: '',
-      phone: '',
-      occupation: '',
-      employer: '',
-      target: 'Whatever Helps',
-      amount: 0,
-      unconditional: false,
-      subscribe: true,
-      anonymous: false
-    },
-    header:header,
-    error: '',
-    loading: false,
-    cents: function() {
-      return Math.floor($scope.ctrl.form.amount * 100);
-    },
-    validateForm: function() {
-      var email = $('input[type="email"]').val() || null;
-      var occ = $scope.ctrl.form.occupation || null;
-      var emp = $scope.ctrl.form.employer || null;
-      var amount = $scope.ctrl.form.amount || null;
-      
-      
-      if (!occ) {
-        $scope.ctrl.error = "Please enter occupation";
-        return false;
-      } else if (!emp) {
-        $scope.ctrl.error = "Please enter employer";
-        return false;
-      } else if (!email) {
-        $scope.ctrl.error = "Sorry, we are having trouble accepting pledges right now.  Please come back in 10 minutes"; 
-        return false;
-      } else if (!validateEmail(email)) {
-        $scope.ctrl.error = "Please enter a valid email";
-        return false;
-      } else if (amount && amount < 1) {
-        $scope.ctrl.error = "Please enter an amount of $1 or more";
-        return false;
-      }
-      return true;
-    },
-    pledge: function() {
-      if ($scope.ctrl.validateForm()) {
-        var cents = $scope.ctrl.cents();
-        $scope.ctrl.stripeHandler.open({
-          email: $('input[type="email"]').val(),
-          amount: cents
-        });        
-      }
-    },
-    onTokenRecv: function(token, args) {
-      $scope.ctrl.loading = true;
-      $scope.ctrl.createPledge(args.billing_name,
-                               { STRIPE: { token: token.id } });
-    },
-    createPledge: function(name, payment) {
-      var urlParams = getUrlParams();
+var paymentConfig = null;
+var stripeHandler = null;
 
-      var pledgeType =
-            $scope.ctrl.form.unconditional ? 'DONATION' : 'CONDITIONAL';
+var getAmountCents = function() {
+  return Math.floor($('#amount_input').val() * 100);
+};
 
-      $http.post(PLEDGE_URL + '/r/pledge', {
-        email: $('input[type="email"]').val(),
-        phone: $scope.ctrl.form.phone,
-        name: name,
-        occupation: $scope.ctrl.form.occupation,
-        employer: $scope.ctrl.form.employer,
-        target: $scope.ctrl.form.target,
-        subscribe: $scope.ctrl.form.subscribe,
-        anonymous: $scope.ctrl.form.anonymous,
-        amountCents: $scope.ctrl.cents(),
-        pledgeType: pledgeType,
-        team: urlParams['team'] || readCookie("last_team_key") || '',
-        payment: payment
-      }).success(function(data) {
-        location.href = PLEDGE_URL + data.receipt_url;
-      }).error(function(data) {
-        $scope.ctrl.loading = false;
+var validateForm = function() {
+    var email = $('#email_input').val() || null;
+    var occ = $('#occupation_input').val() || null;
+    var emp = $('#employer_input').val() || null;
+    var amount = $('#amount_input').val() || null;
 
-        if ('paymentError' in data) {
-          $scope.ctrl.error = "We're having trouble charging your card: " +
-            data.paymentError;
-        } else {
-          $scope.ctrl.error =
-            'Oops, something went wrong. Try again in a few minutes';
-        }
-      });
+
+    if (!occ) {
+      showError( "Please enter occupation");
+      return false;
+    } else if (!emp) {
+      showError( "Please enter employer");
+      return false;
+    } else if (!email) {
+      showError("Sorry, we are having trouble accepting pledges right now.  Please come back in 10 minutes");
+      return false;
+    } else if (!validateEmail(email)) {
+      showError("Please enter a valid email");
+      return false;
+    } else if (amount && amount < 1) {
+      showError( "Please enter an amount of $1 or more");
+      return false;
     }
+    return true;
+};
+
+var pledge = function() {
+  if (validateForm()) {
+    var cents = getAmountCents();
+    stripeHandler.open({
+      email: $('#email_input').val(),
+      amount: cents
+    });
+  }
+};
+
+var showError = function(errorText) {
+  $('#formError').text(errorText);
+  $('#formError').show();
+}
+
+var setLoading = function(loading) {
+  if (loading) {
+    $('#pledgeButton .pledgeText').hide();
+    $('#pledgeButton .spinner').show();
+  } else {
+    $('#pledgeButton .pledgeText').show();
+    $('#pledgeButton .spinner').hide();
+  }
+}
+
+var onTokenRecv = function(token, args) {
+  setLoading(true);
+  createPledge(args.billing_name, { STRIPE: { token: token.id } });
+};
+
+var createPledge = function(name, payment) {
+  var urlParams = getUrlParams();
+  var pledgeType = null;
+
+  if($("#directDonate_input").is(':checked')) {
+    pledgeType = 'DONATION';
+  } else {
+    pledgeType = 'CONDITIONAL';
+  }
+
+  var data = {
+    email: $('#email_input').val(),
+    phone: $('#phone_input').val(),
+    name: name,
+    occupation: $('#occupation_input').val(),
+    employer: $('#employer_input').val(),
+    target: $('#targeting_input').val(),
+    subscribe: $('#emailSignupInput').is(':checked') ? true : false,
+    // anonymous: $scope.ctrl.form.anonymous,
+    amountCents: getAmountCents(),
+    pledgeType: pledgeType,
+    team: urlParams['team'] || readCookie("last_team_key") || '',
+    payment: payment
   };
-  
-  var urlParams = getUrlParams(); 
+
+  $.ajax({
+      type: 'POST',
+      url: PLEDGE_URL + '/r/pledge',
+      data: JSON.stringify(data),
+      contentType: "application/json",
+      dataType: 'json',
+      success: function(data) {
+        location.href = PLEDGE_URL + data.receipt_url;
+      },
+      error: function(data) {
+        setLoading(false);
+        if ('paymentError' in data) {
+          showError("We're having trouble charging your card: " + data.paymentError);
+        } else {
+          $('#formError').text('Oops, something went wrong. Try again in a few minutes');
+          $('#formError').show();
+        }
+      },
+  });
+};
+
+$(document).ready(function() {
+  var urlParams = getUrlParams();
   var passedEmail = urlParams['email'] || '';
   var header = urlParams['header'] || '';
-        
-  $('input[type="email"]').val(passedEmail);
 
-  $http.get(PLEDGE_URL + '/r/payment_config').success(function(config) {
-    $scope.ctrl.paymentConfig = config;
-    $scope.ctrl.stripeHandler = StripeCheckout.configure({
+  $('#email_input').val(passedEmail);
+
+  $('#pledgeButton').on('click', pledge);
+
+  $.get(PLEDGE_URL + '/r/payment_config').done(function(config) {
+      paymentConfig = config;
+      stripeHandler = StripeCheckout.configure({
       key: config.stripePublicKey,
       name: 'MAYDAY.US',
       panelLabel: 'Pledge',
       billingAddress: true,
       image: PLEDGE_URL + '/static/flag.jpg',
       token: function(token, args) {
-        $scope.ctrl.onTokenRecv(token, args);
+        onTokenRecv(token, args);
       }
     });
   });
-}];
-
-angular.module('mayOne',[])
-  .controller('PledgeController', PledgeController);
+});
