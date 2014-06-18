@@ -2,7 +2,7 @@ doctype html
 html
   head
     include includes/head
-    script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js")
+    script(src="//code.jquery.com/jquery-1.11.0.min.js")
     script(src="//cdn.optimizely.com/js/210578001.js")
     script PLEDGE_URL = '//' + window.location.host;
     script(src="/static/pledge.js")
@@ -10,35 +10,34 @@ html
     include includes/header
     script(src="https://checkout.stripe.com/checkout.js")
     .container
-      .butterbar.row(ng-show="ctrl.error")
-        .alert.alert-danger {{ctrl.error}}
+      div#formError.row.alert.alert-danger(style="display:none")
       #content.row
         .col-md-12
           h2 We are running an all or nothing campaign.
-          form(role="form", method="POST", ng-submit="ctrl.pledge()")
+          form(role="form", method="POST", action="javascript:return false;")
             .form-group.col-sm-6
               label.control-label Email
               input.form-control.input-lg(type="email", required,
-                placeholder="smith@example.com", ng-model="ctrl.form.email")
+                placeholder="smith@example.com", id="email_input")
             .form-group.col-sm-6
               label.control-label Phone Number <span class="label label-default">Optional</span>
               input.form-control.input-lg(type="tel",
-                placeholder="(212) 867-5309", ng-model="ctrl.form.phone")
+                placeholder="(212) 867-5309", id="phone_input")
 
             .form-group.col-sm-6
               label.control-label Occupation
               input.form-control.input-lg(type="text", required,
                 placeholder="Gardener, Railroad Worker, etc",
-                ng-model="ctrl.form.occupation")
+                id="occupation_input")
             .form-group.col-sm-6
               label.control-label Employer
               input.form-control.input-lg(type="text", required,
                 placeholder="Nintendo, UPS, Self, etc",
-                ng-model="ctrl.form.employer")
+                id="employer_input")
 
             .form-group.col-sm-6
               label.control-label Who to Fund?
-              select.form-control.input-lg(ng-model="ctrl.form.target")
+              select.form-control.input-lg(id="targeting_input")
                 option Whatever Helps
                 option Democrats Only
                 option Republicans Only
@@ -47,18 +46,18 @@ html
               .input-group.input-group-lg
                 span.input-group-addon $
                 input.form-control(type="number", required, min="1",
-                  ng-model="ctrl.form.amount")
+                  id="amount_input")
             .form-group.col-sm-12
               .checkbox
-                label <input type="checkbox" ng-model="ctrl.form.unconditional"> I want my donation to be used to support MAYDAY.US, even if the goal has not been met by July 4th.
+                label <input type="checkbox" id="directDonate_input"> I want my donation to be used to support MAYDAY.US, even if the goal has not been met by July 4th.
               .checkbox
-                label <input type="checkbox" ng-model="ctrl.form.subscribe"> Want to know how we're using the money? Sign up for emails from us.
+                label <input type="checkbox" id="emailSignupInput"> Want to know how we're using the money? Sign up for emails from us.
               .checkbox
-                label <input type="checkbox" ng-model="ctrl.form.anonymous"> I do not want my name displayed on the donor pledge page.
+                label <input type="checkbox" id="anonymous_input"> I do not want my name displayed on the donor pledge page.
             .form-group.col-sm-12
               button.form-control.input-lg.btn.btn-lg.btn-danger#pledgeButton(
                   ng-disabled="ctrl.loading")
-                .spinner(ng-show="ctrl.loading")
+                .spinner.hidden
 
                 span(ng-hide="ctrl.loading") Pledge
             p.
