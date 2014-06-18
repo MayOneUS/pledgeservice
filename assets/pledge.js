@@ -85,9 +85,11 @@ var showError = function(errorText) {
 var setLoading = function(loading) {
   if (loading) {
     $('#pledgeButton .pledgeText').hide();
+    $('#pledgeButton').off('click');  
     $('#pledgeButton .spinner').show();
   } else {
     $('#pledgeButton .pledgeText').show();
+    $('#pledgeButton').on('click', pledge);      
     $('#pledgeButton .spinner').hide();
   }
 }

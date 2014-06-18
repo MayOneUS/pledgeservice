@@ -6,7 +6,7 @@ html
     script(src="//cdn.optimizely.com/js/210578001.js")
     script PLEDGE_URL = '//' + window.location.host;
     script(src="/static/pledge.js")
-  body#pledge(ng-app="mayOne", ng-controller="PledgeController")
+  body#pledge
     include includes/header
     script(src="https://checkout.stripe.com/checkout.js")
     .container
@@ -51,15 +51,11 @@ html
               .checkbox
                 label <input type="checkbox" id="directDonate_input"> I want my donation to be used to support MAYDAY.US, even if the goal has not been met by July 4th.
               .checkbox
-                label <input type="checkbox" id="emailSignupInput"> Want to know how we're using the money? Sign up for emails from us.
-              .checkbox
-                label <input type="checkbox" id="anonymous_input"> I do not want my name displayed on the donor pledge page.
+                label <input type="checkbox" id="emailSignupInput" checked> Want to know how we're using the money? Sign up for emails from us.             
             .form-group.col-sm-12
-              button.form-control.input-lg.btn.btn-lg.btn-danger#pledgeButton(
-                  ng-disabled="ctrl.loading")
-                .spinner.hidden
-
-                span(ng-hide="ctrl.loading") Pledge
+              button.form-control.input-lg.btn.btn-lg.btn-danger#pledgeButton
+                .spinner(style="display:none;")
+                span.pledgeText Pledge
             p.
               If we don't meet our target, you don't pay. That way, you know
               that you will only pledge if there's enough money collected to
