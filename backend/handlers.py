@@ -337,7 +337,7 @@ class PaymentConfigHandler(webapp2.RequestHandler):
 
 class TotalHandler(webapp2.RequestHandler):
   # These get added to every pledge calculation
-  STRETCH_GOAL_MATCH = 10000000
+  STRETCH_GOAL_MATCH = 35000000
   PRE_SHARDING_TOTAL = 59767534  # See model.ShardedCounter
   WP_PLEDGE_TOTAL = 41326868
   DEMOCRACY_DOT_COM_BALANCE = 9951173
