@@ -30,7 +30,15 @@ class Error(Exception): pass
 #   8: Adds whether or not pledges are anonymous
 #   9: Previous versions were not summed on demand into TeamTotal objects.
 #      Model 9 and newer pledges are.
-MODEL_VERSION = 9
+#  10: SurveResult field added.  This is just a text field, one of:
+#         Digital voter registration ads to grow the electorate
+#         Video trackers to force candidate transparency
+#         No robocalls
+#         State-of-the-art digital canvassing and field tools
+#         No negative ads
+#         Whatever helps us win
+#
+MODEL_VERSION = 10
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -122,6 +130,10 @@ class User(db.Model):
   # political affiliation
   target = db.StringProperty(required=False)
 
+
+  # the results of a survey from mayday.us/goodfight
+  surveyResult = db.StringProperty(required=False)
+  
   # this is the nonce for what we'll put in a url to send to people when we ask
   # them to update their information. it's kind of like their password for the
   # user-management part of the site.
@@ -136,7 +148,7 @@ class User(db.Model):
   @db.transactional
   def createOrUpdate(email, first_name=None, last_name=None, occupation=None,
                      employer=None, phone=None, target=None,
-                     from_import=None, mail_list_optin=None):
+                     from_import=None, mail_list_optin=None, surveyResult=None):
     user = User.get_by_key_name(email)
     if user is None:
       user = User(model_version=MODEL_VERSION,
@@ -158,6 +170,8 @@ class User(db.Model):
     user.employer = choose(user.employer, employer)
     user.phone = choose(user.phone, phone)
     user.target = choose(user.target, target)
+    user.surveyResult = choose(user.surveyResult, surveyResult)
+    
     user.mail_list_optin = choose(user.mail_list_optin, mail_list_optin)
     user.put()
     return user
@@ -287,7 +301,7 @@ def addPledge(email,
               stripe_customer_id, stripe_charge_id,
               amount_cents, pledge_type,
               first_name, last_name, occupation, employer, phone,
-              target, team, mail_list_optin, anonymous):
+              target, team, mail_list_optin, anonymous, surveyResult=None):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
@@ -298,7 +312,7 @@ def addPledge(email,
   user = User.createOrUpdate(
     email=email, first_name=first_name, last_name=last_name,
     occupation=occupation, employer=employer, phone=phone, target=target,
-    mail_list_optin=mail_list_optin)
+    mail_list_optin=mail_list_optin, surveyResult=surveyResult)
 
   return user, Pledge.create(email=email,
                        stripe_customer_id=stripe_customer_id,

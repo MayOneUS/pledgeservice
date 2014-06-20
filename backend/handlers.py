@@ -68,6 +68,8 @@ class MailingListSubscriber(object):
 
 
 _STR = dict(type='string')
+_STR_optional = dict(type='string', required=False)
+
 class PledgeHandler(webapp2.RequestHandler):
   """RESTful handler for pledge objects."""
 
@@ -80,6 +82,7 @@ class PledgeHandler(webapp2.RequestHandler):
       occupation=_STR,
       employer=_STR,
       target=_STR,
+      surveyResult=_STR_optional,
       subscribe=dict(type='boolean'),
       anonymous=dict(type='boolean', required=False),
       amountCents=dict(type='integer', minimum=100),
@@ -148,6 +151,9 @@ class PledgeHandler(webapp2.RequestHandler):
     else:
       last_name = name_parts[1]
 
+    if not 'surveyResult' in data:
+      data['surveyResult'] = ''
+
     user, pledge = model.addPledge(email=data['email'],
                              stripe_customer_id=stripe_customer_id,
                              stripe_charge_id=stripe_charge_id,
@@ -158,6 +164,7 @@ class PledgeHandler(webapp2.RequestHandler):
                              employer=data['employer'],
                              phone=data['phone'],
                              target=data['target'],
+                             surveyResult=data['surveyResult'],                             
                              pledge_type=data.get(
                                'pledgeType', model.Pledge.TYPE_CONDITIONAL),
                              team=data['team'],
