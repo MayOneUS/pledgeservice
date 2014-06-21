@@ -166,8 +166,12 @@ class UserInfoHandler(webapp2.RequestHandler):
   def options(self):
     util.EnableCors(self)
 
-
+class RootRedirectHandler(webapp2.RequestHandler):
+  def get(self):  
+    self.redirect('/pledge')
+  
 HANDLERS = [
+  ('/', RootRedirectHandler),
   ('/total', GetTotalHandler),
   (r'/user-update/(\w+)', UserUpdateHandler),
   (r'/user-info/(\w+)', UserInfoHandler),

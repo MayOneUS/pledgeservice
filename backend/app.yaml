@@ -13,11 +13,6 @@ handlers:
   static_files: static/favicon.ico
   upload: static/*
 
-- url: /
-  static_files: static/index.html
-  upload: static/*
-  secure: always
-
 - url: /pledge/?
   static_files: static/pledge.html
   upload: static/*
