@@ -407,8 +407,13 @@ class ThankTeamHandler(webapp2.RequestHandler):
       'team =',self.request.POST['team']).filter(
       'email !=', self.request.POST['reply_to'])
 
-    # if only sending to new members, filter out those that have already received emails
+    # yes this is executing another query, and it's ok because
+    # this will be done so infrequently
+    # FIXME: lookup from cache.Get.. or TeamTotal once those are sorted out
+    total_pledges = model.Pledge.all().filter(
+      'team =',self.request.POST['team']).count()
 
+    # if only sending to new members, filter out those that have already received emails
     if self.request.POST['new_members'] == 'True':
       pledges = pledges.filter('thank_you_sent_at =', None)
 
@@ -426,7 +431,9 @@ class ThankTeamHandler(webapp2.RequestHandler):
       pledge.put()
 
     logging.info('THANKING: %d PLEDGERS!!' % i)
-    self.response.write(i)
+    response_data = {'num_emailed': i, 'total_pledges': total_pledges}
+    self.response.content_type = 'application/json'
+    self.response.write(json.dumps(response_data))
 
   options = util.EnableCors
 
