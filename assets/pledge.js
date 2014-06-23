@@ -48,19 +48,22 @@ var validateForm = function() {
     var amount = $('#amount_input').val() || null;
 
 
-    if (!occ) {
+    if (!email) {
+      showError( "Please enter email");
+      return false;
+    } else if (!validateEmail(email)) {
+      showError("Please enter a valid email");
+      return false;
+    } else if (!occ) {
       showError( "Please enter occupation");
       return false;
     } else if (!emp) {
       showError( "Please enter employer");
       return false;
-    } else if (!email) {
-      showError("Sorry, we are having trouble accepting pledges right now.  Please come back in 10 minutes");
+    } else if (!amount) {
+      showError( "Please enter an amount");
       return false;
-    } else if (!validateEmail(email)) {
-      showError("Please enter a valid email");
-      return false;
-    } else if (amount && amount < 1) {
+    } else if (amount < 1) {
       showError( "Please enter an amount of $1 or more");
       return false;
     }

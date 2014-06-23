@@ -8,6 +8,7 @@ from google.appengine.ext import db
 from google.appengine.ext import deferred
 
 import model
+import cache
 
 
 class Error(Exception): pass
@@ -122,8 +123,36 @@ class BackfillTeamTotalNumPledges(Command):
       tt.put()
 
 
+class BackfillTeamTotalNumPledges(Command):
+  SHORT_NAME = 'backfill_teamtotal_num_pledges'
+  NAME = 'backfill TeamTotal.num_pledges'
+  SHOW = True
+
+  def run(self):
+    for tt in model.TeamTotal.all():
+      if not tt.num_pledges:
+        tt.num_pledges = 0
+      tt.num_pledges += model.Pledge.all().filter("model_version <=", 11).filter(
+        "team =", tt.team).count()
+      tt.put()
+
+
+class ResetTeamPledgeCount(Command):
+  SHORT_NAME = 'reset_team_num_pledges'
+  NAME = 'reset the TeamTotal.num_pledges counter from memcache'
+  SHOW = True
+
+  def run(self):
+    for tt in model.TeamTotal.all():
+      team_pledges = cache.GetTeamPledgeCount(tt.team) or 0
+      if team_pledges != tt.num_pledges:
+        tt.num_pledges = team_pledges
+        tt.put()
+
+
 # List your command here so admin.py can expose it.
 COMMANDS = [
+  ResetTeamPledgeCount,
   BackfillTeamTotalNumPledges,
   TestCommand,
   FindMissingDataUsersCommand,

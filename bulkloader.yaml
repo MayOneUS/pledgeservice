@@ -21,7 +21,6 @@ python_preamble:
 - import: google.appengine.ext.db
 - import: google.appengine.api.datastore
 - import: google.appengine.api.users
-- import: model
 
 transformers:
 
@@ -71,6 +70,9 @@ transformers:
     - property: url_nonce
       external_name: url_nonce
       # Type: String Stats: 6705 properties of this type in this kind.
+
+    - property: pledge_type
+      external_name: pledge_type
 
 
 - kind: Secrets
