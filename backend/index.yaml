@@ -13,6 +13,11 @@ indexes:
 - kind: Pledge
   properties:
   - name: team
+  - name: model_version
+  
+- kind: Pledge
+  properties:
+  - name: team
   - name: email
 
 - kind: Pledge
