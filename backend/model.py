@@ -37,8 +37,10 @@ class Error(Exception): pass
 #         State-of-the-art digital canvassing and field tools
 #         No negative ads
 #         Whatever helps us win
+#  11: TeamTotal.num_pledges added. This is a live total of completed pledges for
+#       that team.
 #
-MODEL_VERSION = 10
+MODEL_VERSION = 11
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -252,13 +254,16 @@ class TeamTotal(db.Model):
 
   totalCents = db.IntegerProperty(required=False)
 
+  num_pledges = db.IntegerProperty(required=True)
+
   @classmethod
   @db.transactional
-  def _create(cls, team_id, pledge_8_count):
+  def _create(cls, team_id, pledge_8_count, num_pledges):
     tt = cls.get_by_key_name(team_id)
     if tt is not None:
       return tt
-    tt = cls(key_name=team_id, team=team_id, totalCents=pledge_8_count)
+    tt = cls(key_name=team_id, team=team_id, totalCents=pledge_8_count,
+      num_pledges=num_pledges)
     tt.put()
     return tt
 
@@ -275,7 +280,7 @@ class TeamTotal(db.Model):
   def _get(cls, team_id):
     tt = cls.get_by_key_name(team_id)
     if tt is None:
-      tt = cls._create(team_id, cls._pledge8Count(team_id))
+      tt = cls._create(team_id, cls._pledge8Count(team_id), 0)
     return tt
 
   @classmethod
@@ -287,6 +292,7 @@ class TeamTotal(db.Model):
   def _add(cls, team_id, amount_cents):
     tt = cls.get_by_key_name(team_id)
     tt.totalCents += amount_cents
+    tt.num_pledges += 1
     tt.put()
 
   @classmethod

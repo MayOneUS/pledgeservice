@@ -121,6 +121,25 @@ class PledgeTest(BaseTest):
 
     return self.app.post_json('/r/pledge', self.pledge)
 
+  def testTeamTotalModel(self):
+    for _ in range(3):
+      self.expectStripe()
+      self.expectSubscribe()
+    self.mockery.ReplayAll()
+
+    self.assertEquals(model.TeamTotal.all().count(), 0)
+    self.app.post_json('/r/pledge', self.pledge)
+    tt = model.TeamTotal.all()[0]
+    self.assertEquals(tt.totalCents, self.pledge["amountCents"])
+    self.assertEquals(tt.num_pledges, 1)
+
+    self.app.post_json('/r/pledge', self.pledge)
+    self.app.post_json('/r/pledge', self.pledge)
+    self.assertEquals(model.TeamTotal.all().count(), 1)
+    tt = model.TeamTotal.all()[0]
+    self.assertEquals(tt.totalCents, 12600)
+    self.assertEquals(tt.num_pledges, 3)
+
   def testMailOnCreatePledge(self):
     self.makeDefaultRequest()
 
