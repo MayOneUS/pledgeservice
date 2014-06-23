@@ -404,8 +404,9 @@ class ThankTeamHandler(webapp2.RequestHandler):
 
     # get the pldedges for this team, excluding the reply_to
     pledges = model.Pledge.all().filter(
-      'team =',self.request.POST['team']).filter(
-      'email !=', self.request.POST['reply_to'])
+      'team =',self.request.POST['team'])
+    # .filter(
+      # 'email !=', self.request.POST['reply_to'])
 
     # yes this is executing another query, and it's ok because
     # this will be done so infrequently
