@@ -108,8 +108,23 @@ class RequestAllPledges(Command):
     logging.info('Done')
 
 
+class BackfillTeamTotalNumPledges(Command):
+  SHORT_NAME = 'backfill_teamtotal_num_pledges'
+  NAME = 'backfill TeamTotal.num_pledges'
+  SHOW = True
+
+  def run(self):
+    for tt in model.TeamTotal.all():
+      if not tt.num_pledges:
+        tt.num_pledges = 0
+      tt.num_pledges += model.Pledge.all().filter("model_version <=", 11).filter(
+        "team =", tt.team).count()
+      tt.put()
+
+
 # List your command here so admin.py can expose it.
 COMMANDS = [
+  BackfillTeamTotalNumPledges,
   TestCommand,
   FindMissingDataUsersCommand,
   UpdateSecretsProperties,
