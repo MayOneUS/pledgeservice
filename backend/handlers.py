@@ -181,7 +181,7 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
     id = str(pledge.key())
     receipt_url = '/receipt/%s?auth_token=%s' % (id, pledge.url_nonce)
 
-    return id, receipt_url
+    return id, pledge.url_nonce, receipt_url
 
 
 class PledgeHandler(webapp2.RequestHandler):
@@ -229,10 +229,10 @@ class PledgeHandler(webapp2.RequestHandler):
       self.error(400)
       return
 
-    id, receipt_url = pledge_helper(self, data, stripe_customer_id, stripe_charge_id, None, None)
+    id, auth_token, receipt_url = pledge_helper(self, data, stripe_customer_id, stripe_charge_id, None, None)
 
     json.dump(dict(id=id,
-                   auth_token=pledge.url_nonce,
+                   auth_token=auth_token,
                    receipt_url=receipt_url), self.response)
 
 
@@ -628,7 +628,7 @@ class PaypalReturnHandler(webapp2.RequestHandler):
 
     rc, results = paypal.DoExpressCheckoutPayment(token, payer_id, amount, custom)
     if rc:
-      id, receipt_url = pledge_helper(self, data, None, None, payer_id, results['PAYMENTINFO_0_TRANSACTIONID'][0])
+      id, auth_token, receipt_url = pledge_helper(self, data, None, None, payer_id, results['PAYMENTINFO_0_TRANSACTIONID'][0])
       self.redirect(receipt_url)
 
     else:
