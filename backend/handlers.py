@@ -17,6 +17,9 @@ import model
 import templates
 import util
 
+import pprint
+import urlparse
+import paypal
 
 # Immutable environment with both configuration variables, and backends to be
 # mocked out in tests.
@@ -70,86 +73,55 @@ class MailingListSubscriber(object):
 _STR = dict(type='string')
 _STR_optional = dict(type='string', required=False)
 
-class PledgeHandler(webapp2.RequestHandler):
-  """RESTful handler for pledge objects."""
+PLEDGE_SCHEMA = dict(
+  type='object',
+  properties=dict(
+    email=_STR,
+    phone=dict(type='string', blank=True),
+    name=_STR,
+    occupation=_STR,
+    employer=_STR,
+    target=_STR,
+    surveyResult=_STR_optional,
+    subscribe=dict(type='boolean'),
+    anonymous=dict(type='boolean', required=False),
+    amountCents=dict(type='integer', minimum=100),
+    pledgeType=dict(enum=model.Pledge.TYPE_VALUES, required=False),
+    team=dict(type='string', blank=True),
 
-  CREATE_SCHEMA = dict(
-    type='object',
-    properties=dict(
-      email=_STR,
-      phone=dict(type='string', blank=True),
-      name=_STR,
-      occupation=_STR,
-      employer=_STR,
-      target=_STR,
-      surveyResult=_STR_optional,
-      subscribe=dict(type='boolean'),
-      anonymous=dict(type='boolean', required=False),
-      amountCents=dict(type='integer', minimum=100),
-      pledgeType=dict(enum=model.Pledge.TYPE_VALUES, required=False),
-      team=dict(type='string', blank=True),
-
-      payment=dict(type='object',
-                   properties=dict(
-                     STRIPE=dict(type='object',
-                                 required=False,
-                                 properties=dict(token=_STR)),
-                     # TODO: Paypal
-                   )
-                 ),
-    )
+    payment=dict(type='object',
+                 properties=dict(
+                   STRIPE=dict(type='object',
+                               required=False,
+                               properties=dict(token=_STR)),
+                   PAYPAL=dict(type='object',
+                               required=False,
+                               properties=dict(step=_STR_optional)),
+                 )
+               ),
   )
+)
 
-  def post(self):
-    """Create a new pledge, and update user info."""
-    util.EnableCors(self)
-    self.response.headers['Content-Type'] = 'application/json'
-    env = self.app.config['env']
 
-    try:
-      data = json.loads(self.request.body)
-    except ValueError, e:
-      logging.warning('Bad JSON request: %s', e)
-      self.error(400)
-      self.response.write('Invalid request')
-      return
+def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_payer_id, paypal_txn_id):
+    env = handler.app.config['env']
 
-    try:
-      validictory.validate(data, PledgeHandler.CREATE_SCHEMA)
-    except ValueError, e:
-      logging.warning('Schema check failed: %s', e)
-      self.error(400)
-      self.response.write('Invalid request')
-      return
-
-    # Do any server-side processing the payment processor needs.
-    stripe_customer_id = None
-    stripe_charge_id = None
-    if 'STRIPE' in data['payment']:
-      stripe_customer_id = env.stripe_backend.CreateCustomer(
-        email=data['email'], card_token=data['payment']['STRIPE']['token'])
-      try:
-        stripe_charge_id = env.stripe_backend.Charge(stripe_customer_id,
-                                                     data['amountCents'])
-      except PaymentError, e:
-        logging.warning('Payment error: %s', e)
-        self.error(400)
-        json.dump(dict(paymentError=str(e)), self.response)
-        return
+    if 'last_name' in data:
+      last_name = data['last_name']
+      if 'first_name' in data:
+        first_name = data['first_name']
+      else:
+        first_name = ''
     else:
-      logging.warning('No payment processor specified: %s', data)
-      self.error(400)
-      return
-
-    # Split apart the name into first and last. Yes, this sucks, but adding the
-    # name fields makes the form look way more daunting. We may reconsider this.
-    name_parts = data['name'].split(None, 1)
-    first_name = name_parts[0]
-    if len(name_parts) == 1:
-      last_name = ''
-      logging.warning('Could not determine last name: %s', data['name'])
-    else:
-      last_name = name_parts[1]
+      # Split apart the name into first and last. Yes, this sucks, but adding the
+      # name fields makes the form look way more daunting. We may reconsider this.
+      name_parts = data['name'].split(None, 1)
+      first_name = name_parts[0]
+      if len(name_parts) == 1:
+        last_name = ''
+        logging.warning('Could not determine last name: %s', data['name'])
+      else:
+        last_name = name_parts[1]
 
     if not 'surveyResult' in data:
       data['surveyResult'] = ''
@@ -157,6 +129,8 @@ class PledgeHandler(webapp2.RequestHandler):
     user, pledge = model.addPledge(email=data['email'],
                              stripe_customer_id=stripe_customer_id,
                              stripe_charge_id=stripe_charge_id,
+                             paypal_payer_id=paypal_payer_id,
+                             paypal_txn_id=paypal_txn_id,
                              amount_cents=data['amountCents'],
                              first_name=first_name,
                              last_name=last_name,
@@ -176,7 +150,7 @@ class PledgeHandler(webapp2.RequestHandler):
         email=data['email'],
         first_name=first_name, last_name=last_name,
         amount_cents=data['amountCents'],
-        ip_addr=self.request.remote_addr,
+        ip_addr=handler.request.remote_addr,
         time=datetime.datetime.now(),
         source='pledge',
         phone=data['phone'],
@@ -207,9 +181,60 @@ class PledgeHandler(webapp2.RequestHandler):
     id = str(pledge.key())
     receipt_url = '/receipt/%s?auth_token=%s' % (id, pledge.url_nonce)
 
+    return id, user.url_nonce, receipt_url
+
+
+class PledgeHandler(webapp2.RequestHandler):
+  """RESTful handler for pledge objects."""
+
+  def post(self):
+    """Create a new pledge, and update user info."""
+    util.EnableCors(self)
+    self.response.headers['Content-Type'] = 'application/json'
+    env = self.app.config['env']
+
+    try:
+      data = json.loads(self.request.body)
+    except ValueError, e:
+      logging.warning('Bad JSON request: %s', e)
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+
+    try:
+      validictory.validate(data, PLEDGE_SCHEMA)
+    except ValueError, e:
+      logging.warning('Schema check failed: %s', e)
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+
+    # Do any server-side processing the payment processor needs.
+    stripe_customer_id = None
+    stripe_charge_id = None
+    if 'STRIPE' in data['payment']:
+      stripe_customer_id = env.stripe_backend.CreateCustomer(
+        email=data['email'], card_token=data['payment']['STRIPE']['token'])
+      try:
+        stripe_charge_id = env.stripe_backend.Charge(stripe_customer_id,
+                                                     data['amountCents'])
+      except PaymentError, e:
+        logging.warning('Payment error: %s', e)
+        self.error(400)
+        json.dump(dict(paymentError=str(e)), self.response)
+        return
+
+    else:
+      logging.warning('No payment processor specified: %s', data)
+      self.error(400)
+      return
+
+    id, auth_token, receipt_url = pledge_helper(self, data, stripe_customer_id, stripe_charge_id, None, None)
+
     json.dump(dict(id=id,
-                   auth_token=pledge.url_nonce,
+                   auth_token=auth_token,
                    receipt_url=receipt_url), self.response)
+
 
   def options(self):
     util.EnableCors(self)
@@ -404,11 +429,17 @@ class ThankTeamHandler(webapp2.RequestHandler):
 
     # get the pldedges for this team, excluding the reply_to
     pledges = model.Pledge.all().filter(
-      'team =',self.request.POST['team']).filter(
-      'email !=', self.request.POST['reply_to'])
+      'team =',self.request.POST['team'])
+    # .filter(
+      # 'email !=', self.request.POST['reply_to'])
+
+    # yes this is executing another query, and it's ok because
+    # this will be done so infrequently
+    # FIXME: lookup from cache.Get.. or TeamTotal once those are sorted out
+    total_pledges = model.Pledge.all().filter(
+      'team =',self.request.POST['team']).count()
 
     # if only sending to new members, filter out those that have already received emails
-
     if self.request.POST['new_members'] == 'True':
       pledges = pledges.filter('thank_you_sent_at =', None)
 
@@ -426,7 +457,9 @@ class ThankTeamHandler(webapp2.RequestHandler):
       pledge.put()
 
     logging.info('THANKING: %d PLEDGERS!!' % i)
-    self.response.write(i)
+    response_data = {'num_emailed': i, 'total_pledges': total_pledges}
+    self.response.content_type = 'application/json'
+    self.response.write(json.dumps(response_data))
 
   options = util.EnableCors
 
@@ -490,6 +523,121 @@ class LeaderboardHandler(webapp2.RequestHandler):
 
   options = util.EnableCors
 
+# Paypal Step 1: We initiate a PAYPAL transaction
+class PaypalStartHandler(webapp2.RequestHandler):
+  """RESTful handler for Paypal pledge objects."""
+
+  def post(self):
+    """Create a new pledge, and update user info."""
+    util.EnableCors(self)
+    self.response.headers['Content-Type'] = 'application/json'
+    env = self.app.config['env']
+
+    try:
+      data = json.loads(self.request.body)
+    except ValueError, e:
+      logging.warning('Bad JSON request: %s', e)
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+
+    try:
+      validictory.validate(data, PLEDGE_SCHEMA)
+    except ValueError, e:
+      logging.warning('Schema check failed: %s', e)
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+
+    rc, paypal_url = paypal.SetExpressCheckout(self.request.host_url, data)
+    if rc:
+        json.dump(dict(paypal_url=paypal_url), self.response)
+        return
+
+    logging.warning('PaypalStart failed')
+    self.error(400)
+
+
+
+# Paypal Step 2: Paypal returns to us, telling us the user has agreed.  Book it.
+class PaypalReturnHandler(webapp2.RequestHandler):
+  def get(self):
+    token = self.request.get("token")
+    if not token:
+      token = self.request.get("TOKEN")
+
+    payer_id = self.request.get("PayerID")
+    if not payer_id:
+      payer_id = self.request.get("PAYERID")
+
+    if not token or not payer_id:
+      logging.warning("Paypal completion missing data: " + self.request.url)
+      self.error(400);
+      self.response.write("Unusual error: no token or payer id from Paypal.  Please contact info@mayday.us and report these details:")
+      self.response.write(self.request.url)
+      return
+
+
+    # Fetch the details of this pending transaction
+    form_fields = {
+      "METHOD": "GetExpressCheckoutDetails",
+      "TOKEN": token
+    }
+    rc, results = paypal.send_request(form_fields)
+    if not rc:
+      self.error(400);
+      self.response.write("Unusual error: Could not get payment details from Paypal.  Please contact info@mayday.us and report these details:")
+      self.response.write(pprint.pformat(results))
+      return
+
+    data = dict()
+
+    name = ""
+    if 'FIRSTNAME' in results:
+        data['first_name'] = results['FIRSTNAME'][0]
+        name += results['FIRSTNAME'][0]
+    if 'MIDDLENAME' in results:
+        name += " " + results['FIRSTNAME'][0]
+    if 'LASTNAME' in results:
+        data['last_name'] = results['LASTNAME'][0]
+        if len(name) > 0:
+            name += " "
+        name += results['LASTNAME'][0]
+    data['name'] = name
+
+    note = None
+    if 'PAYMENTREQUEST_0_NOTETEXT' in results:
+        note = results['PAYMENTREQUEST_0_NOTETEXT'][0]
+    data['note'] = note
+
+    paypal_email = results['EMAIL'][0]
+    amount = results['PAYMENTREQUEST_0_AMT'][0]
+    cents = int(float(amount)) * 100
+    data['amountCents'] = cents
+    payer_id = results['PAYERID'][0]
+    custom = urlparse.parse_qs(results['CUSTOM'][0])
+    if custom['email'][0] != paypal_email:
+        logging.warning("User entered email [%s], but purchased with email [%s]" % (custom['email'][0], paypal_email))
+
+    for v in { 'email', 'phone', 'occupation', 'employer', 'target', 'subscribe', 'anonymous', 'pledgeType', 'team', 'surveyResult' }:
+      if v in custom:
+        data[v] = custom[v][0]
+      else:
+        data[v] = None
+
+    data['subscribe'] =  data['subscribe'] == 'True'
+
+    rc, results = paypal.DoExpressCheckoutPayment(token, payer_id, amount, custom)
+    if rc:
+      id, auth_token, receipt_url = pledge_helper(self, data, None, None, payer_id, results['PAYMENTINFO_0_TRANSACTIONID'][0])
+      self.redirect(receipt_url)
+
+    else:
+      self.error(400);
+      self.response.write("Unusual error: Could not get complete payment from Paypal.  Please contact info@mayday.us and report these details:")
+      self.response.write(pprint.pformat(results))
+      return
+
 
 HANDLERS = [
   ('/r/leaderboard', LeaderboardHandler),
@@ -500,4 +648,6 @@ HANDLERS = [
   ('/r/total', TotalHandler),
   ('/r/thank', ThankTeamHandler),
   ('/r/subscribe', SubscribeHandler),
+  ('/r/paypal_start', PaypalStartHandler),
+  ('/r/paypal_return', PaypalReturnHandler),
 ]

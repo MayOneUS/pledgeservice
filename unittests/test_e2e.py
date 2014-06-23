@@ -1,6 +1,7 @@
 import unittest
 import logging
 import datetime
+import json
 
 from google.appengine.api import mail_stub
 from google.appengine.ext import db
@@ -385,32 +386,38 @@ class PledgeTest(BaseTest):
     with self.assertRaises(Exception):
       resp = self.app.post('/r/thank', {})
 
-    # pledge doesn't get the email if are the reply_to
+    # pledge does get the email if are the reply_to
     post_data['reply_to'] = self.pledge["email"]
     resp = self.app.post('/r/thank', post_data)
     messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
     # 1 email sent is the created pledge
-    self.assertEquals(len(messages), 1)
+    self.assertEquals(len(messages), 2)
     # post response should be zero sent thank you emails
-    self.assertEquals(resp.text, '0')
+    resp_data = json.loads(resp.text)
+    self.assertEquals(resp_data['num_emailed'], 1)
+    self.assertEquals(resp_data['total_pledges'], 1)
 
     # this is the happy path
     post_data['reply_to'] = 'another@email.com'
-    self.assertEquals(model.Pledge.all()[0].thank_you_sent_at, None)
+    # self.assertEquals(model.Pledge.all()[0].thank_you_sent_at, None)
     resp = self.app.post('/r/thank', post_data)
     messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
-    self.assertEquals(len(messages), 2)
-    self.assertEquals(messages[1].reply_to, post_data["reply_to"])
-    self.assertEquals(messages[1].subject, post_data["subject"])
+    self.assertEquals(len(messages), 3)
+    self.assertEquals(messages[2].reply_to, post_data["reply_to"])
+    self.assertEquals(messages[2].subject, post_data["subject"])
     self.assertEquals(type(model.Pledge.all()[0].thank_you_sent_at), datetime.datetime)
-    self.assertEquals(resp.text, '1')
+    resp_data = json.loads(resp.text)
+    self.assertEquals(resp_data['num_emailed'], 1)
+    self.assertEquals(resp_data['total_pledges'], 1)
 
     # make sure it isn't sent a message again when new_member is set to true
     post_data['new_members'] = True
     resp = self.app.post('/r/thank', post_data)
     messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
-    self.assertEquals(len(messages), 2)
-    self.assertEquals(resp.text, '0')
+    self.assertEquals(len(messages), 3)
+    resp_data = json.loads(resp.text)
+    self.assertEquals(resp_data['num_emailed'], 0)
+    self.assertEquals(resp_data['total_pledges'], 1)
 
   def testUserInfoNotFound(self):
     resp = self.app.get('/user-info/nouserhere', status=404)

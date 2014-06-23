@@ -37,10 +37,11 @@ class Error(Exception): pass
 #         State-of-the-art digital canvassing and field tools
 #         No negative ads
 #         Whatever helps us win
-#  11: TeamTotal.num_pledges added. This is a live total of completed pledges for
+#  11: Paypal support
+#  12: TeamTotal.num_pledges added. This is a live total of completed pledges for
 #       that team.
 #
-MODEL_VERSION = 11
+MODEL_VERSION = 12
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -55,7 +56,9 @@ class Config(object):
   ConfigType = namedtuple('ConfigType',
                           ['app_name',
                            'stripe_public_key', 'stripe_private_key',
-                           'mailchimp_api_key', 'mailchimp_list_id'])
+                           'mailchimp_api_key', 'mailchimp_list_id',
+                           'paypal_user', 'paypal_password', 'paypal_signature',
+                           'paypal_url', 'paypal_api_url'])
   _instance = None
 
   @staticmethod
@@ -73,12 +76,37 @@ class Config(object):
       stripe_public_key = s.stripe_public_key
       stripe_private_key = s.stripe_private_key
 
+    if s:
+      paypal_user = s.paypal_sandbox_user
+      paypal_password = s.paypal_sandbox_password
+      paypal_signature = s.paypal_sandbox_signature
+    else:
+      paypal_user = None
+      paypal_password = None
+      paypal_signature = None
+
+    paypal_api_url = "https://api-3t.sandbox.paypal.com/nvp"
+    paypal_url = "https://www.sandbox.paypal.com/webscr"
+
+    if 'productionPaypal' in j and j['productionPaypal']:
+      paypal_user = s.paypal_user
+      paypal_password = s.paypal_password
+      paypal_signature = s.paypal_signature
+      paypal_api_url = "https://api-3t.paypal.com/nvp"
+      paypal_url = "https://www.paypal.com/webscr"
+
     Config._instance = Config.ConfigType(
       app_name = j['appName'],
       stripe_public_key=stripe_public_key,
       stripe_private_key=stripe_private_key,
       mailchimp_api_key=s.mailchimp_api_key,
-      mailchimp_list_id=s.mailchimp_list_id)
+      mailchimp_list_id=s.mailchimp_list_id,
+      paypal_user = paypal_user,
+      paypal_password = paypal_password,
+      paypal_signature = paypal_signature,
+      paypal_api_url = paypal_api_url,
+      paypal_url = paypal_url
+      )
     return Config._instance
 
 
@@ -97,6 +125,13 @@ class Secrets(db.Model):
 
   mailchimp_api_key = db.StringProperty(default='')
   mailchimp_list_id = db.StringProperty(default='')
+
+  paypal_sandbox_user = db.StringProperty(default='')
+  paypal_sandbox_password = db.StringProperty(default='')
+  paypal_sandbox_signature = db.StringProperty(default='')
+  paypal_user = db.StringProperty(default='')
+  paypal_password = db.StringProperty(default='')
+  paypal_signature = db.StringProperty(default='')
 
   @staticmethod
   def get():
@@ -187,11 +222,15 @@ class Pledge(db.Model):
 
   # this is the string id for the stripe api to access the customer. we are
   # doing a whole stripe customer per pledge.
-  stripeCustomer = db.StringProperty(required=True)
+  stripeCustomer = db.StringProperty()
 
   # ID of a successful stripe transaction which occurred prior to creating this
   # pledge.
   stripe_charge_id = db.StringProperty()
+
+  # Paypal specific fields
+  paypalPayerID = db.StringProperty()
+  paypalTransactionID = db.StringProperty()
 
   # when the donation occurred
   donationTime = db.DateTimeProperty(auto_now_add=True)
@@ -218,7 +257,7 @@ class Pledge(db.Model):
 
   # If anonymous, the pledge shouldn't be displayed along with the user's name
   # publically
-  anonymous = db.BooleanProperty(required=False, default=True)
+  anonymous = db.BooleanProperty(required=False, default=False)
 
   # it's possible we'll want to let people change just their pledge. i can't
   # imagine a bunch of people pledging with the same email address and then
@@ -231,12 +270,15 @@ class Pledge(db.Model):
 
   @staticmethod
   def create(email, stripe_customer_id, stripe_charge_id,
+             paypal_payer_id, paypal_txn_id,
              amount_cents, pledge_type, team, anonymous):
     assert pledge_type in Pledge.TYPE_VALUES
     pledge = Pledge(model_version=MODEL_VERSION,
                     email=email,
                     stripeCustomer=stripe_customer_id,
                     stripe_charge_id=stripe_charge_id,
+                    paypalPayerID=paypal_payer_id,
+                    paypalTransactionID=paypal_txn_id,
                     amountCents=amount_cents,
                     pledge_type=pledge_type,
                     team=team,
@@ -304,16 +346,21 @@ class TeamTotal(db.Model):
 
 
 def addPledge(email,
-              stripe_customer_id, stripe_charge_id,
               amount_cents, pledge_type,
               first_name, last_name, occupation, employer, phone,
-              target, team, mail_list_optin, anonymous, surveyResult=None):
+              target, team, mail_list_optin, anonymous, surveyResult=None,
+              stripe_customer_id=None, stripe_charge_id=None,
+              paypal_txn_id=None, paypal_payer_id=None):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
 
   @return: the pledge
   """
+
+  if not (stripe_customer_id or paypal_txn_id):
+      raise Error('We must supply either stripe or Paypal ids')
+
   # first, let's find the user by email
   user = User.createOrUpdate(
     email=email, first_name=first_name, last_name=last_name,
@@ -323,6 +370,8 @@ def addPledge(email,
   return user, Pledge.create(email=email,
                        stripe_customer_id=stripe_customer_id,
                        stripe_charge_id=stripe_charge_id,
+                       paypal_txn_id=paypal_txn_id,
+                       paypal_payer_id=paypal_payer_id,
                        amount_cents=amount_cents,
                        pledge_type=pledge_type,
                        team=team,

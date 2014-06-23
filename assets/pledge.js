@@ -67,6 +67,13 @@ var validateForm = function() {
     return true;
 };
 
+var paypalPledge = function() {
+    if (validateForm()) {
+        setLoading(true);
+        createPledge("Paypal", { PAYPAL: { step : 'start' } });
+    }
+    return false;
+};
 var pledge = function() {
   if (validateForm()) {
     var cents = getAmountCents();
@@ -87,10 +94,12 @@ var setLoading = function(loading) {
     $('#pledgeButton .pledgeText').hide();
     $('#pledgeButton').off('click');  
     $('#pledgeButton .spinner').show();
+    $('#paypalButton').hide();
   } else {
     $('#pledgeButton .pledgeText').show();
     $('#pledgeButton').on('click', pledge);      
     $('#pledgeButton .spinner').hide();
+    $('#paypalButton').show();
   }
 }
 
@@ -102,6 +111,15 @@ var onTokenRecv = function(token, args) {
 var createPledge = function(name, payment) {
   var urlParams = getUrlParams();
   var pledgeType = null;
+  var request_url = null;
+
+  if ('STRIPE' in payment) {
+      request_url = PLEDGE_URL + '/r/pledge';
+  }
+
+  if ('PAYPAL' in payment) {
+      request_url = PLEDGE_URL + '/r/paypal_start';
+  }
 
   if($("#directDonate_input").is(':checked')) {
     pledgeType = 'DONATION';
@@ -126,12 +144,15 @@ var createPledge = function(name, payment) {
 
   $.ajax({
       type: 'POST',
-      url: PLEDGE_URL + '/r/pledge',
+      url: request_url,
       data: JSON.stringify(data),
       contentType: "application/json",
       dataType: 'json',
       success: function(data) {
-        location.href = PLEDGE_URL + data.receipt_url;
+        if ('paypal_url' in data)
+            location.href = data.paypal_url
+        else
+            location.href = PLEDGE_URL + data.receipt_url;
       },
       error: function(data) {
         setLoading(false);
@@ -153,6 +174,8 @@ $(document).ready(function() {
   $('#email_input').val(passedEmail);
 
   $('#pledgeButton').on('click', pledge);
+
+  $('#paypalButton').on('click', paypalPledge);
 
   $.get(PLEDGE_URL + '/r/payment_config').done(function(config) {
       paymentConfig = config;
