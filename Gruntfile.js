@@ -4,21 +4,25 @@ var LOCAL_CONFIG = {
   hardCodeStripe: true,
   stripePublicKey: 'pk_test_g7UBToGvPpJ1xJa8OVsfV7zf',
   stripePrivateKey: 'sk_test_sm4iLzUFCeEE4l8uKe4KNDU7',
+  productionPaypal: false,
 };
 
 var DEV_CONFIG = {
   appName: 'pure-spring-568',
   appVersion: '1',
+  productionPaypal: false,
 };
 
 var STAGING_CONFIG = {
   appName: 'mayday-pac',
   appVersion: 'staging',
+  productionPaypal: false,
 };
 
 var PROD_CONFIG = {
   appName: 'mayday-pac',
   appVersion: '1',
+  productionPaypal: true,
 };
 
 var preprocessAppYaml = function(config) {
@@ -48,10 +52,11 @@ module.exports = function(grunt) {
 
     copy: {
       main: {
-        files: [
+        files: [        
           {cwd: 'backend/', src: '**', dest: 'build/', expand: true },
           {cwd: 'lib/', src: '**', dest: 'build/', expand: true },
           {cwd: 'assets/', src: '**', dest: 'build/static/', expand: true },
+          {cwd: 'jinja_templates', src: '**', dest: 'build/templates/', expand: true },          
         ],
       },
     },

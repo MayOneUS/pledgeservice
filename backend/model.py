@@ -77,23 +77,16 @@ class Config(object):
       stripe_private_key = s.stripe_private_key
 
     if s:
-      paypal_user = s.paypal_sandbox_user
-      paypal_password = s.paypal_sandbox_password
-      paypal_signature = s.paypal_sandbox_signature
-    else:
-      paypal_user = None
-      paypal_password = None
-      paypal_signature = None
-
-    paypal_api_url = "https://api-3t.sandbox.paypal.com/nvp"
-    paypal_url = "https://www.sandbox.paypal.com/webscr"
-
-    if 'productionPaypal' in j and j['productionPaypal']:
       paypal_user = s.paypal_user
       paypal_password = s.paypal_password
       paypal_signature = s.paypal_signature
-      paypal_api_url = "https://api-3t.paypal.com/nvp"
+      
+    if 'productionPaypal' in j and j['productionPaypal']:
+      paypal_api_url =  "https://api-3t.paypal.com/nvp"
       paypal_url = "https://www.paypal.com/webscr"
+    else:
+      paypal_api_url = "https://api-3t.sandbox.paypal.com/nvp"
+      paypal_url = "https://www.sandbox.paypal.com/webscr"
 
     Config._instance = Config.ConfigType(
       app_name = j['appName'],
@@ -132,6 +125,8 @@ class Secrets(db.Model):
   paypal_user = db.StringProperty(default='')
   paypal_password = db.StringProperty(default='')
   paypal_signature = db.StringProperty(default='')
+  paypal_url = db.StringProperty(default='')
+  paypal_api_url = db.StringProperty(default='')
 
   @staticmethod
   def get():
