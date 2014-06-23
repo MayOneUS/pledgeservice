@@ -125,8 +125,6 @@ class Secrets(db.Model):
   paypal_user = db.StringProperty(default='')
   paypal_password = db.StringProperty(default='')
   paypal_signature = db.StringProperty(default='')
-  paypal_url = db.StringProperty(default='')
-  paypal_api_url = db.StringProperty(default='')
 
   @staticmethod
   def get():
