@@ -605,11 +605,6 @@ class PaypalReturnHandler(webapp2.RequestHandler):
         name += results['LASTNAME'][0]
     data['name'] = name
 
-    note = None
-    if 'PAYMENTREQUEST_0_NOTETEXT' in results:
-        note = results['PAYMENTREQUEST_0_NOTETEXT'][0]
-    data['note'] = note
-
     paypal_email = results['EMAIL'][0]
     amount = results['PAYMENTREQUEST_0_AMT'][0]
     cents = int(float(amount)) * 100
