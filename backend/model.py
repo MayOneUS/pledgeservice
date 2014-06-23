@@ -296,7 +296,7 @@ class TeamTotal(db.Model):
 
   totalCents = db.IntegerProperty(required=False)
 
-  num_pledges = db.IntegerProperty(required=True)
+  num_pledges = db.IntegerProperty(required=False)
 
   @classmethod
   @db.transactional
