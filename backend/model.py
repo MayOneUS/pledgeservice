@@ -334,7 +334,10 @@ class TeamTotal(db.Model):
   def _add(cls, team_id, amount_cents):
     tt = cls.get_by_key_name(team_id)
     tt.totalCents += amount_cents
-    tt.num_pledges += 1
+    try:
+      tt.num_pledges += 1
+    except:
+      tt.num_pledges = 1
     tt.put()
 
   @classmethod
