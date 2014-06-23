@@ -255,7 +255,7 @@ class Pledge(db.Model):
 
   # If anonymous, the pledge shouldn't be displayed along with the user's name
   # publically
-  anonymous = db.BooleanProperty(required=False, default=True)
+  anonymous = db.BooleanProperty(required=False, default=False)
 
   # it's possible we'll want to let people change just their pledge. i can't
   # imagine a bunch of people pledging with the same email address and then
