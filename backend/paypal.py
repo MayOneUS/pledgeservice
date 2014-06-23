@@ -5,6 +5,7 @@ import model
 import urlparse
 import urllib
 import pprint
+import copy
 
 from google.appengine.api import urlfetch
 def send_request(fields):
@@ -33,16 +34,28 @@ def send_request(fields):
     logging.warning(result.content)
     return False, result.content
 
+def encode_data(data):
+    d = copy.copy(data)
+
+    # Trim out a few items we don't need to transmit
+    del d['amountCents']
+    del d['name']
+    del d['payment']
+
+    return urllib.urlencode(d)
+
 def SetExpressCheckout(host_url, data):
 
     amount = data['amountCents'] / 100
 
-    # Trim out a few items we don't need to transmit
-    del data['amountCents']
-    del data['name']
-    del data['payment']
+    encoded_data = encode_data(data)
 
-    # TODO - screen for > 256 characters
+    # Paypal limits our custom field to 256 characters
+    #   We should be safe, but just in case...
+    if len(encoded_data) > 255:
+        logging.warning("Encoded data length %d too long" % len(encoded_data))
+        return False, ""
+
 
     form_fields = {
       "METHOD": "SetExpressCheckout",
@@ -53,7 +66,7 @@ def SetExpressCheckout(host_url, data):
       "PAYMENTREQUEST_0_DESC": "Pledge to MayDay PAC",
       "PAYMENTREQUEST_0_AMT":  "%d.00" % amount,
       "PAYMENTREQUEST_0_ITEMAMT":  "%d.00" % amount,
-      "PAYMENTREQUEST_0_CUSTOM": urllib.urlencode(data),
+      "PAYMENTREQUEST_0_CUSTOM": encoded_data,
       "L_PAYMENTREQUEST_0_NAME0": "Pledge to MayDay PAC",
       "L_PAYMENTREQUEST_0_AMT0":  "%d.00" % amount,
       "ALLOWNOTE":  "1",
