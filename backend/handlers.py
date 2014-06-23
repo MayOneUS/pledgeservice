@@ -515,7 +515,8 @@ class LeaderboardHandler(webapp2.RequestHandler):
         offset=offset, limit=limit):
       teams.append({
           "team": tt.team,
-          "total_cents": tt.totalCents})
+          "total_cents": tt.totalCents,
+          "num_pledges": tt.num_pledges})
 
     self.response.headers['Content-Type'] = 'application/json'
     json.dump({"teams": teams}, self.response)
