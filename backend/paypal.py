@@ -69,7 +69,7 @@ def SetExpressCheckout(host_url, data):
       "PAYMENTREQUEST_0_CUSTOM": encoded_data,
       "L_PAYMENTREQUEST_0_NAME0": "Pledge to MayDay PAC",
       "L_PAYMENTREQUEST_0_AMT0":  "%d.00" % amount,
-      "ALLOWNOTE":  "1",
+      "ALLOWNOTE":  "0",
       "SOLUTIONTYPE":  "Sole",
       "BRANDNAME":  "MayDay PAC",
       # TODO FIXME - LOGOIMG trumps if given; it's a different look with HDRIMG
