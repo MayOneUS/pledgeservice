@@ -508,10 +508,11 @@ class LeaderboardHandler(webapp2.RequestHandler):
 
     offset = int(self.request.get("offset") or 0)
     limit = int(self.request.get("limit") or 25)
+    orderBy = self.request.get("orderBy") or "-totalCents"
 
     teams = []
 
-    for tt in model.TeamTotal.all().order("-totalCents").run(
+    for tt in model.TeamTotal.all().order(orderBy).run(
         offset=offset, limit=limit):
       teams.append({
           "team": tt.team,
