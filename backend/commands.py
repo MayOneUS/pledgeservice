@@ -118,24 +118,12 @@ class BackfillTeamTotalNumPledges(Command):
     for tt in model.TeamTotal.all():
       if not tt.num_pledges:
         tt.num_pledges = 0
-      tt.num_pledges += model.Pledge.all().filter("model_version <=", 11).filter(
-        "team =", tt.team).count()
-      tt.put()
-
-
-class BackfillTeamTotalNumPledges(Command):
-  SHORT_NAME = 'backfill_teamtotal_num_pledges'
-  NAME = 'backfill TeamTotal.num_pledges'
-  SHOW = True
-
-  def run(self):
-    for tt in model.TeamTotal.all():
-      if not tt.num_pledges:
-        tt.num_pledges = 0
-      tt.num_pledges += model.Pledge.all().filter("model_version <=", 11).filter(
-        "team =", tt.team).count()
-      tt.put()
-
+        tt.put()
+      elif tt.num_pledges == 0:
+        tt.num_pledges += model.Pledge.all().filter("team =", tt.team).count()
+        tt.put()
+      else:
+        logging.info('Ignoring %s because it has %d already' % (tt.team, tt.num_pledges))
 
 class ResetTeamPledgeCount(Command):
   SHORT_NAME = 'reset_team_num_pledges'
@@ -153,7 +141,6 @@ class ResetTeamPledgeCount(Command):
 # List your command here so admin.py can expose it.
 COMMANDS = [
   ResetTeamPledgeCount,
-  BackfillTeamTotalNumPledges,
   TestCommand,
   FindMissingDataUsersCommand,
   UpdateSecretsProperties,
