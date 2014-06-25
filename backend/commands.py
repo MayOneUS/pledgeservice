@@ -141,6 +141,7 @@ class ResetTeamPledgeCount(Command):
 # List your command here so admin.py can expose it.
 COMMANDS = [
   ResetTeamPledgeCount,
+  BackfillTeamTotalNumPledges,
   TestCommand,
   FindMissingDataUsersCommand,
   UpdateSecretsProperties,
