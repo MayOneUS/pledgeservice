@@ -126,12 +126,14 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
     if not 'surveyResult' in data:
       data['surveyResult'] = ''
 
+    amountCents = data['amountCents']
+    
     user, pledge = model.addPledge(email=data['email'],
                              stripe_customer_id=stripe_customer_id,
                              stripe_charge_id=stripe_charge_id,
                              paypal_payer_id=paypal_payer_id,
                              paypal_txn_id=paypal_txn_id,
-                             amount_cents=data['amountCents'],
+                             amount_cents=amountCents,
                              first_name=first_name,
                              last_name=last_name,
                              occupation=data['occupation'],
@@ -149,7 +151,7 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
       env.mailing_list_subscriber.Subscribe(
         email=data['email'],
         first_name=first_name, last_name=last_name,
-        amount_cents=data['amountCents'],
+        amount_cents=amountCents,
         ip_addr=handler.request.remote_addr,
         time=datetime.datetime.now(),
         source='pledge',
@@ -157,16 +159,17 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
         nonce=user.url_nonce)
 
     # Add to the total.
-    model.ShardedCounter.increment('TOTAL-5', data['amountCents'])
+    model.ShardedCounter.increment('TOTAL-5', amountCents)
 
     if data['team']:
       cache.IncrementTeamPledgeCount(data['team'], 1)
-      cache.IncrementTeamTotal(data['team'], data['amountCents'])
+      cache.IncrementTeamTotal(data['team'], amountCents)
 
+    totalStr = '$%d' % int(amountCents / 100)
     format_kwargs = {
       'name': data['name'].encode('utf-8'),
       'url_nonce': pledge.url_nonce,
-      'total': '$%d' % int(data['amountCents'] / 100),
+      'total': amountCents,
       'user_url_nonce': user.url_nonce
     }
 
@@ -177,6 +180,21 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
                          subject='Thank you for your pledge',
                          text_body=text_body,
                          html_body=html_body)
+
+    if amountCents > 100000:   
+      format_kwargs = {
+        'name': data['name'].encode('utf-8'),      
+        'total': totalStr,
+        'phone': data['phone'],
+        'email': data['email'],
+      }
+                    
+      lessig_body = open('email/thank-you.txt').read().format(**format_kwargs)
+      lessig_body = open('email/thank-you.html').read().format(**format_kwargs)        
+      env.mail_sender.Send(to='aaronlifshin@gmail.com',
+                           subject='A donation for %s has come in from %s %s' % (totalStr, first_name, last_name),
+                           text_body=text_body,
+                           html_body=html_body)
 
     id = str(pledge.key())
     receipt_url = '/receipt/%s?auth_token=%s' % (id, pledge.url_nonce)
@@ -369,7 +387,7 @@ class PaymentConfigHandler(webapp2.RequestHandler):
 
 class TotalHandler(webapp2.RequestHandler):
   # These get added to every pledge calculation
-  STRETCH_GOAL_MATCH = 46800000
+  STRETCH_GOAL_MATCH = 72800000
   PRE_SHARDING_TOTAL = 59767534  # See model.ShardedCounter
   WP_PLEDGE_TOTAL = 41326868
   DEMOCRACY_DOT_COM_BALANCE = 9951173

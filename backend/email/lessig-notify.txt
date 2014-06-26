@@ -1,0 +1,9 @@
+Great news!
+
+New large donation of {{total}} from: {{name}}
+Phone: {{phone}}
+Email: {{email}}
+
+Cheers,
+   - Aaron
+
