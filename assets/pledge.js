@@ -4,6 +4,11 @@
 // NOTE: This could be made more efficient by caching the result (and then
 // killing the cache on URL changes, but we only call it once, so meh.
 
+
+// ******************************************************************************
+//   BE CAREFUL WITH THIS FILE. IT IS INCLUDED IN teams and website repositories
+// ******************************************************************************
+
 var getUrlParams = function() {
   var match,
   pl     = /\+/g,  // Regex for replacing addition symbol with a space
