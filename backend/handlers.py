@@ -169,7 +169,7 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
     format_kwargs = {
       'name': data['name'].encode('utf-8'),
       'url_nonce': pledge.url_nonce,
-      'total': amountCents,
+      'total': totalStr,
       'user_url_nonce': user.url_nonce
     }
 
@@ -189,12 +189,12 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
         'email': data['email'],
       }
                     
-      lessig_body = open('email/thank-you.txt').read().format(**format_kwargs)
-      lessig_body = open('email/thank-you.html').read().format(**format_kwargs)        
-      env.mail_sender.Send(to='aaronlifshin@gmail.com',
+      lessig_body = open('email/lessig-notify.txt').read().format(**format_kwargs)
+      logging.info('Sending ' + lessig_body)
+      env.mail_sender.Send(to='aaron@mayday.us',
                            subject='A donation for %s has come in from %s %s' % (totalStr, first_name, last_name),
-                           text_body=text_body,
-                           html_body=html_body)
+                           text_body=lessig_body,
+                           html_body='<html><body>' + lessig_body + '</html></body>')
 
     id = str(pledge.key())
     receipt_url = '/receipt/%s?auth_token=%s' % (id, pledge.url_nonce)
@@ -387,7 +387,7 @@ class PaymentConfigHandler(webapp2.RequestHandler):
 
 class TotalHandler(webapp2.RequestHandler):
   # These get added to every pledge calculation
-  STRETCH_GOAL_MATCH = 72800000
+  STRETCH_GOAL_MATCH = 75800000
   PRE_SHARDING_TOTAL = 59767534  # See model.ShardedCounter
   WP_PLEDGE_TOTAL = 41326868
   DEMOCRACY_DOT_COM_BALANCE = 9951173
@@ -419,6 +419,10 @@ class TotalHandler(webapp2.RequestHandler):
         for pledge in model.Pledge.all().filter("team =", team):
           team_pledges += 1
           team_total += pledge.amountCents
+        # There was a pledge made to this team that was not made through Stripe
+        if team == 'ahJzfm1heWRheS1wYWMtdGVhbXNyEQsSBFRlYW0YgICAgP7esAgM':
+          team_pledges +=1
+          team_total += 1000000
         cache.SetTeamPledgeCount(team, team_pledges)
         cache.SetTeamTotal(team, team_total)
 
