@@ -42,6 +42,8 @@ def encode_data(data):
     del d['name']
     del d['payment']
 
+    logging.warning("Paypal CUSTOM encoding: %s" % urllib.urlencode(d))
+
     return urllib.urlencode(d)
 
 def SetExpressCheckout(host_url, data):
