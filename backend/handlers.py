@@ -645,7 +645,6 @@ class PaypalReturnHandler(webapp2.RequestHandler):
 
     if 'team' not in custom:
         data['team'] = self.request.cookies.get("last_team_key")
-        logging.warning("JPW: last_team_key:" + pprint.pformat(data['team']))
 
     data['subscribe'] =  data['subscribe'] == 'True'
 

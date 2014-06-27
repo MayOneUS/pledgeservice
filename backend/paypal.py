@@ -54,7 +54,6 @@ def SetExpressCheckout(host_url, data):
     #  If there isn't room for the team, let's strip it out,
     #  and try to pick it up via cookie later
     if len(encoded_data) >= 200:
-        logging.warning("JPW dropping team " + data['team'])
         del data['team']
         encoded_data = encode_data(data)
 
