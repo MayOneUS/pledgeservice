@@ -643,6 +643,9 @@ class PaypalReturnHandler(webapp2.RequestHandler):
       else:
         data[v] = None
 
+    if 'team' not in custom:
+        data['team'] = self.request.cookies.get("last_team_key")
+
     data['subscribe'] =  data['subscribe'] == 'True'
 
     rc, results = paypal.DoExpressCheckoutPayment(token, payer_id, amount, custom)
