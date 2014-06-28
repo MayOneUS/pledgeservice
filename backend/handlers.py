@@ -191,7 +191,7 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
                     
       lessig_body = open('email/lessig-notify.txt').read().format(**format_kwargs)
       logging.info('Sending ' + lessig_body)
-      env.mail_sender.Send(to='aaron@mayday.us',
+      env.mail_sender.Send(to='lessig@mac.com',
                            subject='A donation for %s has come in from %s %s' % (totalStr, first_name, last_name),
                            text_body=lessig_body,
                            html_body='<html><body>' + lessig_body + '</html></body>')
