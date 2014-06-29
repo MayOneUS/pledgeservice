@@ -75,6 +75,26 @@ var validateForm = function() {
     return true;
 };
 
+var validateBitcoinForm = function() {
+  var amount = $('#amount_input').val() || null;
+  if (amount > 100) {
+        showError( "Thank you for your generosity, but we are only able to accept Bitcoin donations of $100 or less");
+    return false;
+  } else {
+    return true;
+  }
+}
+
+var bitcoinPledge = function() {
+    if (validateForm() && validateBitcoinForm()) {
+        var amount = $('#amount_input').val() || null;
+        
+        setLoading(true);
+        createPledge("Bitcoin", { BITCOIN: { step : 'start' } });
+    }
+    return false;
+};
+
 var paypalPledge = function() {
     if (validateForm()) {
         setLoading(true);
@@ -129,8 +149,12 @@ var createPledge = function(name, payment) {
       request_url = PLEDGE_URL + '/r/paypal_start';
   }
 
-  // ALL PAYPAL PAYMENTS ARE DONATIONS
-  if($("#directDonate_input").is(':checked') || ('PAYPAL' in payment)) {
+  if ('BITCOIN' in payment) {
+      request_url = PLEDGE_URL + '/r/bitcoin_start';
+  }
+  
+  // ALL PAYPAL PAYMENTS AND BITCOIN PAYMENTS ARE DONATIONS
+  if($("#directDonate_input").is(':checked') || ('PAYPAL' in payment) || ('BITCOIN' in payment) ) {
     pledgeType = 'DONATION';
   } else {
     pledgeType = 'CONDITIONAL';
@@ -185,7 +209,9 @@ $(document).ready(function() {
   $('#pledgeButton').on('click', pledge);
 
   $('#paypalButton').on('click', paypalPledge);
-
+  
+  $('#bitcoinButton').on('click', bitcoinPledge);
+  
   $.get(PLEDGE_URL + '/r/payment_config').done(function(config) {
       paymentConfig = config;
       stripeHandler = StripeCheckout.configure({
