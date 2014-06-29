@@ -580,6 +580,8 @@ class PaypalStartHandler(webapp2.RequestHandler):
     logging.warning('PaypalStart failed')
     self.error(400)
 
+  options = util.EnableCors
+
 
 
 # Paypal Step 2: Paypal returns to us, telling us the user has agreed.  Book it.
