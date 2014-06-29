@@ -129,7 +129,8 @@ var createPledge = function(name, payment) {
       request_url = PLEDGE_URL + '/r/paypal_start';
   }
 
-  if($("#directDonate_input").is(':checked')) {
+  // ALL PAYPAL PAYMENTS ARE DONATIONS
+  if($("#directDonate_input").is(':checked') || ('PAYPAL' in payment)) {
     pledgeType = 'DONATION';
   } else {
     pledgeType = 'CONDITIONAL';
