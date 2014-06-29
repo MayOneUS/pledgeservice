@@ -88,9 +88,9 @@ var validateBitcoinForm = function() {
 var bitcoinPledge = function() {
     if (validateForm() && validateBitcoinForm()) {
         var amount = $('#amount_input').val() || null;
-        
+
         setLoading(true);
-        createPledge("Bitcoin", { BITCOIN: { step : 'start' } });
+        createPledge("Bitcoin", { BITCOIN: {} });
     }
     return false;
 };
@@ -152,7 +152,6 @@ var createPledge = function(name, payment) {
   if ('BITCOIN' in payment) {
       request_url = PLEDGE_URL + '/r/bitcoin_start';
   }
-  
   // ALL PAYPAL PAYMENTS AND BITCOIN PAYMENTS ARE DONATIONS
   if($("#directDonate_input").is(':checked') || ('PAYPAL' in payment) || ('BITCOIN' in payment) ) {
     pledgeType = 'DONATION';
@@ -182,10 +181,13 @@ var createPledge = function(name, payment) {
       contentType: "application/json",
       dataType: 'json',
       success: function(data) {
-        if ('paypal_url' in data)
-            location.href = data.paypal_url
-        else
-            location.href = PLEDGE_URL + data.receipt_url;
+        if ('paypal_url' in data) {
+          location.href = data.paypal_url
+        } else if ('bitpay_url' in data) {
+          location.href = data.bitpay_url
+        } else {
+          location.href = PLEDGE_URL + data.receipt_url;
+        }
       },
       error: function(data) {
         setLoading(false);
