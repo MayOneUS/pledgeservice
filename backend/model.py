@@ -58,7 +58,7 @@ class Config(object):
                            'stripe_public_key', 'stripe_private_key',
                            'mailchimp_api_key', 'mailchimp_list_id',
                            'paypal_user', 'paypal_password', 'paypal_signature',
-                           'paypal_url', 'paypal_api_url'])
+                           'paypal_url', 'paypal_api_url', 'bitpay_api_key'])
   _instance = None
 
   @staticmethod
@@ -80,6 +80,7 @@ class Config(object):
       paypal_user = s.paypal_user
       paypal_password = s.paypal_password
       paypal_signature = s.paypal_signature
+      bitpay_api_key = s.bitpay_api_key
       
     if 'productionPaypal' in j and j['productionPaypal']:
       paypal_api_url =  "https://api-3t.paypal.com/nvp"
@@ -98,7 +99,8 @@ class Config(object):
       paypal_password = paypal_password,
       paypal_signature = paypal_signature,
       paypal_api_url = paypal_api_url,
-      paypal_url = paypal_url
+      paypal_url = paypal_url,
+      bitpay_api_key = bitpay_api_key    
       )
     return Config._instance
 
@@ -125,6 +127,9 @@ class Secrets(db.Model):
   paypal_user = db.StringProperty(default='')
   paypal_password = db.StringProperty(default='')
   paypal_signature = db.StringProperty(default='')
+  
+  bitpay_api_key = db.StringProperty(default='')
+  
 
   @staticmethod
   def get():
