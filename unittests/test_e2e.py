@@ -485,18 +485,17 @@ class PledgeTest(BaseTest):
 
 
   def testBitpayNotifications(self):
-    # self.expectStripe()
-    # self.expectSubscribe()
-    # self.mockery.ReplayAll()
+    self.expectSubscribe()
+    self.mockery.ReplayAll()
 
     temp_pledge = model.TempPledge(
       model_version=model.MODEL_VERSION,
-      email='bob@gmail.com',
-      phone='310-825-4321',
-      name='Bob Loblaw',
-      occupation='occupier',
-      employer='Walmart',
-      subscribe=False,
+      email=self.pledge["email"],
+      phone=self.pledge["phone"],
+      name=self.pledge["name"],
+      occupation=self.pledge["occupation"],
+      employer=self.pledge["employer"],
+      subscribe=True,
       amountCents=4200,
       )
     temp_key = temp_pledge.put()
