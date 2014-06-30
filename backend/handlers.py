@@ -575,6 +575,7 @@ class BitcoinStartHandler(webapp2.RequestHandler):
       return
 
     temp_pledge = model.TempPledge(
+      model_version=model.MODEL_VERSION,
       email=data["email"],
       name=data["name"],
       phone=data["phone"],
@@ -589,23 +590,20 @@ class BitcoinStartHandler(webapp2.RequestHandler):
     temp_key_str = str(temp_key)
 
     try:
-      resp = self._send_to_bitpay(data["amountCents"], temp_key_str)
-      json.dump({"bitpay_url": resp.url}, self.response)
+      resp_dict = self._send_to_bitpay(data["amountCents"], temp_key_str)
+      json.dump({"bitpay_url": resp_dict["url"]}, self.response)
+      temp_pledge.bitpay_invoice_id = resp_dict["id"]
+      temp_pledge.put()
       return
     except Exception, e:
       logging.warning('BitcoinStart failed', e)
       self.error(400)
 
   def _send_to_bitpay(self, amountCents, temp_key_str):
-    # import pdb; pdb.set_trace()
-
     price_in_dollars = int(amountCents) / 100.0
     apiKey = model.Secrets.get().bitpay_api_key
     uname = base64.b64encode(apiKey)
-    headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Basic %s:' % uname
-    }
+    headers = {'Authorization': 'Basic ' + uname }
 
     post_data = {
       'posData': temp_key_str,
@@ -617,7 +615,8 @@ class BitcoinStartHandler(webapp2.RequestHandler):
     }
 
     payload = urllib.urlencode(post_data)
-    result = urlfetch.fetch('https://bitpay.com/api/invoice/',
+    result = urlfetch.fetch(
+      url='https://bitpay.com/api/invoice/',
       payload=payload,
       method=urlfetch.POST,
       headers=headers
@@ -627,8 +626,10 @@ class BitcoinStartHandler(webapp2.RequestHandler):
       response_dict = json.loads(result.content)
       return response_dict
     else:
-      logging.warning('BitcoinStart failed', response.content)
+      logging.warning('BitcoinStart failed', result.content)
       self.error(400)
+      self.response.write('Invalid request')
+      return
 
   options = util.EnableCors
 
@@ -646,8 +647,6 @@ class BitcoinNotificationsHandler(webapp2.RequestHandler):
     posData = data["posData"]["posData"]
     key = db.Key(posData)
     TempPledge.get_by_id(key.id)
-
-
 
   options = util.EnableCors
 

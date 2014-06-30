@@ -226,6 +226,8 @@ class TempPledge(db.Model):
   amountCents = db.IntegerProperty(required=True)
   team = db.StringProperty()
   # all pledge_types for bitpay pledges must be "DONATION"
+  bitpay_invoice_id = db.StringProperty()
+  pledge_id = db.IntegerProperty(required=True)
 
 
 class Pledge(db.Model):

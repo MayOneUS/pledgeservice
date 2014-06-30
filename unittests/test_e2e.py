@@ -22,6 +22,7 @@ class BaseTest(unittest.TestCase):
 
     self.testbed.init_datastore_v3_stub()
     self.testbed.init_memcache_stub()
+    self.testbed.init_urlfetch_stub()
 
     self.testbed.init_mail_stub()
     self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
@@ -113,7 +114,6 @@ class PledgeTest(BaseTest):
                    source='pledge',
                    nonce=mox.Regex('.*'),)
                    # pledgePageSlug=pledgePageSlug)
-
 
   def makeDefaultRequest(self, phone=None, pledgePageSlug=None):
     self.expectStripe()
@@ -463,3 +463,29 @@ class PledgeTest(BaseTest):
   #   resp = self.makeDefaultRequest()
   #   self.app.get('/receipt/%s?auth_token=%s' % (resp.json['id'],
   #                                               resp.json['auth_token']))
+
+  # def testBitcoinStart(self):
+  # Need to stub URL fetch and return the expected dictionary
+
+  #   secret = model.Secrets.get()
+  #   secret.bitpay_api_key = '123432432'
+  #   secret.put()
+
+  #   fetch_stub = self.testbed.get_stub('urlfetch')
+
+  #   # import pdb; pdb.set_trace()
+  #   self.pledge['payment'] = {'BITPAY': {}}
+  #   resp = self.app.post_json('/r/bitcoin_start', self.pledge)
+  #   self.assertEqual(model.TempPledge.all().count(), 1)
+  #   temp_pledge = model.TempPledge.all()[0]
+  #   self.assertEqual(temp_pledge.name, self.pledge["name"])
+  #   self.assertEqual(temp_pledge.team, self.pledge["team"])
+  #   self.assertEqual(temp_pledge.amountCents, self.pledge["amountCents"])
+  #   self.assertEqual(temp_pledge.subscribe, self.pledge["subscribe"])
+
+
+  # def testBitpayNotifications(self):
+
+  #   resp = self.app.post_json('/r/bitcoin_notifications', self.pledge)
+
+
