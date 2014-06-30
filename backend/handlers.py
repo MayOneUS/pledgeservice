@@ -679,7 +679,8 @@ class BitcoinNotificationsHandler(webapp2.RequestHandler):
       'target': temp_pledge.target,
       'subscribe': temp_pledge.subscribe,
       'team': temp_pledge.team,
-      'amountCents': int(paid_price * 100)
+      'amountCents': int(paid_price * 100),
+      'pledgeType': 'DONATION'
     }
 
     #if the price paid in the confirmed invoice is different, update it here
