@@ -5,10 +5,13 @@ import datetime
 import json
 import logging
 import cgi
+import base64
+import urllib
 
 from google.appengine.api import mail
 from google.appengine.ext import db
 from google.appengine.ext import deferred
+from google.appengine.api import urlfetch
 import validictory
 import webapp2
 
@@ -20,6 +23,7 @@ import util
 import pprint
 import urlparse
 import paypal
+
 
 # Immutable environment with both configuration variables, and backends to be
 # mocked out in tests.
@@ -546,6 +550,108 @@ class LeaderboardHandler(webapp2.RequestHandler):
 
   options = util.EnableCors
 
+
+class BitcoinStartHandler(webapp2.RequestHandler):
+  """RESTful handler for Paypal pledge objects."""
+
+  def post(self):
+    """Create a new TempPledge, and update user info."""
+    util.EnableCors(self)
+
+    try:
+      data = json.loads(self.request.body)
+    except ValueError, e:
+      logging.warning('Bad JSON request: %s', e)
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+
+    try:
+      validictory.validate(data, PLEDGE_SCHEMA)
+    except ValueError, e:
+      logging.warning('Schema check failed: %s', e)
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+
+    temp_pledge = model.TempPledge(
+      email=data["email"],
+      name=data["name"],
+      phone=data["phone"],
+      occupation=data["occupation"],
+      employer=data["employer"],
+      target=data["target"],
+      subscribe=data["subscribe"],
+      amountCents=data["amountCents"],
+      team=data["team"]
+      )
+    temp_key = temp_pledge.put()
+    temp_key_str = str(temp_key)
+
+    try:
+      resp = self._send_to_bitpay(data["amountCents"], temp_key_str)
+      json.dump({"bitpay_url": resp.url}, self.response)
+      return
+    except Exception, e:
+      logging.warning('BitcoinStart failed', e)
+      self.error(400)
+
+  def _send_to_bitpay(self, amountCents, temp_key_str):
+    # import pdb; pdb.set_trace()
+
+    price_in_dollars = int(amountCents) / 100.0
+    apiKey = model.Secrets.get().bitpay_api_key
+    uname = base64.b64encode(apiKey)
+    headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Basic %s:' % uname
+    }
+
+    post_data = {
+      'posData': temp_key_str,
+      'price': price_in_dollars,
+      'notificationURL': "https://pledgedev.mayday.us/r/bitcoin_notitifcations",
+      'currency': 'USD',
+      # 'buyerName': data["name"],
+      # 'buyerEmail': data["email"]
+    }
+
+    payload = urllib.urlencode(post_data)
+    result = urlfetch.fetch('https://bitpay.com/api/invoice/',
+      payload=payload,
+      method=urlfetch.POST,
+      headers=headers
+    )
+
+    if result.status_code == 200:
+      response_dict = json.loads(result.content)
+      return response_dict
+    else:
+      logging.warning('BitcoinStart failed', response.content)
+      self.error(400)
+
+  options = util.EnableCors
+
+
+class BitcoinNotificationsHandler(webapp2.RequestHandler):
+  def post(self):
+    try:
+      data = json.loads(self.request.body)
+    except ValueError, e:
+      logging.warning('Bad JSON request: %s', e)
+      self.error(400)
+      self.response.write('Invalid request')
+      return
+
+    posData = data["posData"]["posData"]
+    key = db.Key(posData)
+    TempPledge.get_by_id(key.id)
+
+
+
+  options = util.EnableCors
+
+
 # Paypal Step 1: We initiate a PAYPAL transaction
 class PaypalStartHandler(webapp2.RequestHandler):
   """RESTful handler for Paypal pledge objects."""
@@ -581,7 +687,6 @@ class PaypalStartHandler(webapp2.RequestHandler):
     self.error(400)
 
   options = util.EnableCors
-
 
 
 # Paypal Step 2: Paypal returns to us, telling us the user has agreed.  Book it.
@@ -671,6 +776,8 @@ HANDLERS = [
   ('/r/total', TotalHandler),
   ('/r/thank', ThankTeamHandler),
   ('/r/subscribe', SubscribeHandler),
+  ('/r/bitcoin_start', BitcoinStartHandler),
+  ('/r/bitcoin_notifications', BitcoinNotificationsHandler),
   ('/r/paypal_start', PaypalStartHandler),
   ('/r/paypal_return', PaypalReturnHandler),
 ]
