@@ -465,15 +465,15 @@ class PledgeTest(BaseTest):
   #                                               resp.json['auth_token']))
 
   # def testBitcoinStart(self):
-  # Need to stub URL fetch and return the expected dictionary
+  #   Need to stub URL fetch and return the expected dictionary
 
   #   secret = model.Secrets.get()
   #   secret.bitpay_api_key = '123432432'
   #   secret.put()
 
   #   fetch_stub = self.testbed.get_stub('urlfetch')
+  #   return = {'status': 'new', 'invoiceTime': 1393950046292, 'currentTime': 1393950046520, 'url': 'https://bitpay.com/invoice?id=aASDF2jh4ashkASDfh234', 'price': 1, 'btcPrice': '1.0000', 'currency': 'BTC', 'posData': '{"posData": "fish", "hash": "ASDfkjha452345ASDFaaskjhasdlfkflkajsdf"}', 'expirationTime': 1393950946292, 'id': 'aASDF2jh4ashkASDfh234'}
 
-  #   # import pdb; pdb.set_trace()
   #   self.pledge['payment'] = {'BITPAY': {}}
   #   resp = self.app.post_json('/r/bitcoin_start', self.pledge)
   #   self.assertEqual(model.TempPledge.all().count(), 1)
@@ -484,8 +484,29 @@ class PledgeTest(BaseTest):
   #   self.assertEqual(temp_pledge.subscribe, self.pledge["subscribe"])
 
 
-  # def testBitpayNotifications(self):
+  def testBitpayNotifications(self):
+    self.expectStripe()
+    self.expectSubscribe()
+    self.mockery.ReplayAll()
 
-  #   resp = self.app.post_json('/r/bitcoin_notifications', self.pledge)
+    temp_pledge = model.TempPledge(
+      model_version=model.MODEL_VERSION,
+      email='bob@gmail.com',
+      phone='310-825-4321',
+      name='Bob Loblaw',
+      occupation='occupier',
+      employer='Walmart',
+      subscribe=True,
+      amountCents=4200,
+      )
+    temp_key = temp_pledge.put()
+    temp_key_str = str(temp_key)
+
+    notification = {'status': 'confirmed', 'url': 'https://bitpay.com/invoice?id=aASDF2jh4ashkASDfh234',
+      'price': 42, 'btcPrice': '1.0000', 'currency': 'BTC', 'posData': temp_key_str,
+      'expirationTime': 1393950946292, 'id': 'aASDF2jh4ashkASDfh234'}
+    resp = self.app.post_json('/r/bitcoin_notifications', notification)
+    # import pdb; pdb.set_trace()
+
 
 

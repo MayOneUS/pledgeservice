@@ -636,6 +636,9 @@ class BitcoinStartHandler(webapp2.RequestHandler):
 
 class BitcoinNotificationsHandler(webapp2.RequestHandler):
   def post(self):
+    # TODO: check SSL cert
+    # add bitpay invoice ID to pledge record
+
     try:
       data = json.loads(self.request.body)
     except ValueError, e:
@@ -644,9 +647,55 @@ class BitcoinNotificationsHandler(webapp2.RequestHandler):
       self.response.write('Invalid request')
       return
 
-    posData = data["posData"]["posData"]
+    posData = data["posData"]
     key = db.Key(posData)
-    TempPledge.get_by_id(key.id)
+    temp_pledge = model.TempPledge.get_by_id(key.id())
+
+    if not temp_pledge:
+      logging.warning('could not find temp pledge from posData')
+      self.error(400)
+      return
+
+    # check to make sure this isn't a duplicate notification
+    # as they try up to 5 times
+    if temp_pledge.pledge_id:
+      return self.response
+
+    if not data.get('status') == 'confirmed':
+      logging.warning('Bitpay sending notifications for non comfirmed transactions')
+      self.error(400)
+      return
+
+    paid_price = float(data["price"])
+    if paid_price > 100:
+      logging.warning('bitpay paid amount > $100')
+
+    temp_pledge_data = {
+      'name': temp_pledge.name,
+      'email': temp_pledge.email,
+      'phone': temp_pledge.phone,
+      'occupation': temp_pledge.occupation,
+      'employer': temp_pledge.employer,
+      'target': temp_pledge.target,
+      'subscribe': temp_pledge.subscribe,
+      'team': temp_pledge.team,
+      'amountCents': int(paid_price * 100)
+    }
+
+    #if the price paid in the confirmed invoice is different, update it here
+    temp_pledge_data["price"] = data["price"]
+    if temp_pledge.amountCents != data["price"]:
+      logging.warning('bitpay confirmed amount is different')
+
+
+    id, auth_token, receipt_url = pledge_helper(self, temp_pledge_data, None,
+      None, None, None)
+
+    temp_pledge.pledge_id = id
+    temp_pledge.put()
+
+    # they just look for any 200 response
+    return self.response
 
   options = util.EnableCors
 

@@ -227,7 +227,7 @@ class TempPledge(db.Model):
   team = db.StringProperty()
   # all pledge_types for bitpay pledges must be "DONATION"
   bitpay_invoice_id = db.StringProperty()
-  pledge_id = db.IntegerProperty(required=False)
+  pledge_id = db.StringProperty(required=False)
 
 
 class Pledge(db.Model):
@@ -377,8 +377,9 @@ def addPledge(email,
   @return: the pledge
   """
 
-  if not (stripe_customer_id or paypal_txn_id):
-      raise Error('We must supply either stripe or Paypal ids')
+  # TODO: know if this is a bitcoin pledge and check all 3
+  # if not (stripe_customer_id or paypal_txn_id):
+  #     raise Error('We must supply either stripe or Paypal ids')
 
   # first, let's find the user by email
   user = User.createOrUpdate(
