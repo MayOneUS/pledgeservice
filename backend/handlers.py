@@ -619,7 +619,8 @@ class BitcoinStartHandler(webapp2.RequestHandler):
       url='https://bitpay.com/api/invoice/',
       payload=payload,
       method=urlfetch.POST,
-      headers=headers
+      headers=headers,
+      validate_certificates=True
     )
 
     if result.status_code == 200:
