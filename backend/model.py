@@ -206,10 +206,26 @@ class User(db.Model):
     user.phone = choose(user.phone, phone)
     user.target = choose(user.target, target)
     user.surveyResult = choose(user.surveyResult, surveyResult)
-    
+
     user.mail_list_optin = choose(user.mail_list_optin, mail_list_optin)
     user.put()
     return user
+
+
+# for bitpay pledges, we need to store the form data while waiting for the
+# response from bitpay
+class TempPledge(db.Model):
+  model_version = db.IntegerProperty()
+  email = db.EmailProperty(required=True)
+  phone = db.StringProperty()
+  name = db.StringProperty()
+  occupation = db.StringProperty()
+  employer = db.StringProperty()
+  target = db.StringProperty()
+  subscribe = db.BooleanProperty(required=False, default=True)
+  amountCents = db.IntegerProperty(required=True)
+  team = db.StringProperty()
+  # all pledge_types for bitpay pledges must be "DONATION"
 
 
 class Pledge(db.Model):
