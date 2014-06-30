@@ -608,7 +608,7 @@ class BitcoinStartHandler(webapp2.RequestHandler):
     post_data = {
       'posData': temp_key_str,
       'price': price_in_dollars,
-      'notificationURL': "https://pledge.mayday.us/r/bitcoin_notitifcations",
+      'notificationURL': "https://pledge.mayday.us/r/bitcoin_notifcations",
       'currency': 'USD',
       # 'buyerName': data["name"],
       # 'buyerEmail': data["email"]
