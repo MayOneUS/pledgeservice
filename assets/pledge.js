@@ -194,6 +194,11 @@ var createPledge = function(name, payment) {
   var state = $('#state_input').val() || null;
   var zip = $('#zip_input').val() || null;
   
+  if (($("#requiredConfirmation").is(':checked') == false ) && ('BITCOIN' in payment) ) {
+    console.log('Trying to pay with BITCOIN without a confirmation') 
+    return;
+  }
+  
   var data = {
     email: $('#email_input').val(),
     phone: $('#phone_input').val(),

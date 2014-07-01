@@ -560,20 +560,25 @@ class BitcoinStartHandler(webapp2.RequestHandler):
 
     try:
       data = json.loads(self.request.body)
+      logging.info('1')
     except ValueError, e:
-      logging.warning('Bad JSON request: %s', e)
+      logging.info('2')
+      logging.warning('Bad JSON request: %s', str(e))
       self.error(400)
       self.response.write('Invalid request')
       return
 
     try:
       validictory.validate(data, PLEDGE_SCHEMA)
+      logging.info('3')
     except ValueError, e:
-      logging.warning('Schema check failed: %s', e)
+      logging.info('4')
+      logging.warning('Schema check failed: %s', str(e))
       self.error(400)
       self.response.write('Invalid request')
       return
 
+    logging.info('5')
     temp_pledge = model.TempPledge(
       model_version=model.MODEL_VERSION,
       email=data["email"],
@@ -584,8 +589,15 @@ class BitcoinStartHandler(webapp2.RequestHandler):
       target=data["target"],
       subscribe=data["subscribe"],
       amountCents=data["amountCents"],
+      firstName=data["firstName"],
+      lastName=data["lastName"],
+      address=data["address"],
+      city=data["city"],
+      state=data["state"],
+      zip=data["zip"],
+      bitcoinConfirm=data["bitcoinConfirm"],
       team=data["team"]
-      )
+    )
     temp_key = temp_pledge.put()
     temp_key_str = str(temp_key)
 
@@ -596,7 +608,7 @@ class BitcoinStartHandler(webapp2.RequestHandler):
       temp_pledge.put()
       return
     except Exception, e:
-      logging.warning('BitcoinStart failed', e)
+      logging.warning('BitcoinStart failed: ' + str(e))
       self.error(400)
 
   def _send_to_bitpay(self, amountCents, temp_key_str):
@@ -605,16 +617,21 @@ class BitcoinStartHandler(webapp2.RequestHandler):
     uname = base64.b64encode(apiKey)
     headers = {'Authorization': 'Basic ' + uname }
 
+    callbackUrl = self.request.host_url + "/r/bitcoin_notifications"
+    logging.info('CALLBACK URL WILL BE: ' + callbackUrl)
+
     post_data = {
       'posData': temp_key_str,
       'price': price_in_dollars,
-      'notificationURL': "https://pledge.mayday.us/r/bitcoin_notifications",
+      'notificationURL': self.request.host_url + "/r/bitcoin_notifications",
       'currency': 'USD',
       # 'buyerName': data["name"],
       # 'buyerEmail': data["email"]
     }
 
     payload = urllib.urlencode(post_data)
+    logging.info('calling URL fetchee')
+    
     result = urlfetch.fetch(
       url='https://bitpay.com/api/invoice/',
       payload=payload,
@@ -627,7 +644,7 @@ class BitcoinStartHandler(webapp2.RequestHandler):
       response_dict = json.loads(result.content)
       return response_dict
     else:
-      logging.warning('BitcoinStart failed', result.content)
+      logging.warning('BitcoinStart failed: ' + str(result.content))
       self.error(400)
       self.response.write('Invalid request')
       return
@@ -643,7 +660,7 @@ class BitcoinNotificationsHandler(webapp2.RequestHandler):
     try:
       data = json.loads(self.request.body)
     except ValueError, e:
-      logging.warning('Bad JSON request: %s', e)
+      logging.warning('Bad JSON request: %s', str(e))
       self.error(400)
       self.response.write('Invalid request')
       return
@@ -715,7 +732,7 @@ class PaypalStartHandler(webapp2.RequestHandler):
     try:
       data = json.loads(self.request.body)
     except ValueError, e:
-      logging.warning('Bad JSON request: %s', e)
+      logging.warning('Bad JSON request: %s', str(e))
       self.error(400)
       self.response.write('Invalid request')
       return
@@ -723,7 +740,7 @@ class PaypalStartHandler(webapp2.RequestHandler):
     try:
       validictory.validate(data, PLEDGE_SCHEMA)
     except ValueError, e:
-      logging.warning('Schema check failed: %s', e)
+      logging.warning('Schema check failed: %s', str(e))
       self.error(400)
       self.response.write('Invalid request')
       return
