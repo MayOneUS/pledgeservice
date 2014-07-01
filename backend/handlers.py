@@ -637,7 +637,7 @@ class BitcoinStartHandler(webapp2.RequestHandler):
       payload=payload,
       method=urlfetch.POST,
       headers=headers,
-      validate_certificates=True
+      validate_certificate=True
     )
 
     if result.status_code == 200:
