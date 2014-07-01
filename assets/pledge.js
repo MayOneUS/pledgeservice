@@ -207,20 +207,41 @@ var createPledge = function(name, payment) {
     employer: $('#employer_input').val(),
     target: $('#targeting_input').val(),
     subscribe: $('#emailSignupInput').is(':checked') ? true : false,
-    bitcoinConfirm: $("#requiredConfirmation").is(':checked')? true : false,
-    firstName:firstName,
-    lastName:lastName,
-    address:address,
-    city:city,
-    state:state,
-    zip:zip,
     // anonymous: $scope.ctrl.form.anonymous,
     amountCents: getAmountCents(),
     pledgeType: pledgeType,
     team: urlParams['team'] || readCookie("last_team_key") || '',
     payment: payment
   };
+  
+  if ($("#requiredConfirmation").is(':checked')) {
+    data['bitcoinConfirm'] = true;
+  }  
+  
+  if (firstName) {
+    data['firstName'] = firstName;
+  }
 
+  if (lastName) {
+    data['lastName'] = lastName;
+  }
+
+  if (address) {
+    data['address'] = address;
+  }
+
+  if (zip) {
+    data['zip'] = zip;
+  }
+
+  if (city) {
+    data['city'] = city;
+  }
+
+  if (state) {
+    data['state'] = state;
+  }
+  
   $.ajax({
       type: 'POST',
       url: request_url,

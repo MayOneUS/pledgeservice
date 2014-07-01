@@ -53,12 +53,13 @@ def SetExpressCheckout(host_url, data):
     # Paypal limits our custom field to 200 characters
     #  If there isn't room for the team, let's strip it out,
     #  and try to pick it up via cookie later
-    if len(encoded_data) >= 200:
+    if len(encoded_data) >= 200:      
         del data['team']
         encoded_data = encode_data(data)
 
     if len(encoded_data) >= 200:
         logging.warning("Encoded data length %d too long" % len(encoded_data))
+        logging.info("Data was: %s" % encoded_data)
         return False, ""
 
 
