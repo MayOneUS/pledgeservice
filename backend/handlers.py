@@ -689,7 +689,7 @@ class BitcoinNotificationsHandler(webapp2.RequestHandler):
       logging.warning('bitpay paid amount > $100')
 
     temp_pledge_data = {
-      'name': temp_pledge.name,
+      'name': temp_pledge.firstName,
       'email': temp_pledge.email,
       'phone': temp_pledge.phone,
       'occupation': temp_pledge.occupation,
