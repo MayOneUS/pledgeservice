@@ -77,10 +77,38 @@ var validateForm = function() {
 
 var validateBitcoinForm = function() {
   var amount = $('#amount_input').val() || null;
+  var firstName = $('#first_name_input').val() || null;  
+  var lastName = $('#last_name_input').val() || null;  
+  var address = $('#address_input').val() || null;
+  var city = $('#city_input').val() || null;
+  var state = $('#state_input').val() || null;
+  var zip = $('#zip_input').val() || null;
+    
   if (amount > 100) {
-        showError( "Thank you for your generosity, but we are only able to accept Bitcoin donations of $100 or less");
+    showError( "Thank you for your generosity, but we are only able to accept Bitcoin donations of $100 or less");
     return false;
-  } else {
+  } else if ($("#requiredConfirmation").is(':checked') == false ) {
+    showError( "We are only able to accept donations from US citizens or green card holders, and you may only donate your own bitcoin.");
+    return false;
+  } else if (!firstName) {
+    showError( "Please enter your first name");
+    return false;
+  } else if (!lastName) {
+    showError( "Please enter your last name");
+    return false;
+  } else if (!address) {
+    showError( "Please enter your address");
+    return false;
+  } else if (!city) {
+    showError( "Please enter your address");
+    return false;
+  } else if (!state) {
+    showError( "Please enter your state");
+    return false;
+  } else if (!zip) {
+    showError( "Please enter your zip code");
+    return false;
+  } else {  
     return true;
   }
 }
@@ -159,6 +187,13 @@ var createPledge = function(name, payment) {
     pledgeType = 'CONDITIONAL';
   }
 
+  var firstName = $('#first_name_input').val() || null;  
+  var lastName = $('#last_name_input').val() || null;  
+  var address = $('#address_input').val() || null;
+  var city = $('#city_input').val() || null;
+  var state = $('#state_input').val() || null;
+  var zip = $('#zip_input').val() || null;
+  
   var data = {
     email: $('#email_input').val(),
     phone: $('#phone_input').val(),
@@ -167,6 +202,13 @@ var createPledge = function(name, payment) {
     employer: $('#employer_input').val(),
     target: $('#targeting_input').val(),
     subscribe: $('#emailSignupInput').is(':checked') ? true : false,
+    bitcoinConfirm: $("#requiredConfirmation").is(':checked')? true : false,
+    firstName:firstName,
+    lastName:lastName,
+    address:address,
+    city:city,
+    state:state,
+    zip:zip,
     // anonymous: $scope.ctrl.form.anonymous,
     amountCents: getAmountCents(),
     pledgeType: pledgeType,
