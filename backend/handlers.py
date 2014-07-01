@@ -612,7 +612,7 @@ class BitcoinStartHandler(webapp2.RequestHandler):
       address=data["address"],
       city=data["city"],
       state=data["state"],
-      zip=data["zip"],
+      zipCode=data["zip"],
       bitcoinConfirm=data["bitcoinConfirm"],
       team=data["team"]
     )
