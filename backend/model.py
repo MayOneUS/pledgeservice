@@ -153,6 +153,12 @@ class User(db.Model):
   first_name = db.StringProperty()
   last_name = db.StringProperty()
 
+  # Collected in our system for Bitcoin users only
+  address = db.StringProperty()
+  city = db.StringProperty()
+  state = db.StringProperty()
+  zipCode = db.StringProperty()
+  
   # occupation and employer are logically required for all new users, but we
   # don't have this data for everyone. so from a data model perspective, they
   # aren't required.
@@ -183,7 +189,9 @@ class User(db.Model):
   @db.transactional
   def createOrUpdate(email, first_name=None, last_name=None, occupation=None,
                      employer=None, phone=None, target=None,
-                     from_import=None, mail_list_optin=None, surveyResult=None):
+                     from_import=None, mail_list_optin=None, surveyResult=None,
+                     address=None, city=None, state=None, zipCode=None
+                     ):
     user = User.get_by_key_name(email)
     if user is None:
       user = User(model_version=MODEL_VERSION,
@@ -199,6 +207,7 @@ class User(db.Model):
         return current or new
       else:
         return new or current
+        
     user.first_name = choose(user.first_name, first_name)
     user.last_name = choose(user.last_name, last_name)
     user.occupation = choose(user.occupation, occupation)
@@ -206,6 +215,10 @@ class User(db.Model):
     user.phone = choose(user.phone, phone)
     user.target = choose(user.target, target)
     user.surveyResult = choose(user.surveyResult, surveyResult)
+    user.address = choose(user.address, address)
+    user.city = choose(user.city, city) 
+    user.state = choose(user.state, state) 
+    user.zipCode = choose(user.zipCode, zipCode)
 
     user.mail_list_optin = choose(user.mail_list_optin, mail_list_optin)
     user.put()
@@ -255,7 +268,10 @@ class Pledge(db.Model):
   # Paypal specific fields
   paypalPayerID = db.StringProperty()
   paypalTransactionID = db.StringProperty()
-
+  
+  #BitPay specific field
+  bitpay_invoice_id = db.StringProperty()
+  
   # when the donation occurred
   donationTime = db.DateTimeProperty(auto_now_add=True)
 
@@ -295,7 +311,7 @@ class Pledge(db.Model):
   @staticmethod
   def create(email, stripe_customer_id, stripe_charge_id,
              paypal_payer_id, paypal_txn_id,
-             amount_cents, pledge_type, team, anonymous):
+             amount_cents, pledge_type, team, anonymous, bitpay_invoice_id):
     assert pledge_type in Pledge.TYPE_VALUES
     pledge = Pledge(model_version=MODEL_VERSION,
                     email=email,
@@ -307,7 +323,8 @@ class Pledge(db.Model):
                     pledge_type=pledge_type,
                     team=team,
                     url_nonce=os.urandom(32).encode("hex"),
-                    anonymous=anonymous)
+                    anonymous=anonymous,
+                    bitpay_invoice_id=bitpay_invoice_id)
     pledge.put()
     if team:
       TeamTotal.add(team, amount_cents)
@@ -377,7 +394,9 @@ def addPledge(email,
               first_name, last_name, occupation, employer, phone,
               target, team, mail_list_optin, anonymous, surveyResult=None,
               stripe_customer_id=None, stripe_charge_id=None,
-              paypal_txn_id=None, paypal_payer_id=None):
+              paypal_txn_id=None, paypal_payer_id=None, 
+              address=None, city=None, state=None, zipCode=None, 
+              bitpay_invoice_id = None ):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
@@ -393,7 +412,8 @@ def addPledge(email,
   user = User.createOrUpdate(
     email=email, first_name=first_name, last_name=last_name,
     occupation=occupation, employer=employer, phone=phone, target=target,
-    mail_list_optin=mail_list_optin, surveyResult=surveyResult)
+    mail_list_optin=mail_list_optin, surveyResult=surveyResult,
+    address=address, city=city, state=state, zipCode=zipCode )
 
   return user, Pledge.create(email=email,
                        stripe_customer_id=stripe_customer_id,
@@ -403,7 +423,8 @@ def addPledge(email,
                        amount_cents=amount_cents,
                        pledge_type=pledge_type,
                        team=team,
-                       anonymous=anonymous)
+                       anonymous=anonymous,
+                       bitpay_invoice_id = bitpay_invoice_id)
 
 
 class WpPledge(db.Model):

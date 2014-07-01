@@ -130,6 +130,23 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
     if not 'surveyResult' in data:
       data['surveyResult'] = ''
 
+    if not 'city' in data:
+      data['city'] = None
+
+    if not 'address' in data:
+      data['address'] = None
+    else:
+      logging.info('Address was: ' + str( data['address']))      
+
+    if not 'state' in data:
+      data['state'] = None
+
+    if not 'zipCode' in data:
+      data['zipCode'] = None
+    
+    if not 'bitpay_invoice_id' in data:
+      data['bitpay_invoice_id'] = None
+
     amountCents = data['amountCents']
     
     user, pledge = model.addPledge(email=data['email'],
@@ -149,7 +166,13 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
                                'pledgeType', model.Pledge.TYPE_CONDITIONAL),
                              team=data['team'],
                              mail_list_optin=data['subscribe'],
-                             anonymous=data.get('anonymous', False))
+                             anonymous=data.get('anonymous', False),
+                             address=str(data['address']),
+                             city=data['city'],
+                             state=data['state'],
+                             zipCode=data['zipCode'],
+                             bitpay_invoice_id = data['bitpay_invoice_id']
+                             )
 
     if data['subscribe']:
       env.mailing_list_subscriber.Subscribe(
@@ -560,9 +583,7 @@ class BitcoinStartHandler(webapp2.RequestHandler):
 
     try:
       data = json.loads(self.request.body)
-      logging.info('1')
     except ValueError, e:
-      logging.info('2')
       logging.warning('Bad JSON request: %s', str(e))
       self.error(400)
       self.response.write('Invalid request')
@@ -570,15 +591,12 @@ class BitcoinStartHandler(webapp2.RequestHandler):
 
     try:
       validictory.validate(data, PLEDGE_SCHEMA)
-      logging.info('3')
     except ValueError, e:
-      logging.info('4')
       logging.warning('Schema check failed: %s', str(e))
       self.error(400)
       self.response.write('Invalid request')
       return
 
-    logging.info('5')
     temp_pledge = model.TempPledge(
       model_version=model.MODEL_VERSION,
       email=data["email"],
@@ -605,6 +623,7 @@ class BitcoinStartHandler(webapp2.RequestHandler):
       resp_dict = self._send_to_bitpay(data["amountCents"], temp_key_str)
       json.dump({"bitpay_url": resp_dict["url"]}, self.response)
       temp_pledge.bitpay_invoice_id = resp_dict["id"]
+      logging.info('Created invoice with id ' + resp_dict["id"])
       temp_pledge.put()
       return
     except Exception, e:
@@ -661,13 +680,18 @@ class BitcoinNotificationsHandler(webapp2.RequestHandler):
       data = json.loads(self.request.body)
     except ValueError, e:
       logging.warning('Bad JSON request: %s', str(e))
+      logging.info('Bad request was: ' + str(self.request.body))
       self.error(400)
       self.response.write('Invalid request')
       return
 
+    invoiceID = data["id"]
     posData = data["posData"]
+    logging.info('Bitpay notifications for. Invoice ID: %s, Status: %s' % (invoiceID, data.get('status')))
+    
     key = db.Key(posData)
     temp_pledge = model.TempPledge.get_by_id(key.id())
+
 
     if not temp_pledge:
       logging.warning('could not find temp pledge from posData')
@@ -680,8 +704,8 @@ class BitcoinNotificationsHandler(webapp2.RequestHandler):
       return self.response
 
     if not data.get('status') == 'confirmed':
-      logging.warning('Bitpay sending notifications for non comfirmed transactions')
-      self.error(400)
+      logging.info('Non comfirmed transaction. Ignoring. Invoice ID: %s, Status: %s' % (invoiceID, data.get('status')))
+      self.response.write('Thanks. We got this, but ignored it.')
       return
 
     paid_price = float(data["price"])
@@ -689,6 +713,7 @@ class BitcoinNotificationsHandler(webapp2.RequestHandler):
       logging.warning('bitpay paid amount > $100')
 
     temp_pledge_data = {
+      'bitpay_invoice_id': temp_pledge.bitpay_invoice_id,
       'name': temp_pledge.firstName,
       'email': temp_pledge.email,
       'phone': temp_pledge.phone,
@@ -697,6 +722,12 @@ class BitcoinNotificationsHandler(webapp2.RequestHandler):
       'target': temp_pledge.target,
       'subscribe': temp_pledge.subscribe,
       'team': temp_pledge.team,
+      'first_name': temp_pledge.firstName,
+      'last_name': temp_pledge.lastName,
+      'address': temp_pledge.address,
+      'city': temp_pledge.city,
+      'state': temp_pledge.state,
+      'zipCode': temp_pledge.zipCode,
       'amountCents': int(paid_price * 100),
       'pledgeType': 'DONATION'
     }
