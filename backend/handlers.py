@@ -417,8 +417,8 @@ class TotalHandler(webapp2.RequestHandler):
   STRETCH_GOAL_MATCH = 85900000
   PRE_SHARDING_TOTAL = 59767534  # See model.ShardedCounter
   WP_PLEDGE_TOTAL = 41326868
-  DEMOCRACY_DOT_COM_BALANCE = 9951173
-  CHECKS_BALANCE = 9065700  # lol US government humor
+  DEMOCRACY_DOT_COM_BALANCE = 10156073
+  CHECKS_BALANCE = 9708000  # lol US government humor
 
   def get(self):
     util.EnableCors(self)
