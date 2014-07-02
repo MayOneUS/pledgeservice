@@ -12,8 +12,11 @@ from google.appengine.api import mail
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 from google.appengine.api import urlfetch
+from google.appengine.api import memcache
+
 import validictory
 import webapp2
+
 
 import cache
 import model
@@ -411,6 +414,27 @@ class PaymentConfigHandler(webapp2.RequestHandler):
     self.response.headers['Content-Type'] = 'application/json'
     json.dump(params, self.response)
 
+class NumPledgesHandler(webapp2.RequestHandler):  
+  def get(self):
+    WP_PLEDGES = 4099
+    VERSION_11_AND_UNDER = 11743 
+    
+    count = memcache.get('TOTAL-PLEDGES')
+    if not count:
+      query = model.Pledge.all(keys_only=True).filter('model_version >', 11)
+      i = 0
+      while True:
+          result = query.fetch(1000)
+          i = i + len(result)
+          if len(result) < 1000:
+              break
+          cursor = query.cursor()
+          query.with_cursor(cursor)
+      count = i      
+      memcache.set('TOTAL-PLEDGES', count + WP_PLEDGES + VERSION_11_AND_UNDER, 60)
+
+    self.response.headers['Content-Type'] = 'application/json'
+    json.dump({'count':count}, self.response)
 
 class TotalHandler(webapp2.RequestHandler):
   # These get added to every pledge calculation
@@ -874,6 +898,7 @@ HANDLERS = [
   ('/receipt/(.+)', ReceiptHandler),
   ('/r/payment_config', PaymentConfigHandler),
   ('/r/total', TotalHandler),
+  ('/r/num_pledges', NumPledgesHandler),    
   ('/r/thank', ThankTeamHandler),
   ('/r/subscribe', SubscribeHandler),
   ('/r/bitcoin_start', BitcoinStartHandler),
