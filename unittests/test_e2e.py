@@ -493,6 +493,8 @@ class PledgeTest(BaseTest):
       email=self.pledge["email"],
       phone=self.pledge["phone"],
       name=self.pledge["name"],
+      firstName=u'Pik\u00E1',
+      lastName=u'Chu',
       occupation=self.pledge["occupation"],
       employer=self.pledge["employer"],
       subscribe=True,
