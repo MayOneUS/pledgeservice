@@ -433,7 +433,7 @@ class NumPledgesHandler(webapp2.RequestHandler):
           cursor = query.cursor()
           query.with_cursor(cursor)
       count = i + WP_PLEDGES + VERSION_11_AND_UNDER
-      memcache.set('TOTAL-PLEDGES', count, 60)
+      memcache.set('TOTAL-PLEDGES', count, 120)
 
     self.response.headers['Content-Type'] = 'application/json'
     json.dump({'count':count}, self.response)
