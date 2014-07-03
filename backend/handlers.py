@@ -416,6 +416,8 @@ class PaymentConfigHandler(webapp2.RequestHandler):
 
 class NumPledgesHandler(webapp2.RequestHandler):  
   def get(self):
+    util.EnableCors(self)
+    
     WP_PLEDGES = 4099
     VERSION_11_AND_UNDER = 11743 
     
@@ -435,6 +437,8 @@ class NumPledgesHandler(webapp2.RequestHandler):
 
     self.response.headers['Content-Type'] = 'application/json'
     json.dump({'count':count}, self.response)
+    
+  options = util.EnableCors  
 
 class TotalHandler(webapp2.RequestHandler):
   # These get added to every pledge calculation
