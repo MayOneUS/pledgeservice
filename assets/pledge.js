@@ -282,17 +282,18 @@ $(document).ready(function() {
   
   $('#bitcoinButton').on('click', bitcoinPledge);
   
-  $.get(PLEDGE_URL + '/r/payment_config').done(function(config) {
-      paymentConfig = config;
-      stripeHandler = StripeCheckout.configure({
-      key: config.stripePublicKey,
-      name: 'MAYDAY.US',
-      panelLabel: 'Pledge',
-      billingAddress: true,
-      image: PLEDGE_URL + '/static/flag.jpg',
-      token: function(token, args) {
-        onTokenRecv(token, args);
-      }
-    });
+  $.get(PLEDGE_URL + '/r/payment_config', {}, function(){}, "json").done(function(pConf) {    
+      paymentConfig = pConf;
+      stripeConfig = {
+        key: paymentConfig.stripePublicKey,
+        name: 'MAYDAY.US',
+        panelLabel: 'Pledge',
+        billingAddress: true,
+        image: PLEDGE_URL + '/static/flag.jpg',
+        token: function(token, args) {
+          onTokenRecv(token, args);
+        }
+      };
+    stripeHandler = StripeCheckout.configure(stripeConfig);
   });
 });
