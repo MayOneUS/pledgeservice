@@ -53,6 +53,7 @@ class ProdStripe(handlers.StripeBackend):
         statement_description='MayOne.US',
       )
     except stripe.CardError, e:
+      logging.info('Stripe returned error for customer: %s ' % customer_id)
       raise handlers.PaymentError(str(e))
     return charge.id
 
