@@ -1,0 +1,20 @@
+doctype html
+html
+  head
+    include includes/head
+
+  body#donation_update
+    include includes/header
+    .container
+      .page-header
+        h1 Thank You
+      .row
+        .col-md-12
+          p For email address {{email}}:
+          p Updated {{num_conditional_pledges}} pledge(s) totalling ${{amount_pledges}} to be donations
+          {% if amount_donations > 0 %}
+          p {{num_donations}} donation(s) totalling ${{amount_donations}} for this email were also found
+          {% endif %}
+          p Thank you for so much for supporting our effort to end corruption
+    .spacing
+    include includes/footer

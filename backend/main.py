@@ -51,8 +51,7 @@ class GetTotalHandler(webapp2.RequestHandler):
     total = (handlers.TotalHandler.PRE_SHARDING_TOTAL +
              handlers.TotalHandler.WP_PLEDGE_TOTAL +
              handlers.TotalHandler.DEMOCRACY_DOT_COM_BALANCE +
-             handlers.TotalHandler.CHECKS_BALANCE +
-             handlers.TotalHandler.STRETCH_GOAL_MATCH)
+             handlers.TotalHandler.CHECKS_BALANCE)
     total += model.ShardedCounter.get_count('TOTAL-5')
     total = int(total/100) * 100
     self.response.headers['Content-Type'] = 'application/javascript'
@@ -166,13 +165,50 @@ class UserInfoHandler(webapp2.RequestHandler):
   def options(self):
     util.EnableCors(self)
 
+class DonationTypeUpdateHandler(webapp2.RequestHandler):
+  def get(self, url_nonce):
+    util.EnableCors(self)
+    user = model.User.all().filter('url_nonce =', url_nonce).get()
+    if user is None:
+      self.error(404)
+      self.response.write('user not found')
+      return
+      
+    num_conditional_pledges = 0
+    num_donations = 0
+    amount_pledges = 0
+    amount_donations = 0
+    for pledge in model.Pledge.all().filter('email =', user.email):
+      if pledge.fundraisingRound == 1:
+        continue 
+       
+      if pledge.pledge_type == 'DONATION':
+        num_donations += 1
+        amount_donations += pledge.amountCents
+      else:
+        num_conditional_pledges += 1
+        amount_pledges += pledge.amountCents
+        pledge.pledge_type = 'DONATION'
+        pledge.put()
+    
+    template_vars = {
+      'num_donations':num_donations,
+      'amount_donations':amount_donations/100,
+      'num_conditional_pledges':num_conditional_pledges,
+      'amount_pledges':amount_pledges/100,
+      'email':user.email
+    }
+    template = templates.GetTemplate('donation-update.html')    
+    self.response.write(template.render(template_vars))    
+
 class RootRedirectHandler(webapp2.RequestHandler):
   def get(self):  
     self.redirect('/pledge')
-  
+
 HANDLERS = [
   ('/', RootRedirectHandler),
   ('/total', GetTotalHandler),
+  (r'/donation-update/(\w+)', DonationTypeUpdateHandler),  
   (r'/user-update/(\w+)', UserUpdateHandler),
   (r'/user-info/(\w+)', UserInfoHandler),
   ('/campaigns/may-one/?', EmbedHandler),
