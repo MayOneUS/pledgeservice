@@ -18,6 +18,9 @@ def SetShardedCounterTotal(name, value):
 def IncrementShardedCounterTotal(name, delta):
   memcache.incr(_COUNTER_TOTAL.format(name), delta)
 
+def ClearShardedCounterTotal(name):
+  memcache.delete(_COUNTER_TOTAL.format(name))
+  
 
 _TEAM_PLEDGES = 'TEAM-PLEDGES-{}'
 def GetTeamPledgeCount(team):

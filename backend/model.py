@@ -143,7 +143,6 @@ class Secrets(db.Model):
       s = Secrets(key_name=Secrets.SINGLETON_KEY)
     s.put()
 
-
 class User(db.Model):
   model_version = db.IntegerProperty()
 
@@ -544,11 +543,38 @@ class ChargeStatus(db.Model):
                             parent=pledge_key)
 
 
+
+class StretchCheckTotal(db.Model):
+  dollars = db.IntegerProperty()
+
+  @classmethod
+  def update(cls, newTotal):
+    total = cls.all().get()
+    if total:
+      total.dollars = newTotal
+      total.put()
+    else:
+      newTotalForDB = cls(dollars = newTotal)
+      newTotalForDB.put()
+    
+  @classmethod
+  def get(cls):
+    total = cls.all().get()
+    if total:
+      return total.dollars
+    else:
+      logging.info('No StretchCheckTotal')
+      return 0
+  
 SHARD_KEY_TEMPLATE = 'shard-{}-{:d}'
 SHARD_COUNT = 50
 
 class ShardedCounter(db.Model):
   count = db.IntegerProperty(default=0)
+
+  @staticmethod
+  def clear(name):
+    cache.ClearShardedCounterTotal(name)
 
   @staticmethod
   def get_count(name):
@@ -560,7 +586,18 @@ class ShardedCounter(db.Model):
         if counter is not None:
           total += counter.count
       logging.info("recalculated counter %s to %s", name, total)
+      
+      # Add the stretch check total which is not reflected elsewhere in the counter
+      # And is set manually      
+      # This is here so that is only read out on a cache miss
+      stretchCheckTotal = StretchCheckTotal.get()
+      if stretchCheckTotal < 112742800:
+        stretchCheckTotal = 112742800
+      
+      total += stretchCheckTotal
+      
       cache.SetShardedCounterTotal(name, total)
+      
     return total
 
   @staticmethod

@@ -444,8 +444,7 @@ class NumPledgesHandler(webapp2.RequestHandler):
   options = util.EnableCors  
 
 class TotalHandler(webapp2.RequestHandler):
-  # These get added to every pledge calculation
-  STRETCH_GOAL_MATCH = 112742800
+  # These get added to every pledge total calculation
   PRE_SHARDING_TOTAL = 59767534  # See model.ShardedCounter
   WP_PLEDGE_TOTAL = 41326868
   DEMOCRACY_DOT_COM_BALANCE = 10156073
@@ -456,8 +455,7 @@ class TotalHandler(webapp2.RequestHandler):
     total = (TotalHandler.PRE_SHARDING_TOTAL +
              TotalHandler.WP_PLEDGE_TOTAL +
              TotalHandler.DEMOCRACY_DOT_COM_BALANCE +
-             TotalHandler.CHECKS_BALANCE +
-             TotalHandler.STRETCH_GOAL_MATCH)
+             TotalHandler.CHECKS_BALANCE)
     total += model.ShardedCounter.get_count('TOTAL-5')
 
     result = dict(totalCents=total)

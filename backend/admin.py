@@ -79,6 +79,26 @@ class PledgesCsvHandler(webapp2.RequestHandler):
       w.writerow([str(pledge.donationTime), pledge.amountCents])
 
 
+class StretchHandler(webapp2.RequestHandler):
+  def get(self):
+    total = model.StretchCheckTotal.get()    
+    if total != 0:
+      total = total/100
+    template = templates.GetTemplate('stretch.html')
+    self.response.write(template.render({'stretch': total}))
+  
+  def post(self):
+    total = self.request.get("stretch")
+    try:    
+      centsTotal = int(total) * 100
+      model.StretchCheckTotal.update(centsTotal)
+      
+      # clear the cache so that it recalculates the next time
+      model.ShardedCounter.clear('TOTAL-5')
+      self.response.write('The Stretch total has been updated to: $' + str(total))
+    except Exception as e:
+      self.response.write('Sorry, something went wrong: ' + str(e))
+
 def MakeCommandHandler(cmd_cls):
   """Takes a command class and returns a route tuple which allows that command
      to be executed.
@@ -109,5 +129,6 @@ COMMAND_HANDLERS = [MakeCommandHandler(c) for c in commands.COMMANDS]
 
 app = webapp2.WSGIApplication([
   ('/admin/pledges.csv', PledgesCsvHandler),
+  ('/admin/stretch', StretchHandler),
   ('/admin/?', AdminDashboardHandler),
 ] + COMMAND_HANDLERS, debug=False, config=dict(env=env.get_env()))
