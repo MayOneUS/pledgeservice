@@ -25,7 +25,10 @@ html
         var date_its_over = Date.UTC(2014,06,05,05,00,00,00);
         var days_left = Math.floor((date_its_over - Date.now())/(1000*24*60*60));
 
-        var days_left_message = days_left + ' days left';
+        var days_left_message = "";
+        if (days_left >= 0) {
+          days_left_message = days_left + ' days left';
+        }
 
         $scope.ctrl = {
           daysLeftMsg: days_left_message,
