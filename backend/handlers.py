@@ -416,6 +416,8 @@ class PaymentConfigHandler(webapp2.RequestHandler):
 
     self.response.headers['Content-Type'] = 'application/json'
     json.dump(params, self.response)
+  
+  options = util.EnableCors  
 
 class NumPledgesHandler(webapp2.RequestHandler):  
   def get(self):
