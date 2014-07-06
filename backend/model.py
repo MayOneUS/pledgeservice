@@ -81,7 +81,7 @@ class Config(object):
       paypal_password = s.paypal_password
       paypal_signature = s.paypal_signature
       bitpay_api_key = s.bitpay_api_key
-      
+
     if 'productionPaypal' in j and j['productionPaypal']:
       paypal_api_url =  "https://api-3t.paypal.com/nvp"
       paypal_url = "https://www.paypal.com/webscr"
@@ -100,7 +100,7 @@ class Config(object):
       paypal_signature = paypal_signature,
       paypal_api_url = paypal_api_url,
       paypal_url = paypal_url,
-      bitpay_api_key = bitpay_api_key    
+      bitpay_api_key = bitpay_api_key
       )
     return Config._instance
 
@@ -127,9 +127,9 @@ class Secrets(db.Model):
   paypal_user = db.StringProperty(default='')
   paypal_password = db.StringProperty(default='')
   paypal_signature = db.StringProperty(default='')
-  
+
   bitpay_api_key = db.StringProperty(default='')
-  
+
 
   @staticmethod
   def get():
@@ -157,7 +157,7 @@ class User(db.Model):
   city = db.StringProperty()
   state = db.StringProperty()
   zipCode = db.StringProperty()
-  
+
   # occupation and employer are logically required for all new users, but we
   # don't have this data for everyone. so from a data model perspective, they
   # aren't required.
@@ -173,7 +173,7 @@ class User(db.Model):
 
   # the results of a survey from mayday.us/goodfight
   surveyResult = db.StringProperty(required=False)
-  
+
   # this is the nonce for what we'll put in a url to send to people when we ask
   # them to update their information. it's kind of like their password for the
   # user-management part of the site.
@@ -206,7 +206,7 @@ class User(db.Model):
         return current or new
       else:
         return new or current
-        
+
     user.first_name = choose(user.first_name, first_name)
     user.last_name = choose(user.last_name, last_name)
     user.occupation = choose(user.occupation, occupation)
@@ -215,8 +215,8 @@ class User(db.Model):
     user.target = choose(user.target, target)
     user.surveyResult = choose(user.surveyResult, surveyResult)
     user.address = choose(user.address, address)
-    user.city = choose(user.city, city) 
-    user.state = choose(user.state, state) 
+    user.city = choose(user.city, city)
+    user.state = choose(user.state, state)
     user.zipCode = choose(user.zipCode, zipCode)
 
     user.mail_list_optin = choose(user.mail_list_optin, mail_list_optin)
@@ -235,7 +235,7 @@ class TempPledge(db.Model):
   employer = db.StringProperty()
   target = db.StringProperty()
   subscribe = db.BooleanProperty(required=False, default=True)
-  amountCents = db.IntegerProperty(required=True)  
+  amountCents = db.IntegerProperty(required=True)
   firstName = db.StringProperty()
   lastName = db.StringProperty()
   address = db.StringProperty()
@@ -243,7 +243,7 @@ class TempPledge(db.Model):
   state = db.StringProperty()
   zipCode = db.StringProperty()
   bitcoinConfirm=db.BooleanProperty(required=False, default=False)
-  
+
   team = db.StringProperty()
   # all pledge_types for bitpay pledges must be "DONATION"
   bitpay_invoice_id = db.StringProperty()
@@ -267,10 +267,10 @@ class Pledge(db.Model):
   # Paypal specific fields
   paypalPayerID = db.StringProperty()
   paypalTransactionID = db.StringProperty()
-  
+
   #BitPay specific field
   bitpay_invoice_id = db.StringProperty()
-  
+
   # when the donation occurred
   donationTime = db.DateTimeProperty(auto_now_add=True)
 
@@ -393,8 +393,8 @@ def addPledge(email,
               first_name, last_name, occupation, employer, phone,
               target, team, mail_list_optin, anonymous, surveyResult=None,
               stripe_customer_id=None, stripe_charge_id=None,
-              paypal_txn_id=None, paypal_payer_id=None, 
-              address=None, city=None, state=None, zipCode=None, 
+              paypal_txn_id=None, paypal_payer_id=None,
+              address=None, city=None, state=None, zipCode=None,
               bitpay_invoice_id = None ):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
@@ -556,7 +556,7 @@ class StretchCheckTotal(db.Model):
     else:
       newTotalForDB = cls(dollars = newTotal)
       newTotalForDB.put()
-    
+
   @classmethod
   def get(cls):
     total = cls.all().get()
@@ -565,9 +565,10 @@ class StretchCheckTotal(db.Model):
     else:
       logging.info('No StretchCheckTotal')
       return 0
-  
+
 SHARD_KEY_TEMPLATE = 'shard-{}-{:d}'
 SHARD_COUNT = 50
+STRETCH_CACHE_MISS_TOTAL = 112742800
 
 class ShardedCounter(db.Model):
   count = db.IntegerProperty(default=0)
@@ -586,18 +587,18 @@ class ShardedCounter(db.Model):
         if counter is not None:
           total += counter.count
       logging.info("recalculated counter %s to %s", name, total)
-      
+
       # Add the stretch check total which is not reflected elsewhere in the counter
-      # And is set manually      
+      # And is set manually
       # This is here so that is only read out on a cache miss
       stretchCheckTotal = StretchCheckTotal.get()
-      if stretchCheckTotal < 112742800:
-        stretchCheckTotal = 112742800
-      
+      if stretchCheckTotal < STRETCH_CACHE_MISS_TOTAL:
+        stretchCheckTotal = STRETCH_CACHE_MISS_TOTAL
+
       total += stretchCheckTotal
-      
+
       cache.SetShardedCounterTotal(name, total)
-      
+
     return total
 
   @staticmethod

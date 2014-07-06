@@ -76,7 +76,7 @@ class PledgeTest(BaseTest):
     handlers.TotalHandler.WP_PLEDGE_TOTAL = 11
     handlers.TotalHandler.DEMOCRACY_DOT_COM_BALANCE = 12
     handlers.TotalHandler.CHECKS_BALANCE = 13
-    handlers.TotalHandler.STRETCH_GOAL_MATCH = 14
+    model.STRETCH_CACHE_MISS_TOTAL = 14
 
     self.balance_baseline = 60
 
@@ -508,6 +508,3 @@ class PledgeTest(BaseTest):
       'expirationTime': 1393950946292, 'id': 'aASDF2jh4ashkASDfh234'}
     resp = self.app.post_json('/r/bitcoin_notifications', notification)
     # import pdb; pdb.set_trace()
-
-
-
