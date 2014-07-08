@@ -4,10 +4,11 @@ import jinja2
 import json
 import logging
 import os
+import StringIO
 import urllib2
 import webapp2
 
-from google.appengine.api import mail, memcache
+from google.appengine.api import files, mail, memcache
 from google.appengine.ext import db, deferred
 
 import commands
@@ -58,15 +59,46 @@ class AdminDashboardHandler(webapp2.RequestHandler):
             for c in commands.COMMANDS if c.SHOW]
 
 
-class PledgesCsvHandler(webapp2.RequestHandler):
+def generate_pledges_csv(file_name):
+  """ Generates the pledges.csv file in a deferred way """
+
+  csv_buffer = StringIO.StringIO()
+  w = csv.writer(csv_buffer)
+  w.writerow(['time', 'amount'])
+  for pledge in model.WpPledge.all():
+    w.writerow([str(pledge.donationTime), pledge.amountCents])
+  for pledge in model.Pledge.all():
+    w.writerow([str(pledge.donationTime), pledge.amountCents])
+  with files.open(file_name, 'a') as f:
+    f.write(csv_buffer.getvalue())
+  csv_buffer.close()
+  files.finalize(file_name)
+
+
+class GeneratePledgesCsvHandler(webapp2.RequestHandler):
   def get(self):
-    self.response.headers['Content-type'] = 'text/csv'
-    w = csv.writer(self.response)
-    w.writerow(['time', 'amount'])
-    for pledge in model.WpPledge.all():
-      w.writerow([str(pledge.donationTime), pledge.amountCents])
-    for pledge in model.Pledge.all():
-      w.writerow([str(pledge.donationTime), pledge.amountCents])
+    # Create a blobstore file, a deferred task, and redirect to the download
+    # page.
+    file_name = files.blobstore.create(
+      mime_type='text/csv', _blobinfo_uploaded_filename="pledges.csv")
+    deferred.defer(generate_pledges_csv, file_name,
+                   _queue='generatePledgesCSV')
+    self.redirect('/admin/files%s/pledges.csv' % file_name)
+
+
+class PledgesCsvHandler(webapp2.RequestHandler):
+  def get(self, file_name):
+    """
+    Serve the blobstore file if it exists, otherwise instruct the user to
+    refresh later.
+    """
+    try:
+      with files.open(file_name, 'r') as f:
+        self.response.headers['Content-type'] = 'text/csv'
+        for row in f.read():
+          self.response.write(row)
+    except:
+      self.response.write('Working on it, refresh in a few minutes.')
 
 
 class StretchHandler(webapp2.RequestHandler):
@@ -118,7 +150,8 @@ def MakeCommandHandler(cmd_cls):
 COMMAND_HANDLERS = [MakeCommandHandler(c) for c in commands.COMMANDS]
 
 app = webapp2.WSGIApplication([
-  ('/admin/pledges.csv', PledgesCsvHandler),
+  ('/admin/generate/pledges.csv', GeneratePledgesCsvHandler),
+  ('/admin/files(.+)/pledges.csv', PledgesCsvHandler),
   ('/admin/stretch', StretchHandler),
   ('/admin/?', AdminDashboardHandler),
 ] + COMMAND_HANDLERS, debug=False, config=dict(env=env.get_env()))

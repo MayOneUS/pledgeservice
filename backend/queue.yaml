@@ -9,3 +9,7 @@ queue:
 - name: stripeCharge
   rate: 1/s
   max_concurrent_requests: 5
+
+- name: generatePledgesCSV
+  rate: 1/m
+  max_concurrent_requests: 1
