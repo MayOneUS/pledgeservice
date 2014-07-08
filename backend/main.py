@@ -139,20 +139,22 @@ class UserInfoHandler(webapp2.RequestHandler):
       self.response.write("user not found")
       return
 
+    cc_user_name = None
+    cc_zip_code = None
     stripe.api_key = env.get_env().stripe_backend.stripe_private_key
-    cus = stripe.Customer.retrieve(biggest_pledge.stripeCustomer)
-    if len(cus.cards.data) == 0:
-      self.error(404)
-      self.response.write("user not found")
-      return
+    if biggest_pledge.stripeCustomer:
+      cus = stripe.Customer.retrieve(biggest_pledge.stripeCustomer)
+      if len(cus.cards.data) > 0:
+        cc_user_name = cus.cards.data[0].name
+        cc_zip_code = cus.cards.data[0].address_zip
 
     if user.first_name or user.last_name:
       # TODO(jt): we should backfill this information
       user_name = "%s %s" % (user.first_name or "", user.last_name or "")
     else:
-      user_name = cus.cards.data[0].name
+      user_name = cc_user_name
 
-    zip_code = cus.cards.data[0].address_zip
+    zip_code = cc_zip_code
 
     self.response.headers['Content-Type'] = 'application/javascript'
     self.response.write(json.dumps({
