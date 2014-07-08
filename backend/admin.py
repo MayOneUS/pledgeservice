@@ -19,21 +19,11 @@ class AdminDashboardHandler(webapp2.RequestHandler):
   def get(self):
     users = AdminDashboardHandler.get_missing_data_users()
 
-    pre_sharding_total = 0
-    post_sharding_total = 0
-    for p in model.Pledge.all():
-      if p.model_version >= 5:
-        post_sharding_total += p.amountCents
-      else:
-        pre_sharding_total += p.amountCents
-
     template = templates.GetTemplate('admin-dashboard.html')
     self.response.write(template.render({
       'missingUsers': [dict(email=user.email, amount=amt/100)
                        for user, amt in users],
       'totalMissing': sum(v for _, v in users)/100,
-      'preShardedTotal': pre_sharding_total,
-      'postShardedTotal': post_sharding_total,
       'shardedCounterTotal': model.ShardedCounter.get_count('TOTAL-5'),
       'commands': AdminDashboardHandler.get_commands(),
     }))
@@ -81,18 +71,18 @@ class PledgesCsvHandler(webapp2.RequestHandler):
 
 class StretchHandler(webapp2.RequestHandler):
   def get(self):
-    total = model.StretchCheckTotal.get()    
+    total = model.StretchCheckTotal.get()
     if total != 0:
       total = total/100
     template = templates.GetTemplate('stretch.html')
     self.response.write(template.render({'stretch': total}))
-  
+
   def post(self):
     total = self.request.get("stretch")
-    try:    
+    try:
       centsTotal = int(total) * 100
       model.StretchCheckTotal.update(centsTotal)
-      
+
       # clear the cache so that it recalculates the next time
       model.ShardedCounter.clear('TOTAL-5')
       self.response.write('The Stretch total has been updated to: $' + str(total))
