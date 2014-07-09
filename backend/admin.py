@@ -9,7 +9,8 @@ import urllib2
 import webapp2
 
 from google.appengine.api import files, mail, memcache
-from google.appengine.ext import db, deferred
+from google.appengine.ext import blobstore, db, deferred
+from google.appengine.ext.webapp import blobstore_handlers
 
 import commands
 import env
@@ -86,17 +87,16 @@ class GeneratePledgesCsvHandler(webapp2.RequestHandler):
     self.redirect('/admin/files%s/pledges.csv' % file_name)
 
 
-class PledgesCsvHandler(webapp2.RequestHandler):
+class PledgesCsvHandler(blobstore_handlers.BlobstoreDownloadHandler):
   def get(self, file_name):
     """
     Serve the blobstore file if it exists, otherwise instruct the user to
     refresh later.
     """
     try:
-      with files.open(file_name, 'r') as f:
-        self.response.headers['Content-type'] = 'text/csv'
-        for row in f.read():
-          self.response.write(row)
+      blob_key = files.blobstore.get_blob_key(file_name)
+      blob_info = blobstore.BlobInfo.get(blob_key)
+      self.send_blob(blob_info)
     except:
       self.response.write('Working on it, refresh in a few minutes.')
 
