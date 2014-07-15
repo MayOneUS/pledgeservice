@@ -72,6 +72,22 @@ transformers:
       external_name: url_nonce
       # Type: String Stats: 6705 properties of this type in this kind.
 
+    - property: pledge_type
+      external_name: pledge_type
+      # Type: String Stats: 6705 properties of this type in this kind.
+
+    - property: paypalPayerID
+      external_name: paypalPayerID
+      # Type: String Stats: 6705 properties of this type in this kind.
+
+    - property: paypalTransactionID
+      external_name: paypalTransactionID
+      # Type: String Stats: 6705 properties of this type in this kind.
+
+    - property: bitpay_invoice_id
+      external_name: bitpay_invoice_id
+      # Type: String Stats: 6705 properties of this type in this kind.
+
 
 - kind: Secrets
   connector: csv
@@ -141,9 +157,34 @@ transformers:
       external_name: target
       # Type: String Stats: 6710 properties of this type in this kind.
 
-    - property: url_nonce
-      external_name: url_nonce
+    - property: address
+      external_name: address
       # Type: String Stats: 10658 properties of this type in this kind.
+
+    - property: city
+      external_name: city
+      # Type: String Stats: 10658 properties of this type in this kind.
+
+    - property: zipCode
+      external_name: zipCode
+      # Type: String Stats: 10658 properties of this type in this kind.
+
+    - property: state
+      external_name: state
+      # Type: String Stats: 10658 properties of this type in this kind.
+
+    - property: first_name
+      external_name: first_name
+      # Type: String Stats: 10658 properties of this type in this kind.
+
+    - property: last_name
+      external_name: last_name
+      # Type: String Stats: 10658 properties of this type in this kind.
+
+    - property: mail_list_optin
+      external_name: mail_list_optin
+      # Type: String Stats: 10658 properties of this type in this kind.
+
 
 
 - kind: WpPledge
