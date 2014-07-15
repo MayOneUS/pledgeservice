@@ -11,7 +11,17 @@ html
       .row
         .col-md-4
           h2 CSV
+          a(href="/admin/generate/pledge_amounts.csv") Generate pledge_amounts.csv
+          {% if pledge_amounts %}
+          &nbsp;
+          a(href="/admin/files{{pledge_amounts}}/pledge_amounts.csv") Latest
+          {% endif %}
+          br
           a(href="/admin/generate/pledges.csv") Generate pledges.csv
+          {% if pledges %}
+          &nbsp;
+          a(href="/admin/files{{pledges}}/pledges.csv") Latest
+          {% endif %}
           h2 Admin Commands
           {% for cmd in commands %}
           div
