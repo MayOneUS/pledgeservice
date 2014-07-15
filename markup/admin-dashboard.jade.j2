@@ -10,8 +10,8 @@ html
 
       .row
         .col-md-4
-          h2 Dump CSV
-          a(href="/admin/pledges.csv") Do it
+          h2 CSV
+          a(href="/admin/generate/pledges.csv") Generate pledges.csv
           h2 Admin Commands
           {% for cmd in commands %}
           div
@@ -34,7 +34,3 @@ html
           h2 Sharded Counters
           label Calculated post-sharding total
           p {{shardedCounterTotal}} cents
-          label Actual post-sharding total
-          p {{postShardedTotal}} cents
-          label Pre-sharding total
-          p {{preShardedTotal}} cents

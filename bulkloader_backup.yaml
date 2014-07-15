@@ -21,7 +21,6 @@ python_preamble:
 - import: google.appengine.ext.db
 - import: google.appengine.api.datastore
 - import: google.appengine.api.users
-- import: model
 
 transformers:
 
@@ -74,6 +73,7 @@ transformers:
 
     - property: pledge_type
       external_name: pledge_type
+<<<<<<< HEAD
       # Type: String Stats: 6705 properties of this type in this kind.
 
     - property: paypalPayerID
@@ -87,6 +87,8 @@ transformers:
     - property: bitpay_invoice_id
       external_name: bitpay_invoice_id
       # Type: String Stats: 6705 properties of this type in this kind.
+=======
+>>>>>>> 1b2d0e38f1ca63546d81c739a993b276843374a9
 
 
 - kind: Secrets

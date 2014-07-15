@@ -21,7 +21,8 @@ def EnableCors(handler):
     _, netloc, _, _, _, _ = urlparse.urlparse(origin)
     if not (handler.app.config['env'].app_name == 'local' or
             netloc == 'mayone.us' or netloc.endswith('.mayone.us') or
-            netloc == 'mayday.us' or netloc.endswith('.mayday.us')):
+            netloc == 'mayday.us' or netloc.endswith('.mayday.us') or 
+            netloc == 'test-dot-mayday-pac-teams.appspot.com'):
       logging.warning('Invalid origin: ' + origin)
       handler.error(403)
       return

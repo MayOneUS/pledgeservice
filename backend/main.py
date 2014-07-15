@@ -51,8 +51,7 @@ class GetTotalHandler(webapp2.RequestHandler):
     total = (handlers.TotalHandler.PRE_SHARDING_TOTAL +
              handlers.TotalHandler.WP_PLEDGE_TOTAL +
              handlers.TotalHandler.DEMOCRACY_DOT_COM_BALANCE +
-             handlers.TotalHandler.CHECKS_BALANCE +
-             handlers.TotalHandler.STRETCH_GOAL_MATCH)
+             handlers.TotalHandler.CHECKS_BALANCE)
     total += model.ShardedCounter.get_count('TOTAL-5')
     total = int(total/100) * 100
     self.response.headers['Content-Type'] = 'application/javascript'
@@ -140,20 +139,22 @@ class UserInfoHandler(webapp2.RequestHandler):
       self.response.write("user not found")
       return
 
+    cc_user_name = None
+    cc_zip_code = None
     stripe.api_key = env.get_env().stripe_backend.stripe_private_key
-    cus = stripe.Customer.retrieve(biggest_pledge.stripeCustomer)
-    if len(cus.cards.data) == 0:
-      self.error(404)
-      self.response.write("user not found")
-      return
+    if biggest_pledge.stripeCustomer:
+      cus = stripe.Customer.retrieve(biggest_pledge.stripeCustomer)
+      if len(cus.cards.data) > 0:
+        cc_user_name = cus.cards.data[0].name
+        cc_zip_code = cus.cards.data[0].address_zip
 
     if user.first_name or user.last_name:
       # TODO(jt): we should backfill this information
       user_name = "%s %s" % (user.first_name or "", user.last_name or "")
     else:
-      user_name = cus.cards.data[0].name
+      user_name = cc_user_name
 
-    zip_code = cus.cards.data[0].address_zip
+    zip_code = cc_zip_code
 
     self.response.headers['Content-Type'] = 'application/javascript'
     self.response.write(json.dumps({
@@ -166,9 +167,50 @@ class UserInfoHandler(webapp2.RequestHandler):
   def options(self):
     util.EnableCors(self)
 
+class DonationTypeUpdateHandler(webapp2.RequestHandler):
+  def get(self, url_nonce):
+    util.EnableCors(self)
+    user = model.User.all().filter('url_nonce =', url_nonce).get()
+    if user is None:
+      self.error(404)
+      self.response.write('user not found')
+      return
+      
+    num_conditional_pledges = 0
+    num_donations = 0
+    amount_pledges = 0
+    amount_donations = 0
+    for pledge in model.Pledge.all().filter('email =', user.email):
+      if pledge.fundraisingRound == 1:
+        continue 
+       
+      if pledge.pledge_type == 'DONATION':
+        num_donations += 1
+        amount_donations += pledge.amountCents
+      else:
+        num_conditional_pledges += 1
+        amount_pledges += pledge.amountCents
+        pledge.pledge_type = 'DONATION'
+        pledge.put()
+    
+    template_vars = {
+      'num_donations':num_donations,
+      'amount_donations':amount_donations/100,
+      'num_conditional_pledges':num_conditional_pledges,
+      'amount_pledges':amount_pledges/100,
+      'email':user.email
+    }
+    template = templates.GetTemplate('donation-update.html')    
+    self.response.write(template.render(template_vars))    
+
+class RootRedirectHandler(webapp2.RequestHandler):
+  def get(self):  
+    self.redirect('/pledge')
 
 HANDLERS = [
+  ('/', RootRedirectHandler),
   ('/total', GetTotalHandler),
+  (r'/donation-update/(\w+)', DonationTypeUpdateHandler),  
   (r'/user-update/(\w+)', UserUpdateHandler),
   (r'/user-info/(\w+)', UserInfoHandler),
   ('/campaigns/may-one/?', EmbedHandler),

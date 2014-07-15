@@ -1,7 +1,9 @@
 import unittest
 import logging
 import datetime
+import json
 
+from google.appengine.api import mail_stub
 from google.appengine.ext import db
 from google.appengine.ext import testbed
 import mox
@@ -10,6 +12,7 @@ import webtest
 
 import handlers
 import model
+import env
 
 
 class BaseTest(unittest.TestCase):
@@ -19,12 +22,16 @@ class BaseTest(unittest.TestCase):
 
     self.testbed.init_datastore_v3_stub()
     self.testbed.init_memcache_stub()
+    self.testbed.init_urlfetch_stub()
+
+    self.testbed.init_mail_stub()
+    self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
 
     self.mockery = mox.Mox()
     self.stripe = self.mockery.CreateMock(handlers.StripeBackend)
     self.mailing_list_subscriber = self.mockery.CreateMock(
       handlers.MailingListSubscriber)
-    self.mail_sender = self.mockery.CreateMock(handlers.MailSender)
+    self.mail_sender = env.MailSender(defer=False)
 
     self.env = handlers.Environment(
       app_name='unittest',
@@ -58,6 +65,7 @@ class PledgeTest(BaseTest):
       amountCents=4200,
       pledgeType='CONDITIONAL',
       team='rocket',
+      thank_you_sent_at=None,
       payment=dict(
         STRIPE=dict(
           token='tok_1234',
@@ -68,7 +76,7 @@ class PledgeTest(BaseTest):
     handlers.TotalHandler.WP_PLEDGE_TOTAL = 11
     handlers.TotalHandler.DEMOCRACY_DOT_COM_BALANCE = 12
     handlers.TotalHandler.CHECKS_BALANCE = 13
-    handlers.TotalHandler.STRETCH_GOAL_MATCH = 14
+    model.STRETCH_CACHE_MISS_TOTAL = 14
 
     self.balance_baseline = 60
 
@@ -90,28 +98,57 @@ class PledgeTest(BaseTest):
     self.stripe.Charge('cust_4321', self.pledge['amountCents']) \
                .AndRaise(handlers.PaymentError('You got no money'))
 
-  def expectSubscribe(self):
+  def expectSubscribe(self, phone=None, pledgePageSlug=None):
+    if phone is None:
+      phone = '212-234-5432'
+    if pledgePageSlug is None:
+      pledgePageSlug = '28e9-Team-Shant-is-Shant'
     self.mailing_list_subscriber \
         .Subscribe(email=self.pledge['email'],
                    first_name=u'Pik\u00E1',
                    last_name='Chu',
-                   amount_cents=4200, ip_addr=None,  # Not sure why this is None
-                                                     # in unittests.
+                   amount_cents=4200,
+                   ip_addr=None,  # Not sure why this is None in unittests
                    time=mox.IsA(datetime.datetime),
-                   source='pledge', nonce=mox.Regex('.*'))
+                   phone=phone,
+                   source='pledge',
+                   nonce=mox.Regex('.*'),)
+                   # pledgePageSlug=pledgePageSlug)
 
-  def expectMailSend(self):
-    self.mail_sender.Send(to=mox.IsA(str), subject=mox.IsA(str),
-                          text_body=mox.IsA(str),
-                          html_body=mox.IsA(str))
-
-  def makeDefaultRequest(self):
+  def makeDefaultRequest(self, phone=None, pledgePageSlug=None):
     self.expectStripe()
-    self.expectSubscribe()
-    self.expectMailSend()
+    self.expectSubscribe(phone=phone,pledgePageSlug=pledgePageSlug)
     self.mockery.ReplayAll()
 
     return self.app.post_json('/r/pledge', self.pledge)
+
+  def testTeamTotalModel(self):
+    for _ in range(3):
+      self.expectStripe()
+      self.expectSubscribe()
+    self.mockery.ReplayAll()
+
+    self.assertEquals(model.TeamTotal.all().count(), 0)
+    self.app.post_json('/r/pledge', self.pledge)
+    tt = model.TeamTotal.all()[0]
+    self.assertEquals(tt.totalCents, self.pledge["amountCents"])
+    self.assertEquals(tt.num_pledges, 1)
+
+    self.app.post_json('/r/pledge', self.pledge)
+    self.app.post_json('/r/pledge', self.pledge)
+    self.assertEquals(model.TeamTotal.all().count(), 1)
+    tt = model.TeamTotal.all()[0]
+    self.assertEquals(tt.totalCents, 12600)
+    self.assertEquals(tt.num_pledges, 3)
+
+  def testMailOnCreatePledge(self):
+    self.makeDefaultRequest()
+
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
+    self.assertEquals(1, len(messages))
+    self.assertEquals(self.pledge["email"], messages[0].to)
+    self.assertTrue('Mayday PAC' in messages[0].sender)
+    self.assertEquals('Thank you for your pledge', messages[0].subject)
 
   def testBadJson(self):
     self.app.post('/r/pledge', '{foo', status=400)
@@ -155,7 +192,6 @@ class PledgeTest(BaseTest):
   def testSubscribes(self):
     self.expectStripe()
     self.expectSubscribe()
-    self.expectMailSend()
 
     self.mockery.ReplayAll()
 
@@ -167,7 +203,6 @@ class PledgeTest(BaseTest):
     self.pledge['subscribe'] = False
 
     self.expectStripe()
-    self.expectMailSend()
 
     # Don't subscribe.
 
@@ -179,7 +214,7 @@ class PledgeTest(BaseTest):
 
   def testNoPhone(self):
     self.pledge['phone'] = ''
-    self.makeDefaultRequest()
+    self.makeDefaultRequest(phone='', pledgePageSlug='')
 
   def testNoName(self):
     self.pledge['name'] = ''
@@ -286,7 +321,6 @@ class PledgeTest(BaseTest):
     for _ in range(2):
       self.expectStripe()
       self.expectSubscribe()
-      self.expectMailSend()
     self.mockery.ReplayAll()
 
     resp = self.app.get('/r/total?team=nobody')
@@ -341,6 +375,50 @@ class PledgeTest(BaseTest):
       teamTotalCents=8400,
     ), resp.json)
 
+  def testThankTeam(self):
+    self.makeDefaultRequest()
+
+    post_data = {'team': 'rocket',
+      'reply_to': 'another@email.com', 'subject': 'the email subject',
+      'message_body': 'the message body', 'new_members': False}
+
+    # fails with a 400 error if the post request is missing any keys
+    with self.assertRaises(Exception):
+      resp = self.app.post('/r/thank', {})
+
+    # pledge does get the email if are the reply_to
+    post_data['reply_to'] = self.pledge["email"]
+    resp = self.app.post('/r/thank', post_data)
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
+    # 1 email sent is the created pledge
+    self.assertEquals(len(messages), 2)
+    # post response should be zero sent thank you emails
+    resp_data = json.loads(resp.text)
+    self.assertEquals(resp_data['num_emailed'], 1)
+    self.assertEquals(resp_data['total_pledges'], 1)
+
+    # this is the happy path
+    post_data['reply_to'] = 'another@email.com'
+    # self.assertEquals(model.Pledge.all()[0].thank_you_sent_at, None)
+    resp = self.app.post('/r/thank', post_data)
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
+    self.assertEquals(len(messages), 3)
+    self.assertEquals(messages[2].reply_to, post_data["reply_to"])
+    self.assertEquals(messages[2].subject, post_data["subject"])
+    self.assertEquals(type(model.Pledge.all()[0].thank_you_sent_at), datetime.datetime)
+    resp_data = json.loads(resp.text)
+    self.assertEquals(resp_data['num_emailed'], 1)
+    self.assertEquals(resp_data['total_pledges'], 1)
+
+    # make sure it isn't sent a message again when new_member is set to true
+    post_data['new_members'] = True
+    resp = self.app.post('/r/thank', post_data)
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
+    self.assertEquals(len(messages), 3)
+    resp_data = json.loads(resp.text)
+    self.assertEquals(resp_data['num_emailed'], 0)
+    self.assertEquals(resp_data['total_pledges'], 1)
+
   def testUserInfoNotFound(self):
     resp = self.app.get('/user-info/nouserhere', status=404)
     self.assertEquals('user not found', resp.body)
@@ -385,3 +463,48 @@ class PledgeTest(BaseTest):
   #   resp = self.makeDefaultRequest()
   #   self.app.get('/receipt/%s?auth_token=%s' % (resp.json['id'],
   #                                               resp.json['auth_token']))
+
+  # def testBitcoinStart(self):
+  #   Need to stub URL fetch and return the expected dictionary
+
+  #   secret = model.Secrets.get()
+  #   secret.bitpay_api_key = '123432432'
+  #   secret.put()
+
+  #   fetch_stub = self.testbed.get_stub('urlfetch')
+  #   return = {'status': 'new', 'invoiceTime': 1393950046292, 'currentTime': 1393950046520, 'url': 'https://bitpay.com/invoice?id=aASDF2jh4ashkASDfh234', 'price': 1, 'btcPrice': '1.0000', 'currency': 'BTC', 'posData': '{"posData": "fish", "hash": "ASDfkjha452345ASDFaaskjhasdlfkflkajsdf"}', 'expirationTime': 1393950946292, 'id': 'aASDF2jh4ashkASDfh234'}
+
+  #   self.pledge['payment'] = {'BITPAY': {}}
+  #   resp = self.app.post_json('/r/bitcoin_start', self.pledge)
+  #   self.assertEqual(model.TempPledge.all().count(), 1)
+  #   temp_pledge = model.TempPledge.all()[0]
+  #   self.assertEqual(temp_pledge.name, self.pledge["name"])
+  #   self.assertEqual(temp_pledge.team, self.pledge["team"])
+  #   self.assertEqual(temp_pledge.amountCents, self.pledge["amountCents"])
+  #   self.assertEqual(temp_pledge.subscribe, self.pledge["subscribe"])
+
+
+  def testBitpayNotifications(self):
+    self.expectSubscribe()
+    self.mockery.ReplayAll()
+
+    temp_pledge = model.TempPledge(
+      model_version=model.MODEL_VERSION,
+      email=self.pledge["email"],
+      phone=self.pledge["phone"],
+      name=self.pledge["name"],
+      firstName=u'Pik\u00E1',
+      lastName=u'Chu',
+      occupation=self.pledge["occupation"],
+      employer=self.pledge["employer"],
+      subscribe=True,
+      amountCents=4200,
+      )
+    temp_key = temp_pledge.put()
+    temp_key_str = str(temp_key)
+
+    notification = {'status': 'confirmed', 'url': 'https://bitpay.com/invoice?id=aASDF2jh4ashkASDfh234',
+      'price': 42, 'btcPrice': '1.0000', 'currency': 'BTC', 'posData': temp_key_str,
+      'expirationTime': 1393950946292, 'id': 'aASDF2jh4ashkASDfh234'}
+    resp = self.app.post_json('/r/bitcoin_notifications', notification)
+    # import pdb; pdb.set_trace()

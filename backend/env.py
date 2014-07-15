@@ -31,7 +31,7 @@ def get_env():
     stripe_public_key=model.Config.get().stripe_public_key,
     stripe_backend=stripe_backend,
     mailing_list_subscriber=mailing_list_subscriber,
-    mail_sender=ProdMailSender())
+    mail_sender=MailSender())
 
 
 class ProdStripe(handlers.StripeBackend):
@@ -53,6 +53,7 @@ class ProdStripe(handlers.StripeBackend):
         statement_description='MayOne.US',
       )
     except stripe.CardError, e:
+      logging.info('Stripe returned error for customer: %s ' % customer_id)
       raise handlers.PaymentError(str(e))
     return charge.id
 
@@ -76,12 +77,12 @@ class FakeStripe(handlers.StripeBackend):
 
 class MailchimpSubscriber(handlers.MailingListSubscriber):
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
-                source, zipcode=None, volunteer=None, skills=None, rootstrikers=None,
-                nonce=None):
+                source, phone=None, zipcode=None, volunteer=None, skills=None, rootstrikers=None,
+                nonce=None, pledgePageSlug=None):
     deferred.defer(_subscribe_to_mailchimp,
                    email, first_name, last_name,
-                   amount_cents, ip_addr, source, zipcode,
-                   volunteer, skills, rootstrikers, nonce)
+                   amount_cents, ip_addr, source, phone, zipcode,
+                   volunteer, skills, rootstrikers, nonce, pledgePageSlug)
 
 
 class FakeSubscriber(handlers.MailingListSubscriber):
@@ -89,26 +90,37 @@ class FakeSubscriber(handlers.MailingListSubscriber):
     logging.info('Subscribing %s', kwargs)
 
 
-class ProdMailSender(handlers.MailSender):
-  def Send(self, to, subject, text_body, html_body):
-    deferred.defer(_send_mail, to, subject, text_body, html_body)
+class MailSender(object):
+  def __init__(self, defer=True):
+    # this can
+    self.defer = defer
+
+  def Send(self, to, subject, text_body, html_body, reply_to=None):
+    if self.defer:
+      deferred.defer(_send_mail, to, subject, text_body, html_body, reply_to)
+    else:
+      _send_mail(to, subject, text_body, html_body, reply_to)
 
 
-def _send_mail(to, subject, text_body, html_body):
+def _send_mail(to, subject, text_body, html_body, reply_to=None):
   """Deferred email task"""
-  sender = ('MayOne no-reply <noreply@%s.appspotmail.com>' %
+  sender = ('Mayday PAC <noreply@%s.appspotmail.com>' %
             model.Config.get().app_name)
   message = mail.EmailMessage(sender=sender, subject=subject)
   message.to = to
   message.body = text_body
   message.html = html_body
+  if reply_to:
+    message.reply_to = reply_to
+  else:
+    message.reply_to = 'info@mayday.us'
   message.send()
 
 
 def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
-                            amount, request_ip, source, zipcode=None,
+                            amount, request_ip, source, phone=None, zipcode=None,
                             volunteer=None, skills=None, rootstrikers=None,
-                            nonce=None):
+                            nonce=None, pledgePageSlug=None):
   mailchimp_api_key = model.Config.get().mailchimp_api_key
   mailchimp_list_id = model.Config.get().mailchimp_list_id
   mc = mailchimp.Mailchimp(mailchimp_api_key)
@@ -136,11 +148,17 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
   if skills is not None and len(skills)>0:
     merge_vars['SKILLS'] = skills[0:255]
 
+  if phone is not None:
+    merge_vars['PHONE'] = phone
+
   if zipcode is not None:
     merge_vars['ZIPCODE'] = zipcode
   
   if rootstrikers is not None:
     merge_vars['ROOTS'] = rootstrikers
+    
+  if pledgePageSlug is not None:
+    merge_vars['PPURL'] = pledgePageSlug
 
   # list ID and email struct
   logging.info('Subscribing: %s', email_to_subscribe)

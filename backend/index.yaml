@@ -10,6 +10,22 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: Pledge
+  properties:
+  - name: team
+  - name: model_version
+  
+- kind: Pledge
+  properties:
+  - name: team
+  - name: email
+
+- kind: Pledge
+  properties:
+  - name: team
+  - name: thank_you_sent_at
+  - name: email
+  
 - kind: WpPledge
   properties:
   - name: email

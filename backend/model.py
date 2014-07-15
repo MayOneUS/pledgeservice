@@ -27,7 +27,21 @@ class Error(Exception): pass
 #   6: Pledges now have "pledge_type"s.
 #   7: Adds Pledge.stripe_charge. Pledges no longer created without a successful
 #      charge. Thus, ChargeStatus is obsolete and deprecated.
-MODEL_VERSION = 7
+#   8: Adds whether or not pledges are anonymous
+#   9: Previous versions were not summed on demand into TeamTotal objects.
+#      Model 9 and newer pledges are.
+#  10: SurveResult field added.  This is just a text field, one of:
+#         Digital voter registration ads to grow the electorate
+#         Video trackers to force candidate transparency
+#         No robocalls
+#         State-of-the-art digital canvassing and field tools
+#         No negative ads
+#         Whatever helps us win
+#  11: Paypal support
+#  12: TeamTotal.num_pledges added. This is a live total of completed pledges for
+#       that team.
+#
+MODEL_VERSION = 12
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -42,7 +56,9 @@ class Config(object):
   ConfigType = namedtuple('ConfigType',
                           ['app_name',
                            'stripe_public_key', 'stripe_private_key',
-                           'mailchimp_api_key', 'mailchimp_list_id'])
+                           'mailchimp_api_key', 'mailchimp_list_id',
+                           'paypal_user', 'paypal_password', 'paypal_signature',
+                           'paypal_url', 'paypal_api_url', 'bitpay_api_key'])
   _instance = None
 
   @staticmethod
@@ -60,12 +76,32 @@ class Config(object):
       stripe_public_key = s.stripe_public_key
       stripe_private_key = s.stripe_private_key
 
+    if s:
+      paypal_user = s.paypal_user
+      paypal_password = s.paypal_password
+      paypal_signature = s.paypal_signature
+      bitpay_api_key = s.bitpay_api_key
+
+    if 'productionPaypal' in j and j['productionPaypal']:
+      paypal_api_url =  "https://api-3t.paypal.com/nvp"
+      paypal_url = "https://www.paypal.com/webscr"
+    else:
+      paypal_api_url = "https://api-3t.sandbox.paypal.com/nvp"
+      paypal_url = "https://www.sandbox.paypal.com/webscr"
+
     Config._instance = Config.ConfigType(
       app_name = j['appName'],
       stripe_public_key=stripe_public_key,
       stripe_private_key=stripe_private_key,
       mailchimp_api_key=s.mailchimp_api_key,
-      mailchimp_list_id=s.mailchimp_list_id)
+      mailchimp_list_id=s.mailchimp_list_id,
+      paypal_user = paypal_user,
+      paypal_password = paypal_password,
+      paypal_signature = paypal_signature,
+      paypal_api_url = paypal_api_url,
+      paypal_url = paypal_url,
+      bitpay_api_key = bitpay_api_key
+      )
     return Config._instance
 
 
@@ -85,6 +121,16 @@ class Secrets(db.Model):
   mailchimp_api_key = db.StringProperty(default='')
   mailchimp_list_id = db.StringProperty(default='')
 
+  paypal_sandbox_user = db.StringProperty(default='')
+  paypal_sandbox_password = db.StringProperty(default='')
+  paypal_sandbox_signature = db.StringProperty(default='')
+  paypal_user = db.StringProperty(default='')
+  paypal_password = db.StringProperty(default='')
+  paypal_signature = db.StringProperty(default='')
+
+  bitpay_api_key = db.StringProperty(default='')
+
+
   @staticmethod
   def get():
     return Secrets.get_or_insert(key_name=Secrets.SINGLETON_KEY)
@@ -97,7 +143,6 @@ class Secrets(db.Model):
       s = Secrets(key_name=Secrets.SINGLETON_KEY)
     s.put()
 
-
 class User(db.Model):
   model_version = db.IntegerProperty()
 
@@ -106,6 +151,12 @@ class User(db.Model):
 
   first_name = db.StringProperty()
   last_name = db.StringProperty()
+
+  # Collected in our system for Bitcoin users only
+  address = db.StringProperty()
+  city = db.StringProperty()
+  state = db.StringProperty()
+  zipCode = db.StringProperty()
 
   # occupation and employer are logically required for all new users, but we
   # don't have this data for everyone. so from a data model perspective, they
@@ -118,6 +169,10 @@ class User(db.Model):
   # whether or not the pledge was donated specifically for a particular
   # political affiliation
   target = db.StringProperty(required=False)
+
+
+  # the results of a survey from mayday.us/goodfight
+  surveyResult = db.StringProperty(required=False)
 
   # this is the nonce for what we'll put in a url to send to people when we ask
   # them to update their information. it's kind of like their password for the
@@ -133,7 +188,9 @@ class User(db.Model):
   @db.transactional
   def createOrUpdate(email, first_name=None, last_name=None, occupation=None,
                      employer=None, phone=None, target=None,
-                     from_import=None, mail_list_optin=None):
+                     from_import=None, mail_list_optin=None, surveyResult=None,
+                     address=None, city=None, state=None, zipCode=None
+                     ):
     user = User.get_by_key_name(email)
     if user is None:
       user = User(model_version=MODEL_VERSION,
@@ -149,15 +206,48 @@ class User(db.Model):
         return current or new
       else:
         return new or current
+
     user.first_name = choose(user.first_name, first_name)
     user.last_name = choose(user.last_name, last_name)
     user.occupation = choose(user.occupation, occupation)
     user.employer = choose(user.employer, employer)
     user.phone = choose(user.phone, phone)
     user.target = choose(user.target, target)
+    user.surveyResult = choose(user.surveyResult, surveyResult)
+    user.address = choose(user.address, address)
+    user.city = choose(user.city, city)
+    user.state = choose(user.state, state)
+    user.zipCode = choose(user.zipCode, zipCode)
+
     user.mail_list_optin = choose(user.mail_list_optin, mail_list_optin)
     user.put()
     return user
+
+
+# for bitpay pledges, we need to store the form data while waiting for the
+# response from bitpay
+class TempPledge(db.Model):
+  model_version = db.IntegerProperty()
+  email = db.EmailProperty(required=True)
+  phone = db.StringProperty()
+  name = db.StringProperty()
+  occupation = db.StringProperty()
+  employer = db.StringProperty()
+  target = db.StringProperty()
+  subscribe = db.BooleanProperty(required=False, default=True)
+  amountCents = db.IntegerProperty(required=True)
+  firstName = db.StringProperty()
+  lastName = db.StringProperty()
+  address = db.StringProperty()
+  city = db.StringProperty()
+  state = db.StringProperty()
+  zipCode = db.StringProperty()
+  bitcoinConfirm=db.BooleanProperty(required=False, default=False)
+
+  team = db.StringProperty()
+  # all pledge_types for bitpay pledges must be "DONATION"
+  bitpay_invoice_id = db.StringProperty()
+  pledge_id = db.StringProperty(required=False)
 
 
 class Pledge(db.Model):
@@ -168,11 +258,18 @@ class Pledge(db.Model):
 
   # this is the string id for the stripe api to access the customer. we are
   # doing a whole stripe customer per pledge.
-  stripeCustomer = db.StringProperty(required=True)
+  stripeCustomer = db.StringProperty()
 
   # ID of a successful stripe transaction which occurred prior to creating this
   # pledge.
   stripe_charge_id = db.StringProperty()
+
+  # Paypal specific fields
+  paypalPayerID = db.StringProperty()
+  paypalTransactionID = db.StringProperty()
+
+  #BitPay specific field
+  bitpay_invoice_id = db.StringProperty()
 
   # when the donation occurred
   donationTime = db.DateTimeProperty(auto_now_add=True)
@@ -197,6 +294,10 @@ class Pledge(db.Model):
   # Optionally, a pledge can be assigned to a "team".
   team = db.StringProperty()
 
+  # If anonymous, the pledge shouldn't be displayed along with the user's name
+  # publically
+  anonymous = db.BooleanProperty(required=False, default=False)
+
   # it's possible we'll want to let people change just their pledge. i can't
   # imagine a bunch of people pledging with the same email address and then
   # getting access to change a bunch of other people's credit card info, but
@@ -204,45 +305,125 @@ class Pledge(db.Model):
   # specific pledge. if so, this is their site-management password.
   url_nonce = db.StringProperty(required=True)
 
+  thank_you_sent_at = db.DateTimeProperty(required=False)
+
   @staticmethod
   def create(email, stripe_customer_id, stripe_charge_id,
-             amount_cents, pledge_type, team):
+             paypal_payer_id, paypal_txn_id,
+             amount_cents, pledge_type, team, anonymous, bitpay_invoice_id):
     assert pledge_type in Pledge.TYPE_VALUES
     pledge = Pledge(model_version=MODEL_VERSION,
                     email=email,
                     stripeCustomer=stripe_customer_id,
                     stripe_charge_id=stripe_charge_id,
+                    paypalPayerID=paypal_payer_id,
+                    paypalTransactionID=paypal_txn_id,
                     amountCents=amount_cents,
                     pledge_type=pledge_type,
                     team=team,
-                    url_nonce=os.urandom(32).encode("hex"))
+                    url_nonce=os.urandom(32).encode("hex"),
+                    anonymous=anonymous,
+                    bitpay_invoice_id=bitpay_invoice_id)
     pledge.put()
+    if team:
+      TeamTotal.add(team, amount_cents)
     return pledge
 
 
+class TeamTotal(db.Model):
+  # this is also the model key
+  team = db.StringProperty(required=True)
+
+  totalCents = db.IntegerProperty(required=False)
+
+  num_pledges = db.IntegerProperty(required=False)
+
+  @classmethod
+  @db.transactional
+  def _create(cls, team_id, pledge_8_count, num_pledges):
+    tt = cls.get_by_key_name(team_id)
+    if tt is not None:
+      return tt
+    tt = cls(key_name=team_id, team=team_id, totalCents=pledge_8_count,
+      num_pledges=num_pledges)
+    tt.put()
+    return tt
+
+  @staticmethod
+  def _pledge8Count(team_id):
+    """do this outside of a transaction"""
+    total = 0
+    for pledge in Pledge.all().filter("team =", team_id):
+      if pledge.model_version < 9:
+        total += pledge.amountCents
+    return total
+
+  @classmethod
+  def _get(cls, team_id):
+    tt = cls.get_by_key_name(team_id)
+    if tt is None:
+      tt = cls._create(team_id, cls._pledge8Count(team_id), 0)
+    return tt
+
+  @classmethod
+  def get(cls, team_id):
+    return cls._get(team_id).totalCents
+
+  @classmethod
+  @db.transactional
+  def _add(cls, team_id, amount_cents):
+    tt = cls.get_by_key_name(team_id)
+    tt.totalCents += amount_cents
+    try:
+      tt.num_pledges += 1
+    except:
+      tt.num_pledges = 1
+    tt.put()
+
+  @classmethod
+  def add(cls, team_id, amount_cents):
+    # make sure the team total exists first before we add
+    cls._get(team_id)
+    # okay safe to add
+    cls._add(team_id, amount_cents)
+
+
 def addPledge(email,
-              stripe_customer_id, stripe_charge_id,
               amount_cents, pledge_type,
               first_name, last_name, occupation, employer, phone,
-              target, team, mail_list_optin):
+              target, team, mail_list_optin, anonymous, surveyResult=None,
+              stripe_customer_id=None, stripe_charge_id=None,
+              paypal_txn_id=None, paypal_payer_id=None,
+              address=None, city=None, state=None, zipCode=None,
+              bitpay_invoice_id = None ):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
 
   @return: the pledge
   """
+
+  # TODO: know if this is a bitcoin pledge and check all 3
+  # if not (stripe_customer_id or paypal_txn_id):
+  #     raise Error('We must supply either stripe or Paypal ids')
+
   # first, let's find the user by email
   user = User.createOrUpdate(
     email=email, first_name=first_name, last_name=last_name,
     occupation=occupation, employer=employer, phone=phone, target=target,
-    mail_list_optin=mail_list_optin)
+    mail_list_optin=mail_list_optin, surveyResult=surveyResult,
+    address=address, city=city, state=state, zipCode=zipCode )
 
   return user, Pledge.create(email=email,
                        stripe_customer_id=stripe_customer_id,
                        stripe_charge_id=stripe_charge_id,
+                       paypal_txn_id=paypal_txn_id,
+                       paypal_payer_id=paypal_payer_id,
                        amount_cents=amount_cents,
                        pledge_type=pledge_type,
-                       team=team)
+                       team=team,
+                       anonymous=anonymous,
+                       bitpay_invoice_id = bitpay_invoice_id)
 
 
 class WpPledge(db.Model):
@@ -362,11 +543,39 @@ class ChargeStatus(db.Model):
                             parent=pledge_key)
 
 
+
+class StretchCheckTotal(db.Model):
+  dollars = db.IntegerProperty()
+
+  @classmethod
+  def update(cls, newTotal):
+    total = cls.all().get()
+    if total:
+      total.dollars = newTotal
+      total.put()
+    else:
+      newTotalForDB = cls(dollars = newTotal)
+      newTotalForDB.put()
+
+  @classmethod
+  def get(cls):
+    total = cls.all().get()
+    if total:
+      return total.dollars
+    else:
+      logging.info('No StretchCheckTotal')
+      return 0
+
 SHARD_KEY_TEMPLATE = 'shard-{}-{:d}'
 SHARD_COUNT = 50
+STRETCH_CACHE_MISS_TOTAL = 112742800
 
 class ShardedCounter(db.Model):
   count = db.IntegerProperty(default=0)
+
+  @staticmethod
+  def clear(name):
+    cache.ClearShardedCounterTotal(name)
 
   @staticmethod
   def get_count(name):
@@ -378,7 +587,18 @@ class ShardedCounter(db.Model):
         if counter is not None:
           total += counter.count
       logging.info("recalculated counter %s to %s", name, total)
+
+      # Add the stretch check total which is not reflected elsewhere in the counter
+      # And is set manually
+      # This is here so that is only read out on a cache miss
+      stretchCheckTotal = StretchCheckTotal.get()
+      if stretchCheckTotal < STRETCH_CACHE_MISS_TOTAL:
+        stretchCheckTotal = STRETCH_CACHE_MISS_TOTAL
+
+      total += stretchCheckTotal
+
       cache.SetShardedCounterTotal(name, total)
+
     return total
 
   @staticmethod
