@@ -205,8 +205,12 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
       'user_url_nonce': user.url_nonce
     }
 
-    text_body = open('email/thank-you.txt').read().format(**format_kwargs)
-    html_body = open('email/thank-you.html').read().format(**format_kwargs)
+    text_template = jinja2.Template(open('email/thank-you.txt').read())
+    html_template = jinja2.Template(open('email/thank-you.html').read())
+
+    text_body = text_template.render(**format_kwargs)
+    html_body = text_template.render(**format_kwargs)
+
 
     env.mail_sender.Send(to=data['email'].encode('utf-8'),
                          subject='Thank you for your pledge',
@@ -220,8 +224,10 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
         'phone': data['phone'],
         'email': data['email'],
       }
-                    
-      lessig_body = open('email/lessig-notify.txt').read().format(**format_kwargs)
+      
+      lessig_template = jinja2.Template(open('email/lessig-notify.txt').read())  
+      lessig_body = lessig_template.render(**format_kwargs)
+      
       logging.info('Sending ' + lessig_body)
       env.mail_sender.Send(to='lessig@mac.com',
                            subject='A donation for %s has come in from %s %s' % (totalStr, first_name, last_name),
