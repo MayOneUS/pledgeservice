@@ -27,6 +27,8 @@ import pprint
 import urlparse
 import paypal
 
+import jinja2
+
 
 # Immutable environment with both configuration variables, and backends to be
 # mocked out in tests.
