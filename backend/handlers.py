@@ -199,7 +199,7 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
 
     totalStr = '$%d' % int(amountCents / 100)
     format_kwargs = {
-      'name': data['name'].encode('utf-8'),
+      'name': data['name'].encode('utf-8').decode('utf-8'),
       'url_nonce': pledge.url_nonce,
       'total': totalStr,
       'user_url_nonce': user.url_nonce
