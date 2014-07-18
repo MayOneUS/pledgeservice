@@ -205,8 +205,8 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
       'user_url_nonce': user.url_nonce
     }
 
-    text_template = jinja2.Template(open('email/thank-you.txt').read())
-    html_template = jinja2.Template(open('email/thank-you.html').read())
+    text_template = jinja2.Template(open('email/thank-you.txt').read().decode('utf-8'))
+    html_template = jinja2.Template(open('email/thank-you.html').read().decode('utf-8'))
 
     text_body = text_template.render(**format_kwargs)
     html_body = text_template.render(**format_kwargs)
@@ -225,7 +225,7 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
         'email': data['email'],
       }
       
-      lessig_template = jinja2.Template(open('email/lessig-notify.txt').read())  
+      lessig_template = jinja2.Template(open('email/lessig-notify.txt').read().decode('utf-8'))  
       lessig_body = lessig_template.render(**format_kwargs)
       
       logging.info('Sending ' + lessig_body)
