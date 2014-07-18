@@ -151,7 +151,7 @@ class PledgeTest(BaseTest):
     self.assertEquals('Thank you for your pledge', messages[0].subject)
 
   def testSendToLessigOnCreateLargePledge(self):
-    self.pledge[amountCents] = 5000000
+    self.pledge["amountCents"] = 5000000
 
     self.makeDefaultRequest()
 
