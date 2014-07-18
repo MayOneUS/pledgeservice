@@ -150,6 +150,18 @@ class PledgeTest(BaseTest):
     self.assertTrue('Mayday PAC' in messages[0].sender)
     self.assertEquals('Thank you for your pledge', messages[0].subject)
 
+  def testSendToLessigOnCreateLargePledge(self):
+    self.pledge[amountCents] = 5000000
+
+    self.makeDefaultRequest()
+
+    totalStr = '$%d' % int(self.pledge["amountCents"] / 100)
+
+    messages = self.mail_stub.get_sent_messages(to="lessig@mac.com") 
+    self.assertEquals(1, len(messages))
+    self.assertEquals("lessig@mac.com", messages[0].to)
+    self.assertTrue('Mayday PAC' in messages[0].sender)
+
   def testBadJson(self):
     self.app.post('/r/pledge', '{foo', status=400)
 
