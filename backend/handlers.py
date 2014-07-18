@@ -212,7 +212,7 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
     html_body = text_template.render(**format_kwargs)
 
 
-    env.mail_sender.Send(to=data['email'].encode('utf-8'),
+    env.mail_sender.Send(to=data['email'].encode('utf-8').decode('utf-8'),
                          subject='Thank you for your pledge',
                          text_body=text_body,
                          html_body=html_body)
