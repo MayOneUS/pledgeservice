@@ -222,7 +222,7 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
         'name': data['name'].encode('utf-8').decode('utf-8'),      
         'total': totalStr,
         'phone': data['phone'],
-        'email': data['email'],
+        'email': data['email'].encode('utf-8').decode('utf-8'),
       }
       
       lessig_template = jinja2.Template(open('email/lessig-notify.txt').read().decode('utf-8'))  
