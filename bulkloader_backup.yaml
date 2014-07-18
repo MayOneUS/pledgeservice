@@ -73,7 +73,6 @@ transformers:
 
     - property: pledge_type
       external_name: pledge_type
-<<<<<<< HEAD
       # Type: String Stats: 6705 properties of this type in this kind.
 
     - property: paypalPayerID
@@ -87,8 +86,6 @@ transformers:
     - property: bitpay_invoice_id
       external_name: bitpay_invoice_id
       # Type: String Stats: 6705 properties of this type in this kind.
-=======
->>>>>>> 1b2d0e38f1ca63546d81c739a993b276843374a9
 
 
 - kind: Secrets
@@ -242,5 +239,3 @@ transformers:
       external_name: wp_post_id
       # Type: Integer Stats: 4099 properties of this type in this kind.
       import_transform: transform.none_if_empty(int)
-
-
