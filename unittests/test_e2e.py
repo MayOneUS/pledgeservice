@@ -55,7 +55,7 @@ class PledgeTest(BaseTest):
   def setUp(self):
     super(PledgeTest, self).setUp()
     self.pledge = dict(
-      email='pika@pokedex.biz',
+      email='pik\u00E@pokedex.biz',
       phone='212-234-5432',
       name=u'Pik\u00E1 Chu',
       occupation=u'Pok\u00E9mon',
