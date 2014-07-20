@@ -107,7 +107,7 @@ class PledgeTest(BaseTest):
         .Subscribe(email=self.pledge['email'],
                    first_name=u'Pik\u00E1',
                    last_name='Chu',
-                   amount_cents=4200,
+                   amount_cents=self.pledge['amountCents'],
                    ip_addr=None,  # Not sure why this is None in unittests
                    time=mox.IsA(datetime.datetime),
                    phone=phone,
