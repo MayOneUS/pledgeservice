@@ -122,22 +122,47 @@ def pledge_row(pledge, zg):
           zg_lookup['lon']]
 
 
-def generate_pledges_csv(file_name):
+def generate_pledges_csv(file_name, pledge_type, pledge_time):
   """ Generates the pledges.csv file in a deferred way """
 
+  PAGE_SIZE = 500
   csv_buffer = StringIO.StringIO()
   w = csv.writer(csv_buffer)
-  w.writerow(['zip', 'dollars', 'timestamp', 'date', 'city', 'state',
-              'latitude', 'longitude'])
+  if not pledge_time and pledge_type == 'WpPledge':
+    # First time through, add the column headers
+    w.writerow(['zip', 'dollars', 'timestamp', 'date', 'city', 'state',
+                'latitude', 'longitude'])
   zg = Zipgun('zipgun/zipcodes')
-  for pledge in model.WpPledge.all():
-    w.writerow(pledge_row(pledge, zg))
-  for pledge in model.Pledge.all():
+
+  # Get the next PAGE_SIZE pledges
+  query = getattr(model, pledge_type).all().order('donationTime')
+  if pledge_time:
+    # Filter instead of using 'offset' because offset is very inefficient,
+    # according to https://developers.google.com/appengine/articles/paging
+    query = query.filter('donationTime >= ', pledge_time)
+  pledges = query.fetch(PAGE_SIZE + 1)
+  next_pledge_time = None
+  if len(pledges) == PAGE_SIZE + 1:
+    next_pledge_time = pledges[-1].donationTime
+  pledges = pledges[:PAGE_SIZE]
+
+  # Loop through the current pledges and write them to the csv
+  for pledge in pledges:
     w.writerow(pledge_row(pledge, zg))
   with files.open(file_name, 'a') as f:
     f.write(csv_buffer.getvalue())
   csv_buffer.close()
-  files.finalize(file_name)
+
+  if not next_pledge_time and pledge_type == 'Pledge':
+    # Last time through, finalize the file
+    files.finalize(file_name)
+  else:
+    # More to process, recursively run again
+    next_pledge_type = pledge_type
+    if pledge_type == 'WpPledge' and not next_pledge_time:
+      next_pledge_type = 'Pledge'
+    deferred.defer(generate_pledges_csv, file_name, next_pledge_type,
+                   next_pledge_time, _queue='generateCSV')
 
 
 class GeneratePledgesCsvHandler(webapp2.RequestHandler):
@@ -146,7 +171,8 @@ class GeneratePledgesCsvHandler(webapp2.RequestHandler):
     # page.
     file_name = files.blobstore.create(
       mime_type='text/csv', _blobinfo_uploaded_filename="pledges.csv")
-    deferred.defer(generate_pledges_csv, file_name, _queue='generateCSV')
+    deferred.defer(generate_pledges_csv, file_name, 'WpPledge', None,
+                   _queue='generateCSV')
     self.redirect('/admin/files%s/pledges.csv' % file_name)
 
 
