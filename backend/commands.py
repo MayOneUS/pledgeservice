@@ -145,11 +145,11 @@ def update_user_data(env, pledge_type, pledge_time):
   PAGE_SIZE = 500
 
   # Get the next PAGE_SIZE pledges
-  query = getattr(model, pledge_type).all().order('donationTime')
+  query = getattr(model, pledge_type).all().order('-donationTime')
   if pledge_time:
     # Filter instead of using 'offset' because offset is very inefficient,
     # according to https://developers.google.com/appengine/articles/paging
-    query = query.filter('donationTime >= ', pledge_time)
+    query = query.filter('donationTime <= ', pledge_time)
   pledges = query.fetch(PAGE_SIZE + 1)
   next_pledge_time = None
   if len(pledges) == PAGE_SIZE + 1:
@@ -163,7 +163,7 @@ def update_user_data(env, pledge_type, pledge_time):
       user = model.User.all().filter('email =', pledge.email).get()
       if user.zipCode:
         continue
-      if pledge.paypalTransactionID:
+      if hasattr(pledge, 'paypalTransactionID') and pledge.paypalTransactionID:
         request_data = {
           'METHOD': 'GetTransactionDetails',
           'TRANSACTIONID': pledge.paypalTransactionID
