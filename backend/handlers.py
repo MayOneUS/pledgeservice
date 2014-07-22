@@ -64,6 +64,13 @@ class StripeBackend(object):
     """
     raise NotImplementedError()
 
+  def RetrieveCardData(self, customer_id):
+    """Retrieves a stripe customer's card data, given the id.
+
+    Returns: A card dictionary
+    """
+    raise NotImplementedError()
+
   def Charge(self, customer_id, amount_cents):
     """Charges a customer and returns an identifier for the charge."""
     raise NotImplementedError()
@@ -139,19 +146,19 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
     if not 'address' in data:
       data['address'] = None
     else:
-      logging.info('Address was: ' + str( data['address']))      
+      logging.info('Address was: ' + str( data['address']))
 
     if not 'state' in data:
       data['state'] = None
 
     if not 'zipCode' in data:
       data['zipCode'] = None
-    
+
     if not 'bitpay_invoice_id' in data:
       data['bitpay_invoice_id'] = None
 
     amountCents = data['amountCents']
-    
+
     user, pledge = model.addPledge(email=data['email'],
                              stripe_customer_id=stripe_customer_id,
                              stripe_charge_id=stripe_charge_id,
@@ -164,7 +171,7 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
                              employer=data['employer'],
                              phone=data['phone'],
                              target=data['target'],
-                             surveyResult=data['surveyResult'],                             
+                             surveyResult=data['surveyResult'],
                              pledge_type=data.get(
                                'pledgeType', model.Pledge.TYPE_CONDITIONAL),
                              team=data['team'],
@@ -211,14 +218,14 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
                          text_body=text_body,
                          html_body=html_body)
 
-    if amountCents > 100000:   
+    if amountCents > 100000:
       format_kwargs = {
-        'name': data['name'].encode('utf-8'),      
+        'name': data['name'].encode('utf-8'),
         'total': totalStr,
         'phone': data['phone'],
         'email': data['email'],
       }
-                    
+
       lessig_body = open('email/lessig-notify.txt').read().format(**format_kwargs)
       logging.info('Sending ' + lessig_body)
       env.mail_sender.Send(to='lessig@mac.com',
@@ -267,7 +274,7 @@ class PledgeHandler(webapp2.RequestHandler):
         logging.info('Trying to charge %s' % data['email'])
         stripe_charge_id = env.stripe_backend.Charge(stripe_customer_id,
                                                      data['amountCents'])
-                                                       
+
         logging.info('Got charge id %s' % stripe_charge_id)
       except PaymentError, e:
         logging.warning('Payment error: %s', e)
@@ -416,16 +423,16 @@ class PaymentConfigHandler(webapp2.RequestHandler):
 
     self.response.headers['Content-Type'] = 'application/json'
     json.dump(params, self.response)
-  
-  options = util.EnableCors  
 
-class NumPledgesHandler(webapp2.RequestHandler):  
+  options = util.EnableCors
+
+class NumPledgesHandler(webapp2.RequestHandler):
   def get(self):
     util.EnableCors(self)
-    
+
     WP_PLEDGES = 4099
-    VERSION_11_AND_UNDER = 11743 
-    
+    VERSION_11_AND_UNDER = 11743
+
     count = memcache.get('TOTAL-PLEDGES')
     if not count:
       query = model.Pledge.all(keys_only=True).filter('model_version >', 11)
@@ -442,8 +449,8 @@ class NumPledgesHandler(webapp2.RequestHandler):
 
     self.response.headers['Content-Type'] = 'application/json'
     json.dump({'count':count}, self.response)
-    
-  options = util.EnableCors  
+
+  options = util.EnableCors
 
 class TotalHandler(webapp2.RequestHandler):
   # These get added to every pledge total calculation
@@ -681,7 +688,7 @@ class BitcoinStartHandler(webapp2.RequestHandler):
 
     payload = urllib.urlencode(post_data)
     logging.info('calling URL fetchee')
-    
+
     result = urlfetch.fetch(
       url='https://bitpay.com/api/invoice/',
       payload=payload,
@@ -719,7 +726,7 @@ class BitcoinNotificationsHandler(webapp2.RequestHandler):
     invoiceID = data["id"]
     posData = data["posData"]
     logging.info('Bitpay notifications for. Invoice ID: %s, Status: %s' % (invoiceID, data.get('status')))
-    
+
     key = db.Key(posData)
     temp_pledge = model.TempPledge.get_by_id(key.id())
 
@@ -807,7 +814,7 @@ class PaypalStartHandler(webapp2.RequestHandler):
       self.response.write('Invalid request')
       return
 
-    
+
 
     rc, paypal_url = paypal.SetExpressCheckout(self.request.host_url, data)
     if rc:
@@ -905,7 +912,7 @@ HANDLERS = [
   ('/receipt/(.+)', ReceiptHandler),
   ('/r/payment_config', PaymentConfigHandler),
   ('/r/total', TotalHandler),
-  ('/r/num_pledges', NumPledgesHandler),    
+  ('/r/num_pledges', NumPledgesHandler),
   ('/r/thank', ThankTeamHandler),
   ('/r/subscribe', SubscribeHandler),
   ('/r/bitcoin_start', BitcoinStartHandler),
