@@ -1,6 +1,7 @@
 """One-off commands only accessible to admins."""
 
 import logging
+import paypal
 
 from collections import defaultdict
 
@@ -138,6 +139,73 @@ class ResetTeamPledgeCount(Command):
         tt.put()
 
 
+def update_user_data(env, pledge_type, pledge_time):
+  """ Use a deferred task to batch update stripe user data """
+
+  PAGE_SIZE = 500
+
+  # Get the next PAGE_SIZE pledges
+  query = getattr(model, pledge_type).all().order('-donationTime')
+  if pledge_time:
+    # Filter instead of using 'offset' because offset is very inefficient,
+    # according to https://developers.google.com/appengine/articles/paging
+    query = query.filter('donationTime <= ', pledge_time)
+  pledges = query.fetch(PAGE_SIZE + 1)
+  next_pledge_time = None
+  if len(pledges) == PAGE_SIZE + 1:
+    next_pledge_time = pledges[-1].donationTime
+  pledges = pledges[:PAGE_SIZE]
+
+  # Loop through the current pledges and update the associated user with data
+  # pulled from Stripe or Paypal
+  for pledge in pledges:
+    try:
+      user = model.User.all().filter('email =', pledge.email).get()
+      if user.zipCode:
+        continue
+      if hasattr(pledge, 'paypalTransactionID') and pledge.paypalTransactionID:
+        request_data = {
+          'METHOD': 'GetTransactionDetails',
+          'TRANSACTIONID': pledge.paypalTransactionID
+        }
+        rc, txn_data = paypal.send_request(request_data)
+        if not rc:
+          logging.warning('Error retrieving PayPal transaction: %s', txn_data)
+          continue
+        user.zipCode = txn_data['SHIPTOZIP'][0]
+        address = txn_data['SHIPTOSTREET'][0]
+        user.city = txn_data['SHIPTOCITY'][0]
+        user.state = txn_data['SHIPTOSTATE'][0]
+      elif pledge.stripeCustomer:
+        card_data = env.stripe_backend.RetrieveCardData(pledge.stripeCustomer)
+        user.zipCode = card_data['address_zip']
+        address = card_data['address_line1']
+        if card_data['address_line2']:
+          address += ', %s' % card_data['address_line2']
+        user.address = address
+        user.city = card_data['address_city']
+        user.state = card_data['address_state']
+      user.put()
+    except Exception, e:
+      logging.warning('Error updating user %s with error, %s', user.email, e)
+
+  if next_pledge_time or pledge_type == 'WpPledge':
+    # More to process, recursively run again
+    next_pledge_type = pledge_type
+    if pledge_type == 'WpPledge' and not next_pledge_time:
+      next_pledge_type = 'Pledge'
+    deferred.defer(update_user_data, env, next_pledge_type, next_pledge_time)
+
+
+class UpdateUserData(Command):
+  SHORT_NAME = 'update_user_data'
+  NAME = 'Fill in missing user address data from Stripe and PayPal'
+  SHOW = True
+
+  def run(self):
+    deferred.defer(update_user_data, self.config['env'], 'WpPledge', None)
+
+
 # List your command here so admin.py can expose it.
 COMMANDS = [
   ResetTeamPledgeCount,
@@ -147,4 +215,5 @@ COMMANDS = [
   UpdateSecretsProperties,
   RequestAllPledges,
   ChargeRequested,
+  UpdateUserData
 ]
