@@ -41,7 +41,7 @@ class ProdStripe(handlers.StripeBackend):
   def CreateCustomer(self, email, card_token):
     stripe.api_key = self.stripe_private_key
     customer = stripe.Customer.create(card=card_token, email=email)
-    return customer.id
+    return customer
 
   def RetrieveCardData(self, customer_id):
     stripe.api_key = self.stripe_private_key
@@ -67,9 +67,14 @@ class FakeStripe(handlers.StripeBackend):
   def CreateCustomer(self, email, card_token):
     logging.error('USING FAKE STRIPE')
     if email == 'failure@failure.biz':
-      return 'doomed_customer'
+      id = 'doomed_customer'
     else:
-      return 'fake_1234'
+      id = 'fake_1234'
+    cus = stripe.Customer()
+    cus.cards = stripe.ListObject()
+    cus.cards.data = { 0 : self.RetrieveCardData(id) }
+    cus.id = id
+    return cus
 
   def RetrieveCardData(self, customer_id):
     return {

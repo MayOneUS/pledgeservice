@@ -268,8 +268,21 @@ class PledgeHandler(webapp2.RequestHandler):
     stripe_customer_id = None
     stripe_charge_id = None
     if 'STRIPE' in data['payment']:
-      stripe_customer_id = env.stripe_backend.CreateCustomer(
+      stripe_customer = env.stripe_backend.CreateCustomer(
         email=data['email'], card_token=data['payment']['STRIPE']['token'])
+      stripe_customer_id = stripe_customer.id
+      if len(stripe_customer.cards.data) > 0:
+        card_data = stripe_customer.cards.data[0]
+        if 'address_line1' in card_data:
+          data['address'] = card_data['address_line1']
+          if card_data['address_line2']:
+            data['address'] += ', %s' % card_data['address_line2']
+        if 'address_city' in card_data:
+          data['city'] = card_data['address_city']
+        if 'address_state' in card_data:
+          data['state'] = card_data['address_state']
+        if 'address_zip' in card_data:
+          data['zipCode'] = card_data['address_zip']
       try:
         logging.info('Trying to charge %s' % data['email'])
         stripe_charge_id = env.stripe_backend.Charge(stripe_customer_id,
