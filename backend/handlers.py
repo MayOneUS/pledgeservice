@@ -908,6 +908,23 @@ class PaypalReturnHandler(webapp2.RequestHandler):
 
     rc, results = paypal.DoExpressCheckoutPayment(token, payer_id, amount, custom)
     if rc:
+      request_data = {
+         'METHOD': 'GetTransactionDetails',
+         'TRANSACTIONID': results['PAYMENTINFO_0_TRANSACTIONID'][0]
+      }
+      rc, txn_data = paypal.send_request(request_data)
+      if rc:
+        if 'SHIPTOSTREET' in txn_data:
+          data['address'] = txn_data['SHIPTOSTREET'][0]
+          if 'SHIPTOSTREET2' in txn_data:
+            data['address'] += ', %s' % txn_data['SHIPTOSTREET2'][0]
+        if 'SHIPTOCITY' in txn_data:
+          data['city'] = txn_data['SHIPTOCITY'][0]
+        if 'SHIPTOSTATE' in txn_data:
+          data['state'] = txn_data['SHIPTOSTATE'][0]
+        if 'SHIPTOZIP' in txn_data:
+          data['zipCode'] = txn_data['SHIPTOZIP'][0]
+      
       id, auth_token, receipt_url = pledge_helper(self, data, None, None, payer_id, results['PAYMENTINFO_0_TRANSACTIONID'][0])
       self.redirect(receipt_url)
 
