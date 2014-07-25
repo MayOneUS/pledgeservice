@@ -72,7 +72,7 @@ class FakeStripe(handlers.StripeBackend):
       id = 'fake_1234'
     cus = stripe.Customer()
     cus.cards = stripe.ListObject()
-    cus.cards.data = { 0 : self.RetrieveCardData(id) }
+    cus.cards.data = [self.RetrieveCardData(id)]
     cus.id = id
     return cus
 
