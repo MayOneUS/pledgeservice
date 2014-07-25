@@ -1,0 +1,816 @@
+/* Header */
+
+#header {
+  padding: 18px 0 12px;
+  border-bottom: 1px solid #ddd;
+  background-color: #fff;
+}
+  #header .wrap {
+    width: 1050px;
+  }
+    #header .logo {
+      background-image: url(../static/logo-9.svg);
+      width: 225px;
+      height: 30px;
+    }
+    #header blockquote {
+      float: right;
+      font-style: italic;
+      font-size: 15px;
+      margin: 3px 6px 0 0;
+      color: #313945;
+    }
+    #header blockquote:before {
+      content: "“";
+    }
+    #header blockquote:after {
+      content: "”";
+    }
+/*Hero Text Row*/
+h1#page_title {
+  font-size: 2em;
+  margin: 10px 0 30px;
+  padding: 0;
+}
+
+.herotext {
+  padding: 20px 0 0 20px;
+}
+
+/*Hero Area*/
+
+
+.slideroption img {
+  width: 100%;
+  opacity: 0;
+  transition: 600ms opacity;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.slideroption img.active {
+  opacity: 1;
+}
+
+.shareImage {
+  margin-bottom:20px;
+  width:90%;
+}
+
+
+.hero-fw{
+  position:relative;
+  background-image:url('../images/05-midwest.jpg');
+  background-size:cover;
+  background-repeat:no-repeat;
+  background-position:center center;
+  border-bottom:4px solid white;
+}
+.underlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -10;
+  overflow:hidden;
+}
+.underlay img{
+  width:100%;
+  height:100%;
+}
+
+.heroarea {
+  margin-left:auto;
+  margin-right:auto;
+  padding-top:50px;
+  padding-bottom:50px;
+
+}
+
+.video {
+  margin-top:40px;
+  margin-bottom:40px;
+  margin-left:20px;
+  margin-right:20px;
+  height:300px;
+  border: 3px solid white;
+}
+
+.pledgebutton{
+  background-color: #9e0b0f;
+  color: #ffffcc;
+  margin-left:auto;
+  margin-right:auto;
+  margin:10px 50px;
+  padding:10px 20px;
+  text-align: center;
+  font-size:50px;
+  border: 3px solid white;
+  z-index:20;
+}
+
+.pledgebutton:hover{
+  z-index:20;
+  box-shadow: 0px 0px 10px #fff;
+  text-shadow: 0px 0px 5px #fff;
+  text-decoration:none;
+}
+
+.checkpoint-text{
+  color: #666;
+  padding-bottom: 5px;
+  text-align:center;
+}
+#super-cool-progress-bar-togo {
+  display: none;
+}
+#complete-total-raised {
+  color:white;
+  text-align:center;
+}
+#super-cool-progress-bar-funded {
+  text-align: right;
+}
+
+.progress-container {
+  margin-top:30px;
+  position: relative;
+  top: 10px;
+}
+
+.progbar {
+  margin-top:40px;
+  margin-bottom:40px;
+  margin-left:20px;
+  margin-right:20px;
+  padding:30px;
+  height:300px;
+  background-color: rgba(0, 51, 102, 0.7); /*blue transparency*/
+  border: 3px solid white;
+}
+
+/*Fancy Progress Bar Stuff*/
+
+.donation-progress-bar {
+  background: #AAA;
+  border-radius: 26px;
+  width: 100%;
+  height: 26px;
+  padding: 0 25px;
+  position: relative;
+}
+
+.donation-progress-bar > span {
+  font-size: 13px;
+  text-transform: uppercase;
+  line-height: 26px;
+  color: #fff;
+  position: relative;
+  z-index: 2;
+  width: 50%;
+  float: right;
+}
+#super-cool-progress-bar-funded {
+  text-align: left;
+  display: block;
+  padding-left: 8px;
+  font-weight: bold;
+}
+#super-cool-progress-bar-percent {
+  text-align: right;
+  display: block;
+  padding-right: 8px;
+}
+
+.donation-progress-bar.endless > span {
+  width: 50%;
+}
+
+.donation-progress-bar.endless em {
+  font-style: normal;
+}
+
+.donation-progress-bar .donation-progress-funded {
+  text-align: center;
+}
+
+.donation-progress-bar .donation-progress-togo,
+.donation-progress-bar.endless .donation-progress-funded {
+  text-align: right;
+}
+
+.donation-progress {
+  width: 200px;
+  height: 26px;
+  border-radius: 26px;
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  background-image: -moz-linear-gradient(-45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+  background-image: -webkit-linear-gradient(-45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(-45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+
+  -webkit-background-size: 26px 26px;
+  -moz-background-size:    26px 26px;
+  -o-background-size:      26px 26px;
+  background-size:         26px 26px;
+
+  -webkit-animation: progress-bar-stripes 1s linear infinite;
+  -moz-animation:    progress-bar-stripes 1s linear infinite;
+  animation:         progress-bar-stripes 1s linear infinite;
+}
+.donation-progress {
+  background: #c5dcb2; /* Old browsers */
+  background: -moz-linear-gradient(top, #c5dcb2 0%, #9ec682 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#c5dcb2), color-stop(100%,#9ec682)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, #c5dcb2 0%,#9ec682 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, #c5dcb2 0%,#9ec682 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, #c5dcb2 0%,#9ec682 100%); /* IE10+ */
+  background: linear-gradient(to bottom, #c5dcb2 0%,#9ec682 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c5dcb2', endColorstr='#9ec682',GradientType=0 ); /* IE6-9 */
+
+}
+
+.donation-progress.gone {
+  background-color: #57ad68;
+}
+
+@-webkit-keyframes progress-bar-stripes {
+  from  { background-position: 26px 0; }
+  to    { background-position: 0 0; }
+}
+
+@-moz-keyframes progress-bar-stripes {
+  from  { background-position: 26px 0; }
+  to    { background-position: 0 0; }
+}
+
+@keyframes progress-bar-stripes {
+  from  { background-position: 26px 0; }
+  to    { background-position: 0 0; }
+}
+
+/*END Fancy Progress Bar Stuff*/
+
+#index a {
+  color:white;
+  text-decoration:underline;
+}
+#index a:hover {
+  color:#AAAAFF;
+  text-decoration:underline;
+}
+
+#subscribe label {
+  padding-top: 15px;
+}
+
+#rootstrikersCheckbox {
+  margin-top:-10px;
+}
+
+/*Share Options*/
+.donation-share{
+  text-align:center;
+}
+
+.donation-share-text {
+  color:white;
+  text-align:center;
+  font-size:28px;
+  font-style:italic;
+}
+.donation-share-text a{
+  color:white;
+}
+.donation-share-text a:hover{
+  text-shadow: 0px 0px 8px #66ccff, 0px 0px 13px #66ccff ;
+  text-decoration:none;
+}
+
+.socialmenu{
+  background-color:black;
+}
+
+.sign-up {
+  color:white;
+  text-align:center;
+  font-size:16px;
+  padding:10px;
+  border: 1px solid white;
+  background-color:#000000;
+  height:50px;
+}
+
+.sign-up-pledge{
+  color:#ffffcc;
+  text-align:center;
+  font-size:24px;
+  padding:6px;
+  border: 1px solid white;
+  background-color:#FF0000;
+  height:50px;
+}
+
+.sign-up:hover {
+  background-color: #222222;
+  color:#ffffcc;
+}
+
+.arrowdown{
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 20px solid rgba(255,255,255,0.8);
+}
+
+.halfcircle{
+  position:absolute;
+  top:0;
+  margin-left:50%;
+  left:-50px;
+  z-index:4;
+  height:50px;
+  width:100px;
+}
+
+.widget1{
+  position:relative;
+  background-image:url('../images/dark_capitol.jpg');
+  background-size:cover;
+  background-repeat:no-repeat;
+  background-position:center center;
+  padding:40px;
+  border-bottom:4px solid white;
+}
+.widget2{
+  position:relative;
+  background-image:url('../images/blue_franklin.jpg');
+  background-size:cover;
+  background-repeat:no-repeat;
+  background-position:center center;
+  padding:40px;
+  border-bottom:4px solid white;
+}
+.widget3{
+  position:relative;
+  background-image:url('../images/green_yorktown.jpg');
+  background-size:cover;
+  background-repeat:no-repeat;
+  background-position:top center;
+  padding:40px;
+  border-bottom:4px solid white;
+}
+.widget4{
+  position:relative;
+  background-image:url('../images/naval_battle.jpg');
+  background-size:cover;
+  background-repeat:no-repeat;
+  background-position:bottom center;
+  padding:40px;
+  border-bottom:4px solid white;
+}
+
+.widgettext h1, .widgettext h2, .widgettext h3, .widgettext h4, .widgettext h5, .widgettext h6 {
+  color:#FFFF99;
+  text-align:center;
+  font-size:35px;
+  padding-bottom:10px;
+}
+
+.widgettext p {
+  color:white;
+  text-align:center;
+  font-size:20px;
+}
+
+.pac_disclaimer {
+  display: inline-block;
+  color:white;
+  text-align:center;
+  font-size:16px;
+  padding:10px;
+  border:2px solid white;
+  font-variant:small-caps;
+}
+
+.footer{
+  background-color: #333333;
+  padding:40px;
+}
+
+.footer a{
+  color:#fff;
+}
+
+
+
+.copyright{
+  color:white;
+}
+
+/*Subpages*/
+
+#embed .subpage-content {
+  text-align:center;
+  font-size:125%;
+}
+
+#embed .subpage-content pre {
+  text-align:left;
+}
+
+#embed .subpage-content img {
+  border: 1px solid black;
+  padding: 1px;
+}
+
+#embed hr {
+    border: 0;
+    height: 1px;
+    background: #333;
+    background-image: -webkit-linear-gradient(left, #ccc, #333, #ccc); 
+    background-image:    -moz-linear-gradient(left, #ccc, #333, #ccc); 
+    background-image:     -ms-linear-gradient(left, #ccc, #333, #ccc); 
+    background-image:      -o-linear-gradient(left, #ccc, #333, #ccc); 
+}
+
+#about .subpage-content img {
+  float:left;
+  width:150px;
+  border:solid #ccc 2px;
+  padding: 2px;
+  margin: 5px 15px 15px 0;
+}
+
+.subpage-content a{
+  color:#003366;
+}
+
+.subpage-content a:hover{
+  text-decoration:underline;
+  color:#003366;
+}
+
+.subpage-content {
+   color:black;
+   font-size:14px;
+   padding:30px 30px 50px;
+   line-height: 1.61em;
+}
+
+.subpage-content h1, 
+.subpage-content h2, 
+.subpage-content h3, 
+.subpage-content h4, 
+.subpage-content h5, 
+.subpage-content h6{
+  padding: 1em 0 .5em;
+  margin: 0;
+  line-height: 1.4em;
+}
+.subpage-content h2 {
+  font-size: 2.5em;
+}
+.subpage-content h1 {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.sidebar {
+   font-size:14px;
+   padding: 10px 40px 40px;
+   margin-top: 40px;
+   background: #EEE;
+}
+
+.sidebar .hide-mobile,
+.sidebar .about-page-only {
+display:none;
+}
+
+.sidebar .btn-primary {
+   padding: 5px 10px;
+   margin-left:3px;
+  background: #005983;
+  font-size: .8em;
+  border: none;
+  position: relative;
+  top: -2px;
+}
+
+#about .sidebar .about-page-only{
+display:inline;
+}
+
+.sidebar .pledge {
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  height: 60px;
+  line-height: 60px;
+  font-size: 1.5em;
+  display: block;
+}
+.pledge, .pledge:visited {
+  background-color: #d53a38;
+  border-radius: 5px;
+  color: #FFF;
+  font-weight: bold;
+  text-align: center;
+  border: none;
+  display: inline-block;
+}
+.pledge:hover {
+  background: #b73230;
+  text-decoration: none;
+  color: #fff;
+}
+
+.sidebar .block {
+  padding-top: 30px;
+}
+
+.sidebar h1, 
+.sidebar h2, 
+.sidebar h3, 
+.sidebar h4, 
+.sidebar h5, 
+.sidebar h6{
+  text-align: center;
+  padding-bottom: 10px;
+  color: #555;
+  border-bottom: 2px solid #555;
+  margin-bottom: 30px;
+}
+
+/* This comment reserved for someone who knows what the heck #login_modal is */
+
+#login_modal .modal-header {
+  color: black;
+}
+
+#login_modal #login_inputs {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  width: 370px;
+  height: 70px;
+}
+
+#login_modal #login_inputs i {
+  font-size: 55px;
+}
+
+#login_modal #login_inputs > div.login-service {
+  padding-right: 20px;
+  text-align: center;
+}
+
+#login_modal #login_inputs > div.login-service:last-child {
+  padding-right: 0px;
+}
+
+/*Responsive Tweaks*/
+
+.mobileonly {
+  display:none;
+}
+
+.mobilehidden{
+  display:inline;
+}
+
+@media (max-width: 1200px) {
+  .pledgebutton{
+    margin:25px 20px;
+    padding:5px 10px;
+    text-align: center;
+    font-size:40px;
+    border: 3px solid white;
+    z-index:20;
+  }
+  .donation-progress-bar{
+    padding:0 5px;
+  }
+}
+
+@media (max-width: 992px) {
+  .donation-progress-bar{
+     padding:0 25px;
+  }
+  .sidebar .pledge {
+    width: 400px;
+  }
+}
+@media (max-width: 600px) {
+  .donation-progress-bar{
+     padding:0 5px;
+  }
+  .sidebar .pledge {
+    width: 100%;
+  }
+}
+
+/* Contact Form */
+
+
+#subscribe .checkbox input {
+  box-shadow: none;
+  width: auto;
+  position: relative;
+  top: -10px;
+}
+#skills_section input {
+  width: 100%;
+  display: block;
+}
+
+#subscribe #content form {
+  max-width: 500px;
+  margin: 0 auto;
+}
+#subscribe #content #submitButton {
+  border-radius: 5px;
+  padding: 15px 40px;
+  background-color: #d53a38;
+  border: none;
+  margin-top: 20px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.input-group, .input-group-lg {
+   display:block;
+   width:75%;
+   margin-left: 12%;
+   margin-right: 13%;
+}
+
+.input-group-btn{
+   display:block;
+   width:75%;
+   margin-left: 12%;
+   margin-right: 13%;
+   text-align: center;
+}
+
+.social-icons{
+  margin: 25px 0 0 0;
+  text-align:center;
+}
+
+.social-icons a.twitter {
+  width: 270px;
+  height: 60px;
+  line-height: 58px;
+  font-size: 20px;
+  display: inline-block;
+  color: #fff;
+  margin: 0 0 20px 0;
+  border-radius: 5px;
+  text-align: center;
+  background: rgb(145,208,247); /* Old browsers */
+  background: -moz-linear-gradient(top,  rgba(145,208,247,1) 0%, rgba(64,151,204,1) 68%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(145,208,247,1)), color-stop(68%,rgba(64,151,204,1))); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top,  rgba(145,208,247,1) 0%,rgba(64,151,204,1) 68%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top,  rgba(145,208,247,1) 0%,rgba(64,151,204,1) 68%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top,  rgba(145,208,247,1) 0%,rgba(64,151,204,1) 68%); /* IE10+ */
+  background: linear-gradient(to bottom,  rgba(145,208,247,1) 0%,rgba(64,151,204,1) 68%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#91d0f7', endColorstr='#4097cc',GradientType=0 ); /* IE6-9 */
+}
+
+.social-icons a.twitter:hover{
+   -moz-box-shadow:    inset 0 0 10px #FFFF99;
+   -webkit-box-shadow: inset 0 0 10px #FFFF99;
+   box-shadow:         inset 0 0 10px #FFFF99;
+}
+
+.social-icons a.facebook {
+  width: 270px;
+  height: 60px;
+  line-height: 58px;
+  font-size: 20px;
+  display: inline-block;
+  background: #3664a2;
+  color: #fff;
+  margin: 0 0 20px 0;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.social-icons a.facebook:hover{
+   -moz-box-shadow:    inset 0 0 10px #FFFF99;
+   -webkit-box-shadow: inset 0 0 10px #FFFF99;
+   box-shadow:         inset 0 0 10px #FFFF99;
+}
+
+
+#pledgecol-sidebar .panel {
+  margin: 40px 10px;
+  border: 1px solid #5990a9;
+  border-radius: 0;
+}
+#pledgecol-sidebar .panel .panel-heading {
+  background: #d9e6ec;
+}
+#pledgecol-sidebar .panel .panel-heading h3 {
+  color: #005982;
+  text-transform: uppercase;
+  font-size: 20px;
+  text-align: center;
+  padding: 10px 0;
+}
+#pledgecol-sidebar .panel .control-label {
+  text-align: center;
+  text-transform: uppercase;
+  color: #888;
+  font-weight: 700;  
+}
+
+#pledgecol-sidebar .panel .panel-body h6 {
+  margin-bottom: 0;
+}
+#pledgecol-sidebar .panel .panel-body h5.amount {
+  font-size: 45px;
+  margin-top: 0;
+  color: #000000;
+}
+#pledgecol-sidebar .panel .panel-body h5.pledges {
+  font-size: 36px;
+  margin-top: 0;
+}
+
+#pledgecol-sidebar form button {
+  margin-top: 0px;
+  height: 63px;
+  width: 100%;
+  font-size: 30px;
+  font-weight: 700;
+  background: #d2393c;
+  color: #fff;  
+  transition: background 0.15s;  
+}
+
+#pledgecol-sidebar form button:hover {
+  background: #db6365;
+}
+
+.videowrapper {
+    float: none;
+    clear: both;
+    width: 100%;
+    position: relative;
+    padding-bottom: 56.25%;
+    padding-top: 25px;
+    height: 0;
+}
+.videowrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.subscribeButton {
+  margin-top: 20px;
+  font-size: 60px;
+  font-weight: 700;
+  border-radius: 2px;  
+}
+
+.videoEmbed {
+  max-width:640px; 
+  max-height:360px; 
+}
+
+#goodfightHeader {
+  width: 90%;
+  max-width: 750px;
+  margin: 0 auto;
+  display: block;
+  padding: 30px 0 20px;
+}
+
+#rules {
+  padding:10px;
+}
+
+#goodfightEmbed {
+  margin:0 auto;
+  width: 50%;
+  min-width:330px;
+}
+
+#goodfightEmbed iframe {
+  border: none; 
+  height:250px;
+  margin:0 0;
+  width:100%;
+  min-width:330px;
+}
+
