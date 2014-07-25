@@ -73,7 +73,7 @@ class FakeStripe(handlers.StripeBackend):
       cus.cards.data = []
     else:
       cus.id = 'fake_1234'
-      cus.cards.data = { 0 : self.RetrieveCardData(id) }
+      cus.cards.data = [self.RetrieveCardData(id)]
     return cus
 
   def RetrieveCardData(self, customer_id):
