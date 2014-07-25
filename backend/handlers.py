@@ -924,7 +924,7 @@ class PaypalReturnHandler(webapp2.RequestHandler):
           data['state'] = txn_data['SHIPTOSTATE'][0]
         if 'SHIPTOZIP' in txn_data:
           data['zipCode'] = txn_data['SHIPTOZIP'][0]
-      
+
       id, auth_token, receipt_url = pledge_helper(self, data, None, None, payer_id, results['PAYMENTINFO_0_TRANSACTIONID'][0])
       self.redirect(receipt_url)
 
