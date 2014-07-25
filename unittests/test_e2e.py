@@ -83,19 +83,23 @@ class PledgeTest(BaseTest):
   def expectStripe(self):
     self.stripe.CreateCustomer(
       email=self.pledge['email'],
-      card_token=self.pledge['payment']['STRIPE']['token']) \
-               .AndReturn('cust_4321')
+      card_token=self.pledge['payment']['STRIPE']['token']
+    ).AndReturn(env.FakeStripe().CreateCustomer(
+      self.pledge['email'], self.pledge['payment']['STRIPE']['token'])
+    )
 
-    self.stripe.Charge('cust_4321', self.pledge['amountCents']) \
+    self.stripe.Charge('fake_1234', self.pledge['amountCents']) \
                .AndReturn('charge_2468')
 
   def expectStripeDeclined(self):
     self.stripe.CreateCustomer(
       email=self.pledge['email'],
-      card_token=self.pledge['payment']['STRIPE']['token']) \
-               .AndReturn('cust_4321')
+      card_token=self.pledge['payment']['STRIPE']['token']
+    ).AndReturn(env.FakeStripe().CreateCustomer(
+      'failure@failure.biz', self.pledge['payment']['STRIPE']['token'])
+    )
 
-    self.stripe.Charge('cust_4321', self.pledge['amountCents']) \
+    self.stripe.Charge('doomed_customer', self.pledge['amountCents']) \
                .AndRaise(handlers.PaymentError('You got no money'))
 
   def expectSubscribe(self, phone=None, pledgePageSlug=None):
@@ -156,12 +160,20 @@ class PledgeTest(BaseTest):
   def testNotEnoughJson(self):
     self.app.post_json('/r/pledge', dict(email='foo@bar.com'), status=400)
 
+  def testCreateAddsUser(self):
+    resp = self.makeDefaultRequest()
+    user = model.User.get_by_key_name(self.pledge['email'])
+    self.assertEquals('1600 Pennsylvania Ave NW', user.address)
+    self.assertEquals('Washington', user.city)
+    self.assertEquals('DC', user.state)
+    self.assertEquals('20500', user.zipCode)
+
   def testCreateAddsPledge(self):
     resp = self.makeDefaultRequest()
     pledge = db.get(resp.json['id'])
     self.assertEquals(4200, pledge.amountCents)
     self.assertEquals(resp.json['auth_token'], pledge.url_nonce)
-    self.assertEquals('cust_4321', pledge.stripeCustomer)
+    self.assertEquals('fake_1234', pledge.stripeCustomer)
     self.assertEquals('charge_2468', pledge.stripe_charge_id)
     self.assertEquals('rocket', pledge.team)
 

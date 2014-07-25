@@ -268,9 +268,24 @@ class PledgeHandler(webapp2.RequestHandler):
     stripe_customer_id = None
     stripe_charge_id = None
     if 'STRIPE' in data['payment']:
-      stripe_customer_id = env.stripe_backend.CreateCustomer(
-        email=data['email'], card_token=data['payment']['STRIPE']['token'])
       try:
+        logging.info('Trying to create stripe customer %s' % data['email'])
+        stripe_customer = env.stripe_backend.CreateCustomer(
+          email=data['email'], card_token=data['payment']['STRIPE']['token'])
+        stripe_customer_id = stripe_customer.id
+        logging.info('Trying to extract address for %s' % data['email'])
+        if len(stripe_customer.cards.data) > 0:
+          card_data = stripe_customer.cards.data[0]
+          if 'address_line1' in card_data:
+            data['address'] = card_data['address_line1']
+            if card_data['address_line2']:
+              data['address'] += ', %s' % card_data['address_line2']
+          if 'address_city' in card_data:
+            data['city'] = card_data['address_city']
+          if 'address_state' in card_data:
+            data['state'] = card_data['address_state']
+          if 'address_zip' in card_data:
+            data['zipCode'] = card_data['address_zip']
         logging.info('Trying to charge %s' % data['email'])
         stripe_charge_id = env.stripe_backend.Charge(stripe_customer_id,
                                                      data['amountCents'])
@@ -895,6 +910,23 @@ class PaypalReturnHandler(webapp2.RequestHandler):
 
     rc, results = paypal.DoExpressCheckoutPayment(token, payer_id, amount, custom)
     if rc:
+      request_data = {
+         'METHOD': 'GetTransactionDetails',
+         'TRANSACTIONID': results['PAYMENTINFO_0_TRANSACTIONID'][0]
+      }
+      rc, txn_data = paypal.send_request(request_data)
+      if rc:
+        if 'SHIPTOSTREET' in txn_data:
+          data['address'] = txn_data['SHIPTOSTREET'][0]
+          if 'SHIPTOSTREET2' in txn_data:
+            data['address'] += ', %s' % txn_data['SHIPTOSTREET2'][0]
+        if 'SHIPTOCITY' in txn_data:
+          data['city'] = txn_data['SHIPTOCITY'][0]
+        if 'SHIPTOSTATE' in txn_data:
+          data['state'] = txn_data['SHIPTOSTATE'][0]
+        if 'SHIPTOZIP' in txn_data:
+          data['zipCode'] = txn_data['SHIPTOZIP'][0]
+
       id, auth_token, receipt_url = pledge_helper(self, data, None, None, payer_id, results['PAYMENTINFO_0_TRANSACTIONID'][0])
       self.redirect(receipt_url)
 
