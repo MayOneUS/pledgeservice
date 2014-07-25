@@ -68,14 +68,6 @@ module.exports = function(grunt) {
       prod: preprocessAppYaml(PROD_CONFIG),
     },
 
-    sass: {
-      main: {
-        files: {
-          'build/static/style.css': 'stylesheets/style.scss'
-        }
-      }
-    },
-
     jade: {
       compile: {
         options: {
@@ -118,10 +110,6 @@ module.exports = function(grunt) {
     },
 
     watch: {
-      stylesheets: {
-        files: 'stylesheets/**',
-        tasks: [ 'css' ]
-      },
       markup: {
         files: 'markup/**',
         tasks: [ 'jade' ]
@@ -138,7 +126,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jade');
-  grunt.loadNpmTasks('grunt-contrib-sass');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-file-creator');
   grunt.loadNpmTasks('grunt-preprocess');
@@ -146,13 +133,9 @@ module.exports = function(grunt) {
 
   // define the tasks
   grunt.registerTask(
-    'css', '',
-    [ 'sass', 'autoprefixer' ]
-  );
-  grunt.registerTask(
     'build',
     'Compiles all of the assets and copies the files to the build directory.',
-    [ 'clean', 'copy', 'css', 'jade']
+    [ 'clean', 'copy', 'jade']
   );
   grunt.registerTask(
     'local',

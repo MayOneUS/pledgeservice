@@ -43,6 +43,11 @@ class ProdStripe(handlers.StripeBackend):
     customer = stripe.Customer.create(card=card_token, email=email)
     return customer.id
 
+  def RetrieveCardData(self, customer_id):
+    stripe.api_key = self.stripe_private_key
+    cus = stripe.Customer.retrieve(customer_id)
+    return cus.cards.data[0] if len(cus.cards.data) > 0 else {}
+
   def Charge(self, customer_id, amount_cents):
     stripe.api_key = self.stripe_private_key
     try:
@@ -65,6 +70,31 @@ class FakeStripe(handlers.StripeBackend):
       return 'doomed_customer'
     else:
       return 'fake_1234'
+
+  def RetrieveCardData(self, customer_id):
+    return {
+      "address_city": "Washington",
+      "address_country": "US",
+      "address_line1": "1600 Pennsylvania Ave NW",
+      "address_line1_check": "pass",
+      "address_line2": "",
+      "address_state": "DC",
+      "address_zip": "20500",
+      "address_zip_check": "pass",
+      "brand": "Visa",
+      "country": "US",
+      "customer": customer_id,
+      "cvc_check": "pass",
+      "exp_month": 3,
+      "exp_year": 2020,
+      "fingerprint": "fakefingerprint",
+      "funding": "debit",
+      "id": "card_fakeid",
+      "last4": "4242",
+      "name": "Phillip Mamouf-Wifarts",
+      "object": "card",
+      "type": "Visa"
+    }
 
   def Charge(self, customer_id, amount_cents):
     logging.error('USING FAKE STRIPE')
@@ -153,10 +183,10 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
 
   if zipcode is not None:
     merge_vars['ZIPCODE'] = zipcode
-  
+
   if rootstrikers is not None:
     merge_vars['ROOTS'] = rootstrikers
-    
+
   if pledgePageSlug is not None:
     merge_vars['PPURL'] = pledgePageSlug
 

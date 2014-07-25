@@ -11,6 +11,7 @@ import webapp2
 from google.appengine.api import files, mail, memcache
 from google.appengine.ext import blobstore, db, deferred
 from google.appengine.ext.webapp import blobstore_handlers
+from zipgun import Zipgun
 
 import commands
 import env
@@ -22,12 +23,27 @@ class AdminDashboardHandler(webapp2.RequestHandler):
     users = AdminDashboardHandler.get_missing_data_users()
 
     template = templates.GetTemplate('admin-dashboard.html')
+    try:
+      pledge_amounts = files.blobstore.get_file_name(
+        blobstore.BlobInfo.all().filter(
+          'filename =', 'pledge_amounts.csv'
+        ).order('-creation').get().key())
+    except:
+      pledge_amounts = None
+    try:
+      pledges = files.blobstore.get_file_name(blobstore.BlobInfo.all().filter(
+        'filename =', 'pledges.csv'
+      ).order('-creation').get().key())
+    except:
+      pledges = None
     self.response.write(template.render({
       'missingUsers': [dict(email=user.email, amount=amt/100)
                        for user, amt in users],
       'totalMissing': sum(v for _, v in users)/100,
       'shardedCounterTotal': model.ShardedCounter.get_count('TOTAL-5'),
       'commands': AdminDashboardHandler.get_commands(),
+      'pledge_amounts': pledge_amounts,
+      'pledges': pledges
     }))
 
   # Gets all the users with missing employer/occupation/targeting data
@@ -60,8 +76,8 @@ class AdminDashboardHandler(webapp2.RequestHandler):
             for c in commands.COMMANDS if c.SHOW]
 
 
-def generate_pledges_csv(file_name):
-  """ Generates the pledges.csv file in a deferred way """
+def generate_pledge_amounts_csv(file_name):
+  """ Generates the pledge_amounts.csv file in a deferred way """
 
   csv_buffer = StringIO.StringIO()
   w = csv.writer(csv_buffer)
@@ -76,18 +92,91 @@ def generate_pledges_csv(file_name):
   files.finalize(file_name)
 
 
+class GeneratePledgeAmountsCsvHandler(webapp2.RequestHandler):
+  def get(self):
+    # Create a blobstore file, a deferred task, and redirect to the download
+    # page.
+    file_name = files.blobstore.create(
+      mime_type='text/csv', _blobinfo_uploaded_filename="pledge_amounts.csv")
+    deferred.defer(generate_pledge_amounts_csv, file_name, _queue='generateCSV')
+    self.redirect('/admin/files%s/pledge_amounts.csv' % file_name)
+
+
+def pledge_row(pledge, zg):
+  try:
+    user = model.User.all().filter('email =', pledge.email).get()
+  except:
+    logging.warning('No user found for pledge email: %s', pledge.email)
+  zg_lookup = None
+  if user.zipCode:
+    zg_lookup = zg.lookup(user.zipCode)
+  if not zg_lookup:
+    zg_lookup = {'lat': '', 'lon': ''}
+  return [user.zipCode,
+          int(pledge.amountCents / 100.0),
+          str(pledge.donationTime),
+          pledge.donationTime.strftime('%-m/%-d/%y'),
+          user.city,
+          user.state,
+          zg_lookup['lat'],
+          zg_lookup['lon']]
+
+
+def generate_pledges_csv(file_name, pledge_type, pledge_time):
+  """ Generates the pledges.csv file in a deferred way """
+
+  PAGE_SIZE = 500
+  csv_buffer = StringIO.StringIO()
+  w = csv.writer(csv_buffer)
+  if not pledge_time and pledge_type == 'WpPledge':
+    # First time through, add the column headers
+    w.writerow(['zip', 'dollars', 'timestamp', 'date', 'city', 'state',
+                'latitude', 'longitude'])
+  zg = Zipgun('zipgun/zipcodes')
+
+  # Get the next PAGE_SIZE pledges
+  query = getattr(model, pledge_type).all().order('donationTime')
+  if pledge_time:
+    # Filter instead of using 'offset' because offset is very inefficient,
+    # according to https://developers.google.com/appengine/articles/paging
+    query = query.filter('donationTime >= ', pledge_time)
+  pledges = query.fetch(PAGE_SIZE + 1)
+  next_pledge_time = None
+  if len(pledges) == PAGE_SIZE + 1:
+    next_pledge_time = pledges[-1].donationTime
+  pledges = pledges[:PAGE_SIZE]
+
+  # Loop through the current pledges and write them to the csv
+  for pledge in pledges:
+    w.writerow(pledge_row(pledge, zg))
+  with files.open(file_name, 'a') as f:
+    f.write(csv_buffer.getvalue())
+  csv_buffer.close()
+
+  if not next_pledge_time and pledge_type == 'Pledge':
+    # Last time through, finalize the file
+    files.finalize(file_name)
+  else:
+    # More to process, recursively run again
+    next_pledge_type = pledge_type
+    if pledge_type == 'WpPledge' and not next_pledge_time:
+      next_pledge_type = 'Pledge'
+    deferred.defer(generate_pledges_csv, file_name, next_pledge_type,
+                   next_pledge_time, _queue='generateCSV')
+
+
 class GeneratePledgesCsvHandler(webapp2.RequestHandler):
   def get(self):
     # Create a blobstore file, a deferred task, and redirect to the download
     # page.
     file_name = files.blobstore.create(
       mime_type='text/csv', _blobinfo_uploaded_filename="pledges.csv")
-    deferred.defer(generate_pledges_csv, file_name,
-                   _queue='generatePledgesCSV')
+    deferred.defer(generate_pledges_csv, file_name, 'WpPledge', None,
+                   _queue='generateCSV')
     self.redirect('/admin/files%s/pledges.csv' % file_name)
 
 
-class PledgesCsvHandler(blobstore_handlers.BlobstoreDownloadHandler):
+class CsvHandler(blobstore_handlers.BlobstoreDownloadHandler):
   def get(self, file_name):
     """
     Serve the blobstore file if it exists, otherwise instruct the user to
@@ -150,8 +239,10 @@ def MakeCommandHandler(cmd_cls):
 COMMAND_HANDLERS = [MakeCommandHandler(c) for c in commands.COMMANDS]
 
 app = webapp2.WSGIApplication([
+  ('/admin/generate/pledge_amounts.csv', GeneratePledgeAmountsCsvHandler),
   ('/admin/generate/pledges.csv', GeneratePledgesCsvHandler),
-  ('/admin/files(.+)/pledges.csv', PledgesCsvHandler),
+  ('/admin/files(.+)/pledge_amounts.csv', CsvHandler),
+  ('/admin/files(.+)/pledges.csv', CsvHandler),
   ('/admin/stretch', StretchHandler),
   ('/admin/?', AdminDashboardHandler),
 ] + COMMAND_HANDLERS, debug=False, config=dict(env=env.get_env()))

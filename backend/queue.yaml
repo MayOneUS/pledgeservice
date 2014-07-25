@@ -10,6 +10,6 @@ queue:
   rate: 1/s
   max_concurrent_requests: 5
 
-- name: generatePledgesCSV
-  rate: 1/m
+- name: generateCSV
+  rate: 1/h
   max_concurrent_requests: 1
