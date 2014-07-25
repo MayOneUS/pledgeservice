@@ -226,13 +226,13 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
 
     if amountCents > 100000:
       format_kwargs = {
-        'name': data['name'].encode('utf-8'),
+        'name': data['name'].encode('utf-8').decode('utf-8'),
         'total': totalStr,
         'phone': data['phone'],
         'email': data['email'].encode('utf-8').decode('utf-8'),
       }
-      
-      lessig_template = jinja2.Template(open('email/lessig-notify.txt').read().decode('utf-8'))  
+
+      lessig_template = jinja2.Template(open('email/lessig-notify.txt').read().decode('utf-8'))
       lessig_body = lessig_template.render(**format_kwargs)
 
       logging.info('Sending ' + lessig_body)
