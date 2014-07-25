@@ -174,6 +174,8 @@ def update_user_data(env, pledge_type, pledge_time):
           continue
         user.zipCode = txn_data['SHIPTOZIP'][0]
         address = txn_data['SHIPTOSTREET'][0]
+        if 'SHIPTOSTREET2' in txn_data:
+          address += ', %s' % txn_data['SHIPTOSTREET2'][0]
         user.city = txn_data['SHIPTOCITY'][0]
         user.state = txn_data['SHIPTOSTATE'][0]
       elif pledge.stripeCustomer:
