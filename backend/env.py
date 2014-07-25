@@ -65,15 +65,15 @@ class ProdStripe(handlers.StripeBackend):
 
 class FakeStripe(handlers.StripeBackend):
   def CreateCustomer(self, email, card_token):
-    logging.error('USING FAKE STRIPE')
-    if email == 'failure@failure.biz':
-      id = 'doomed_customer'
-    else:
-      id = 'fake_1234'
+    logging.warning('USING FAKE STRIPE')
     cus = stripe.Customer()
     cus.cards = stripe.ListObject()
-    cus.cards.data = { 0 : self.RetrieveCardData(id) }
-    cus.id = id
+    if email == 'failure@failure.biz':
+      cus.id = 'doomed_customer'
+      cus.cards.data = []
+    else:
+      cus.id = 'fake_1234'
+      cus.cards.data = { 0 : self.RetrieveCardData(id) }
     return cus
 
   def RetrieveCardData(self, customer_id):
