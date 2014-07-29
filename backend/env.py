@@ -187,7 +187,7 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
     merge_vars['PHONE'] = phone
 
   if zipcode is not None:
-    merge_vars['ZIPCODE'] = zipcode
+    merge_vars['ZIP'] = zipcode
 
   if rootstrikers is not None:
     merge_vars['ROOTS'] = rootstrikers
@@ -196,7 +196,7 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
     merge_vars['PPURL'] = pledgePageSlug
 
   # list ID and email struct
-  logging.info('Subscribing: %s', email_to_subscribe)
+  logging.info('Subscribing: %s. ZIP: %s', email_to_subscribe, zipcode)
   mc.lists.subscribe(id=mailchimp_list_id,
                      email=dict(email=email_to_subscribe),
                      merge_vars=merge_vars,
