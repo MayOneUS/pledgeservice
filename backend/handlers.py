@@ -370,7 +370,14 @@ class SubscribeHandler(webapp2.RequestHandler):
     pledgePageSlug_input = cgi.escape(self.request.get('pledgePageSlug'))
     if len(pledgePageSlug_input) == 0:
       pledgePageSlug_input = ''
-
+      
+    otherVars = {}
+    # get any parameter that looks like MERGE something
+    for argName in self.request.arguments():
+      if argName.startswith('MERGE'):
+        arg = self.request.get(argName)
+        otherVars[argName] = arg    
+    
     env.mailing_list_subscriber.Subscribe(
       email=email_input,
       first_name=first_name, last_name=last_name,
@@ -383,7 +390,8 @@ class SubscribeHandler(webapp2.RequestHandler):
       volunteer=volunteer_input,
       skills=skills_input,
       rootstrikers=rootstrikers_input,
-      pledgePageSlug=pledgePageSlug_input
+      pledgePageSlug=pledgePageSlug_input,
+      otherVars=otherVars
       )
 
     util.EnableCors(self)
