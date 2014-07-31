@@ -19,5 +19,5 @@ after_success:
 notifications:
   irc:
     channels:
-      - "chat.freenode.net#mayone-dev"
+      - "chat.freenode.net#maydaypac"
     skip_join: true
