@@ -224,7 +224,7 @@ class GeneratePledgesFullDataCsvHandler(webapp2.RequestHandler):
     # page.
     file_name = files.blobstore.create(
       mime_type='text/csv', _blobinfo_uploaded_filename="pledges_full_data.csv")
-    deferred.defer(generate_pledges_csv, file_name, 'WpPledge', None,
+    deferred.defer(generate_pledges_csv, file_name, 'Pledge', None,
                    True, _queue='generateCSV')
     self.redirect('/admin/files%s/pledges_full_data.csv' % file_name)
 
@@ -239,7 +239,8 @@ class CsvHandler(blobstore_handlers.BlobstoreDownloadHandler):
       blob_key = files.blobstore.get_blob_key(file_name)
       blob_info = blobstore.BlobInfo.get(blob_key)
       self.send_blob(blob_info)
-    except:
+    except Exception as e:
+      logging.info('Exception was: ' + str(e))
       self.response.write('Working on it, refresh in a few minutes.')
 
 
