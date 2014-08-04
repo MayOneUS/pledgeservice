@@ -161,7 +161,7 @@ def update_user_data(env, pledge_type, pledge_time):
   for pledge in pledges:
     try:
       user = model.User.all().filter('email =', pledge.email).get()
-      if user.zipCode:
+      if user.zipCode and user.address:
         continue
       if hasattr(pledge, 'paypalTransactionID') and pledge.paypalTransactionID:
         request_data = {
@@ -173,9 +173,9 @@ def update_user_data(env, pledge_type, pledge_time):
           logging.warning('Error retrieving PayPal transaction: %s', txn_data)
           continue
         user.zipCode = txn_data['SHIPTOZIP'][0]
-        address = txn_data['SHIPTOSTREET'][0]
+        user.address = txn_data['SHIPTOSTREET'][0]
         if 'SHIPTOSTREET2' in txn_data:
-          address += ', %s' % txn_data['SHIPTOSTREET2'][0]
+          user.address += ', %s' % txn_data['SHIPTOSTREET2'][0]
         user.city = txn_data['SHIPTOCITY'][0]
         user.state = txn_data['SHIPTOSTATE'][0]
       elif pledge.stripeCustomer:
