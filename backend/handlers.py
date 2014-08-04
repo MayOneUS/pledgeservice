@@ -27,8 +27,6 @@ import pprint
 import urlparse
 import paypal
 
-import jinja2
-
 
 # Immutable environment with both configuration variables, and backends to be
 # mocked out in tests.
@@ -206,35 +204,29 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
 
     totalStr = '$%d' % int(amountCents / 100)
     format_kwargs = {
-      'name': data['name'].encode('utf-8').decode('utf-8'),
+      'name': data['name'].encode('utf-8'),
       'url_nonce': pledge.url_nonce,
       'total': totalStr,
       'user_url_nonce': user.url_nonce
     }
 
-    text_template = jinja2.Template(open('email/thank-you.txt').read().decode('utf-8'))
-    html_template = jinja2.Template(open('email/thank-you.html').read().decode('utf-8'))
+    text_body = open('email/thank-you.txt').read().format(**format_kwargs)
+    html_body = open('email/thank-you.html').read().format(**format_kwargs)
 
-    text_body = text_template.render(**format_kwargs)
-    html_body = text_template.render(**format_kwargs)
-
-
-    env.mail_sender.Send(to=data['email'].encode('utf-8').decode('utf-8'),
+    env.mail_sender.Send(to=data['email'].encode('utf-8'),
                          subject='Thank you for your pledge',
                          text_body=text_body,
                          html_body=html_body)
 
     if amountCents > 100000:
       format_kwargs = {
-        'name': data['name'].encode('utf-8').decode('utf-8'),
+        'name': data['name'].encode('utf-8'),
         'total': totalStr,
         'phone': data['phone'],
-        'email': data['email'].encode('utf-8').decode('utf-8'),
+        'email': data['email'],
       }
 
-      lessig_template = jinja2.Template(open('email/lessig-notify.txt').read().decode('utf-8'))
-      lessig_body = lessig_template.render(**format_kwargs)
-
+      lessig_body = open('email/lessig-notify.txt').read().format(**format_kwargs)
       logging.info('Sending ' + lessig_body)
       env.mail_sender.Send(to='lessig@mac.com',
                            subject='A donation for %s has come in from %s %s' % (totalStr, first_name, last_name),

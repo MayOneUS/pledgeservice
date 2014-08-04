@@ -1,10 +1,10 @@
-Dear {{ name }}:
+Dear {name}:
 
 Thank you for your donation to MAYDAY.US. We are grateful for the support to make it possible for us to win back our democracy.
 
 This is just the beginning. But if we can succeed as we have so far, then by 2016, we will have taken the first critical step to getting our democracy back.
 
-This email serves as your receipt for your donation of: {{ total }} 
+This email serves as your receipt for your donation of: {total}
 
 Thank you again,
 

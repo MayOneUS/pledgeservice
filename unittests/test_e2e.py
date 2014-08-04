@@ -55,7 +55,7 @@ class PledgeTest(BaseTest):
   def setUp(self):
     super(PledgeTest, self).setUp()
     self.pledge = dict(
-      email=u'pik\u00E1@pokedex.biz',
+      email='pika@pokedex.biz',
       phone='212-234-5432',
       name=u'Pik\u00E1 Chu',
       occupation=u'Pok\u00E9mon',
@@ -111,7 +111,7 @@ class PledgeTest(BaseTest):
         .Subscribe(email=self.pledge['email'],
                    first_name=u'Pik\u00E1',
                    last_name='Chu',
-                   amount_cents=self.pledge['amountCents'],
+                   amount_cents=4200,
                    ip_addr=None,  # Not sure why this is None in unittests
                    time=mox.IsA(datetime.datetime),
                    phone=phone,
@@ -148,23 +148,11 @@ class PledgeTest(BaseTest):
   def testMailOnCreatePledge(self):
     self.makeDefaultRequest()
 
-    messages = self.mail_stub.get_sent_messages(to=self.pledge['email'].encode('utf-8'))
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
     self.assertEquals(1, len(messages))
     self.assertEquals(self.pledge["email"], messages[0].to)
     self.assertTrue('Mayday PAC' in messages[0].sender)
     self.assertEquals('Thank you for your pledge', messages[0].subject)
-
-  def testSendToLessigOnCreateLargePledge(self):
-    self.pledge["amountCents"] = 5000000
-
-    self.makeDefaultRequest()
-
-    totalStr = '$%d' % int(self.pledge["amountCents"] / 100)
-
-    messages = self.mail_stub.get_sent_messages(to="lessig@mac.com")
-    self.assertEquals(1, len(messages))
-    self.assertEquals("lessig@mac.com", messages[0].to)
-    self.assertTrue('Mayday PAC' in messages[0].sender)
 
   def testBadJson(self):
     self.app.post('/r/pledge', '{foo', status=400)
@@ -189,7 +177,7 @@ class PledgeTest(BaseTest):
     self.assertEquals('charge_2468', pledge.stripe_charge_id)
     self.assertEquals('rocket', pledge.team)
 
-    user = model.User.get_by_key_name(self.pledge['email'])
+    user = model.User.get_by_key_name('pika@pokedex.biz')
 
     def assertEqualsSampleProperty(prop_name, actual):
       self.assertEquals(self.pledge[prop_name], actual)
@@ -220,7 +208,7 @@ class PledgeTest(BaseTest):
     self.mockery.ReplayAll()
 
     self.app.post_json('/r/pledge', self.pledge)
-    user = model.User.get_by_key_name(self.pledge['email'])
+    user = model.User.get_by_key_name('pika@pokedex.biz')
     assert user.mail_list_optin
 
   def testSubscribeOptOut(self):
@@ -233,7 +221,7 @@ class PledgeTest(BaseTest):
     self.mockery.ReplayAll()
 
     self.app.post_json('/r/pledge', self.pledge)
-    user = model.User.get_by_key_name(self.pledge['email'])
+    user = model.User.get_by_key_name('pika@pokedex.biz')
     assert not user.mail_list_optin
 
   def testNoPhone(self):
@@ -413,7 +401,7 @@ class PledgeTest(BaseTest):
     # pledge does get the email if are the reply_to
     post_data['reply_to'] = self.pledge["email"]
     resp = self.app.post('/r/thank', post_data)
-    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"].encode('utf-8'))
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
     # 1 email sent is the created pledge
     self.assertEquals(len(messages), 2)
     # post response should be zero sent thank you emails
@@ -425,7 +413,7 @@ class PledgeTest(BaseTest):
     post_data['reply_to'] = 'another@email.com'
     # self.assertEquals(model.Pledge.all()[0].thank_you_sent_at, None)
     resp = self.app.post('/r/thank', post_data)
-    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"].encode('utf-8'))
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
     self.assertEquals(len(messages), 3)
     self.assertEquals(messages[2].reply_to, post_data["reply_to"])
     self.assertEquals(messages[2].subject, post_data["subject"])
@@ -437,7 +425,7 @@ class PledgeTest(BaseTest):
     # make sure it isn't sent a message again when new_member is set to true
     post_data['new_members'] = True
     resp = self.app.post('/r/thank', post_data)
-    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"].encode('utf-8'))
+    messages = self.mail_stub.get_sent_messages(to=self.pledge["email"])
     self.assertEquals(len(messages), 3)
     resp_data = json.loads(resp.text)
     self.assertEquals(resp_data['num_emailed'], 0)
@@ -450,7 +438,7 @@ class PledgeTest(BaseTest):
   def testUserInfoNoPledge(self):
     self.makeDefaultRequest()
     self.assertEquals(1, model.Pledge.all().count())
-    user = model.User.get_by_key_name(self.pledge['email'])
+    user = model.User.get_by_key_name('pika@pokedex.biz')
     model.Pledge.all().filter('email =', user.email)[0].delete()
     resp = self.app.get('/user-info/%s' % user.url_nonce, status=404)
     self.assertEquals('user not found', resp.body)
