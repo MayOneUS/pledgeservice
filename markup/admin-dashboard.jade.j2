@@ -22,6 +22,9 @@ html
           &nbsp;
           a(href="/admin/files{{pledges}}/pledges.csv") Latest
           {% endif %}
+          br
+          a(href="/admin/generate/pledges_full_data.csv") Generate pledges_full_data.csv
+          
           h2 Admin Commands
           {% for cmd in commands %}
           div

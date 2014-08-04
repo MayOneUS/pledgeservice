@@ -102,7 +102,7 @@ class GeneratePledgeAmountsCsvHandler(webapp2.RequestHandler):
     self.redirect('/admin/files%s/pledge_amounts.csv' % file_name)
 
 
-def pledge_row(pledge, zg):
+def pledge_row(pledge, zg, full_data=False):
   try:
     user = model.User.all().filter('email =', pledge.email).get()
   except:
@@ -112,17 +112,53 @@ def pledge_row(pledge, zg):
     zg_lookup = zg.lookup(user.zipCode)
   if not zg_lookup:
     zg_lookup = {'lat': '', 'lon': ''}
-  return [user.zipCode,
-          int(pledge.amountCents / 100.0),
-          str(pledge.donationTime),
-          pledge.donationTime.strftime('%-m/%-d/%y'),
-          user.city,
-          user.state,
-          zg_lookup['lat'],
-          zg_lookup['lon']]
+
+  if full_data:
+    output = full_pledge_data(pledge,user)
+  else:
+    output = [
+              user.zipCode,
+              int(pledge.amountCents / 100.0),
+              str(pledge.donationTime),
+              pledge.donationTime.strftime('%-m/%-d/%y'),
+              user.city,
+              user.state,
+              zg_lookup['lat'],
+              zg_lookup['lon']
+            ]
+  return output
+
+def full_pledge_data(pledge,user):
+  if pledge.paypalPayerID:
+    source = 'PAYPAL'
+  elif pledge.bitpay_invoice_id:
+    source = 'BITCOIN'
+  else:
+    source = 'STRIPE/MAYDAY.US'
+
+  return [
+    source,
+    pledge.donationTime.strftime('%-m/%-d/%y'),
+    pledge.amountCents/100.0,
+    pledge.url_nonce,
+    pledge.stripeCustomer or pledge.paypalPayerID or pledge.bitpay_invoice_id,
+    pledge.email,
+    user.first_name,
+    user.last_name,
+    user.address,
+    '',
+    user.city,
+    user.state,
+    user.zipCode,
+    'United States',
+    user.occupation,
+    user.employer,
+    user.target or 'Whatever Helps',
+  ]
 
 
-def generate_pledges_csv(file_name, pledge_type, pledge_time):
+
+def generate_pledges_csv(file_name, pledge_type, pledge_time, full_data=False):
   """ Generates the pledges.csv file in a deferred way """
 
   PAGE_SIZE = 500
@@ -130,8 +166,15 @@ def generate_pledges_csv(file_name, pledge_type, pledge_time):
   w = csv.writer(csv_buffer)
   if not pledge_time and pledge_type == 'WpPledge':
     # First time through, add the column headers
-    w.writerow(['zip', 'dollars', 'timestamp', 'date', 'city', 'state',
-                'latitude', 'longitude'])
+    if full_data:
+      headers = ['SOURCE', 'donationTime', 'Amount ($)', 'url_nonce', 'stripeCustomer',
+        'Email', 'First Name', 'Last Name', 'Address', 'Address 2', 'City', 'State',
+        'Zip', 'Country', 'Occupation', 'Employer', 'Targeting']
+    else:
+      headers = ['zip', 'dollars', 'timestamp', 'date', 'city', 'state', 'latitude',
+        'longitude']
+
+    w.writerow(headers)
   zg = Zipgun('zipgun/zipcodes')
 
   # Get the next PAGE_SIZE pledges
@@ -148,7 +191,7 @@ def generate_pledges_csv(file_name, pledge_type, pledge_time):
 
   # Loop through the current pledges and write them to the csv
   for pledge in pledges:
-    w.writerow(pledge_row(pledge, zg))
+    w.writerow(pledge_row(pledge, zg, full_data))
   with files.open(file_name, 'a') as f:
     f.write(csv_buffer.getvalue())
   csv_buffer.close()
@@ -162,7 +205,7 @@ def generate_pledges_csv(file_name, pledge_type, pledge_time):
     if pledge_type == 'WpPledge' and not next_pledge_time:
       next_pledge_type = 'Pledge'
     deferred.defer(generate_pledges_csv, file_name, next_pledge_type,
-                   next_pledge_time, _queue='generateCSV')
+                   next_pledge_time, full_data, _queue='generateCSV')
 
 
 class GeneratePledgesCsvHandler(webapp2.RequestHandler):
@@ -172,8 +215,18 @@ class GeneratePledgesCsvHandler(webapp2.RequestHandler):
     file_name = files.blobstore.create(
       mime_type='text/csv', _blobinfo_uploaded_filename="pledges.csv")
     deferred.defer(generate_pledges_csv, file_name, 'WpPledge', None,
-                   _queue='generateCSV')
+                   False, _queue='generateCSV')
     self.redirect('/admin/files%s/pledges.csv' % file_name)
+
+class GeneratePledgesFullDataCsvHandler(webapp2.RequestHandler):
+  def get(self):
+    # Create a blobstore file, a deferred task, and redirect to the download
+    # page.
+    file_name = files.blobstore.create(
+      mime_type='text/csv', _blobinfo_uploaded_filename="pledges_full_data.csv")
+    deferred.defer(generate_pledges_csv, file_name, 'WpPledge', None,
+                   True, _queue='generateCSV')
+    self.redirect('/admin/files%s/pledges_full_data.csv' % file_name)
 
 
 class CsvHandler(blobstore_handlers.BlobstoreDownloadHandler):
@@ -241,8 +294,10 @@ COMMAND_HANDLERS = [MakeCommandHandler(c) for c in commands.COMMANDS]
 app = webapp2.WSGIApplication([
   ('/admin/generate/pledge_amounts.csv', GeneratePledgeAmountsCsvHandler),
   ('/admin/generate/pledges.csv', GeneratePledgesCsvHandler),
+  ('/admin/generate/pledges_full_data.csv', GeneratePledgesFullDataCsvHandler),
   ('/admin/files(.+)/pledge_amounts.csv', CsvHandler),
   ('/admin/files(.+)/pledges.csv', CsvHandler),
+  ('/admin/files(.+)/pledges_full_data.csv', CsvHandler),
   ('/admin/stretch', StretchHandler),
   ('/admin/?', AdminDashboardHandler),
 ] + COMMAND_HANDLERS, debug=False, config=dict(env=env.get_env()))
