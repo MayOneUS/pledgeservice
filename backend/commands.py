@@ -161,7 +161,7 @@ def update_user_data(env, pledge_type, pledge_time):
   for pledge in pledges:
     try:
       user = model.User.all().filter('email =', pledge.email).get()
-      if user.zipCode and user.address:
+      if user.zipCode and user.address and user.address != 'None':
         continue
       if hasattr(pledge, 'paypalTransactionID') and pledge.paypalTransactionID:
         request_data = {
