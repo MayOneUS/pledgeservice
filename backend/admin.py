@@ -315,8 +315,7 @@ class PledgesExportJSONHandler(webapp2.RequestHandler):
 
     resp = {"pledges": [build_pledge_dict(pledge) for pledge in query.fetch(limit)]}
     cursor = query.cursor()
-    if not build_query(cursor, start_date, end_date, limit).count():
-      resp["next_cursor"] = cursor
+    resp["next_cursor"] = cursor
     self.response.write(json.dumps(resp))
 
 def get_source(pledge):
