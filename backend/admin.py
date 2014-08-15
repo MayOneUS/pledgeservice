@@ -1,5 +1,7 @@
 import calendar
 import csv
+import datetime
+import decimal
 import jinja2
 import json
 import logging
@@ -264,6 +266,107 @@ class StretchHandler(webapp2.RequestHandler):
     except Exception as e:
       self.response.write('Sorry, something went wrong: ' + str(e))
 
+class PledgesExportHandler(webapp2.RequestHandler):
+  def get(self):
+    template = templates.GetTemplate("pledges-csv.html")
+    self.response.write(template.render({}))
+
+def utc_to_boston_time(start_datetime_utc):
+  #TODO use pytz. Manual timezones make baby Jesus cry.
+  FOUR_HOURS = datetime.timedelta(seconds=4*60*60)
+  gmt_minus_4 = start_datetime_utc - FOUR_HOURS
+  return gmt_minus_4
+
+def boston_to_utc_time(gmt_minus_4):
+  #TODO use pytz. Manual timezones make baby Jesus cry.
+  FOUR_HOURS = datetime.timedelta(seconds=4*60*60)
+  gmt = gmt_minus_4 + FOUR_HOURS
+  return gmt
+
+def build_query(cursor=None, start_date=None, limit=None):
+  query = model.Pledge.all()
+  if cursor:
+    query.with_cursor(cursor)
+
+  if start_date:
+    start_datetime_utc = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+    start_datetime_boston = boston_to_utc_time(start_datetime_utc)
+    query.filter('donationTime >=', start_datetime_boston)
+  query.order('donationTime')
+  return query
+
+
+class PledgesExportJSONHandler(webapp2.RequestHandler):
+  def get(self):
+    cursor = self.request.get("cursor")
+    limit = int(self.request.get("limit", 100))
+    start_date = self.request.get("start_date")
+
+    query = build_query(cursor, start_date, limit)
+
+    resp = {"pledges": [build_pledge_dict(pledge) for pledge in query.fetch(limit)]}
+    cursor = query.cursor()
+    if not build_query(cursor, start_date, limit).count():
+      resp["next_cursor"] = cursor
+    self.response.write(json.dumps(resp))
+
+def get_source(pledge):
+  if isinstance(pledge, model.WpPledge):
+    return 'STRIPE/WORDPRESS'
+  elif pledge.paypalPayerID:
+    return 'PAYPAL'
+  elif pledge.bitpay_invoice_id:
+    return 'BITCOIN'
+  else:
+    return 'STRIPE/MAYDAY.US'
+
+def cents_to_dollar_str(cents):
+  """Safely convert from cents to dollars"""
+  TWOPLACES = decimal.Decimal('0.01')
+  dollars = decimal.Decimal(cents).quantize(TWOPLACES) / 100
+  return str(dollars)
+
+class Empty(object):
+  def __getattr__(self, attr):
+    return ''
+
+def build_pledge_dict(pledge):
+  payer = pledge.stripeCustomer or pledge.paypalPayerID or pledge.bitpay_invoice_id
+  date = utc_to_boston_time(pledge.donationTime)
+  pledge_dict = {
+    'Source': get_source(pledge),
+    'Donation Date': date.strftime('%-m/%-d/%y %H:%M'),
+    'Amount ($)': cents_to_dollar_str(pledge.amountCents),
+    'Plege url_nonce': pledge.url_nonce,
+    'Payer Identifier': payer,
+    'Email': pledge.email,
+  }
+
+  # add user info
+  try:
+    user = model.User.all().filter('email =', pledge.email).get()
+  except:
+    logging.warning('No user found for pledge email: %s', pledge.email)
+    user = Empty()
+  if user is None:
+    user = Empty()
+  pledge_dict.update({
+    'User url_nonce': user.url_nonce,
+    'First Name': user.first_name,
+    'Last Name': user.last_name,
+    'Address': user.address,
+    'Address 2': '',
+    'City': user.city,
+    'State': user.state,
+    'ZIP Code': user.zipCode,
+    'Country': 'United States',
+    'Occupation': user.occupation,
+    'Employer': user.employer,
+    'Targeting': user.target or 'Whatever Helps',
+  })
+  return pledge_dict
+
+
 def MakeCommandHandler(cmd_cls):
   """Takes a command class and returns a route tuple which allows that command
      to be executed.
@@ -299,6 +402,8 @@ app = webapp2.WSGIApplication([
   ('/admin/files(.+)/pledge_amounts.csv', CsvHandler),
   ('/admin/files(.+)/pledges.csv', CsvHandler),
   ('/admin/files(.+)/pledges_full_data.csv', CsvHandler),
+  ('/admin/pledges_export', PledgesExportHandler),
+  ('/admin/pledges_export/pledges.json', PledgesExportJSONHandler),
   ('/admin/stretch', StretchHandler),
   ('/admin/?', AdminDashboardHandler),
 ] + COMMAND_HANDLERS, debug=False, config=dict(env=env.get_env()))
