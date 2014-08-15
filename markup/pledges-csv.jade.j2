@@ -49,7 +49,7 @@ html
         return v;
       }
       function outputCSV(pledges){
-        $('.status').html('Done downloading ' + chunks + ' data chunks!')
+        $('.status').html('Done downloading ' + pledges.length + ' pledges!')
         var header = '"' + headers.join('","') + '"';
         var body = $.map(pledges, function(pledge){
           return $.map(headers, function(header){
@@ -64,11 +64,9 @@ html
         $('#csv-download').append('<pre>'+csv+'</pre>');
       }
 
-      var pledges = []
-      var chunks = 0;
+      var pledges = [];
       function getChunk(startDate, endDate, cursor){
-        $('.status').html('Exported ' + chunks + ' data chunks...')
-        chunks ++;
+        $('.status').html('Exported ' + pledges.length + ' pledges...')
         options = {};
         if (!!startDate){
           options.start_date = startDate;
