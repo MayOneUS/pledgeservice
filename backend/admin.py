@@ -2,6 +2,7 @@ import calendar
 import csv
 import datetime
 import decimal
+import itertools
 import jinja2
 import json
 import logging
@@ -283,8 +284,8 @@ def boston_to_utc_time(gmt_minus_4):
   gmt = gmt_minus_4 + FOUR_HOURS
   return gmt
 
-def build_query(cursor=None, start_date=None, end_date=None, limit=None):
-  query = model.Pledge.all()
+def build_query(model, cursor=None, start_date=None, end_date=None, limit=None):
+  query = model.all()
   if cursor:
     query.with_cursor(cursor)
 
@@ -306,15 +307,19 @@ def build_query(cursor=None, start_date=None, end_date=None, limit=None):
 
 class PledgesExportJSONHandler(webapp2.RequestHandler):
   def get(self):
-    cursor = self.request.get("cursor")
+    pledge_cursor, wp_pledge_cursor = self.request.get("cursor", ':').split(':')
     limit = int(self.request.get("limit", 100))
     start_date = self.request.get("start_date")
     end_date = self.request.get("end_date")
 
-    query = build_query(cursor, start_date, end_date, limit)
+    pledge_query = build_query(model.Pledge, pledge_cursor, start_date, end_date, limit)
+    wp_pledge_query = build_query(model.WpPledge, wp_pledge_cursor, start_date, end_date, limit)
 
-    resp = {"pledges": [build_pledge_dict(pledge) for pledge in query.fetch(limit)]}
-    cursor = query.cursor()
+    queries = itertools.chain(pledge_query.fetch(limit), wp_pledge_query.fetch(limit))
+    pledges = sorted(queries, key=lambda x: x.donationTime)[:limit]
+
+    resp = {"pledges": [build_pledge_dict(pledge) for pledge in pledges]}
+    cursor = '{}:{}'.format(pledge_query.cursor(), wp_pledge_query.cursor())
     resp["next_cursor"] = cursor
     self.response.write(json.dumps(resp))
 
