@@ -283,7 +283,7 @@ def boston_to_utc_time(gmt_minus_4):
   gmt = gmt_minus_4 + FOUR_HOURS
   return gmt
 
-def build_query(cursor=None, start_date=None, limit=None):
+def build_query(cursor=None, start_date=None, end_date=None, limit=None):
   query = model.Pledge.all()
   if cursor:
     query.with_cursor(cursor)
@@ -292,6 +292,14 @@ def build_query(cursor=None, start_date=None, limit=None):
     start_datetime_utc = datetime.datetime.strptime(start_date, "%Y-%m-%d")
     start_datetime_boston = boston_to_utc_time(start_datetime_utc)
     query.filter('donationTime >=', start_datetime_boston)
+  if end_date:
+    end_datetime_utc = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+    # we want the end of the day
+    almost_day = datetime.timedelta(days=1) - datetime.timedelta(microseconds=1)
+    end_datetime_utc += almost_day
+    end_datetime_boston = boston_to_utc_time(end_datetime_utc)
+    query.filter('donationTime <=', end_datetime_boston)
+
   query.order('donationTime')
   return query
 
@@ -301,12 +309,13 @@ class PledgesExportJSONHandler(webapp2.RequestHandler):
     cursor = self.request.get("cursor")
     limit = int(self.request.get("limit", 100))
     start_date = self.request.get("start_date")
+    end_date = self.request.get("end_date")
 
-    query = build_query(cursor, start_date, limit)
+    query = build_query(cursor, start_date, end_date, limit)
 
     resp = {"pledges": [build_pledge_dict(pledge) for pledge in query.fetch(limit)]}
     cursor = query.cursor()
-    if not build_query(cursor, start_date, limit).count():
+    if not build_query(cursor, start_date, end_date, limit).count():
       resp["next_cursor"] = cursor
     self.response.write(json.dumps(resp))
 
