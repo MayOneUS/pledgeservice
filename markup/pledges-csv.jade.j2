@@ -58,13 +58,7 @@ html
         a.attr("href", href).attr("download", "pledges.csv");
         $('#csv-download').append('<pre>'+csv+'</pre>');
       }
-      $(function(){
-        $('#csv-download button').one('click', function(){
-          $(this).remove();
-          this.disabled = true;
-          getChunk();
-        });
-      });
+
       var pledges = []
       var chunks = 0;
       function getChunk(cursor){
@@ -85,6 +79,14 @@ html
           }
         });
       }
+
+      $(function(){
+        $('#csv-download button').one('click', function(){
+          $(this).remove();
+          this.disabled = true;
+          getChunk();
+        });
+      });
 
   body#user-update
     .container
