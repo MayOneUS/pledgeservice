@@ -200,11 +200,20 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
   if pledgePageSlug:
     person['pledge_page_slug'] = pledge_page_slug
 
+  if otherVars:
+    merge13 = otherVars.get('MERGE13', '')
+    if merge13 != '':
+      person['fundraising_email_subscription'] = merge13
+
   response = session.put('https://' + nation_slug +".nationbuilder.com/api/v1/people/push",
     data=json.dumps({'person':person}),
     headers={"content-type":"application/json"}
   )
-    
+  id = json.loads(response.content)["person"]["id"]
+  response = session.put('https://' + nation_slug + ".nationbuilder.com/api/v1/people/" + str(id) + "/taggings",
+    data=json.dumps({"tagging":{"tag":"source: " + source}}),
+    headers={"content-type":"application/json"}
+  )
 
 def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
                             amount, request_ip, source, phone=None, zipcode=None,
