@@ -188,15 +188,15 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
   
   if volunteer:
     if volunteer == "Yes":
-	person["volunteer"] = True
+	person["is_volunteer"] = True
     else:
-	person["volunteer"] = False
+	person["is_volunteer"] = False
 
   if phone:
     person["phone"] = phone
 
   if zipcode:
-    person['primary_address'] = {'zip':zipcode}
+    person['home_address'] = {'zip':zipcode}
 
   if skills:
     person['skills'] = skills
