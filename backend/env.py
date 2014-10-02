@@ -178,7 +178,7 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
         'first_name':first_name,
         'last_name':last_name,
         'request_ip':request_ip
-  1}
+  }
   if rootstrikers:
     if rootstrikers == "Yes":
 	person["rootstrikers_subscription"] = True
