@@ -130,7 +130,7 @@ class Secrets(db.Model):
 
   bitpay_api_key = db.StringProperty(default='')
 
-
+  nationbuilder_token = db.StringProperty(default='')
   @staticmethod
   def get():
     return Secrets.get_or_insert(key_name=Secrets.SINGLETON_KEY)
