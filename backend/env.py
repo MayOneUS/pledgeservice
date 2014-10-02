@@ -167,8 +167,8 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
   access_token_url = "http://" + nation_slug + ".nationbuilder.com/oauth/token"
   authorize_url = nation_slug + ".nationbuilder.com/oauth/authorize"
   service = OAuth2Service(
-    client_id = "c2803fd687f856ce94a55b7f66121c79b75bf7283c467c855e82d53af07074e9",
-    client_secret = "0d133e9f2b24ab3b897b4a9a216a1a8391a67b96805eb9a3c9305c0f7ac0e411",
+    client_id = "",
+    client_secret = "",
     name = "anyname",
     authorize_url = authorize_url,
     access_token_url = access_token_url,
@@ -178,12 +178,19 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
         'first_name':first_name,
         'last_name':last_name,
         'request_ip':request_ip
-  }
+  1}
   if rootstrikers:
-    person["rootstrikers_subscription"] = rootstrikers
+    if rootstrikers == "Yes":
+	person["rootstrikers_subscription"] = True
+    else:
+	person["rootstrikers_subscription"] = False
+
   
   if volunteer:
-    person["volunteer"] = volunteer
+    if volunteer == "Yes":
+	person["volunteer"] = True
+    else:
+	person["volunteer"] = False
 
   if phone:
     person["phone"] = phone
