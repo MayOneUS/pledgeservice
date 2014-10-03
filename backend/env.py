@@ -116,11 +116,11 @@ class MailchimpSubscriber(handlers.MailingListSubscriber):
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
                 source, phone=None, zipcode=None, volunteer=None, skills=None, rootstrikers=None,
                 nonce=None, pledgePageSlug=None, otherVars = None):
-    #deferred.defer(_subscribe_to_mailchimp,
-    #               email, first_name, last_name,
-    #               amount_cents, ip_addr, source, phone, zipcode,
-    #               volunteer, skills, rootstrikers, 
-    #               nonce, pledgePageSlug, otherVars)
+    deferred.defer(_subscribe_to_mailchimp,
+                   email, first_name, last_name,
+                   amount_cents, ip_addr, source, phone, zipcode,
+                   volunteer, skills, rootstrikers, 
+                   nonce, pledgePageSlug, otherVars)
     deferred.defer(_subscribe_to_nationbuilder,
                    email, first_name, last_name,
                    amount_cents, ip_addr, source, phone, zipcode,
