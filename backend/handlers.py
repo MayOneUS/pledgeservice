@@ -7,6 +7,7 @@ import logging
 import cgi
 import base64
 import urllib
+import datetime
 
 from google.appengine.api import mail
 from google.appengine.ext import db
@@ -26,7 +27,7 @@ import util
 import pprint
 import urlparse
 import paypal
-
+from rauth import OAuth2Service
 
 # Immutable environment with both configuration variables, and backends to be
 # mocked out in tests.
@@ -59,7 +60,8 @@ def nation_builder_add_donation(email,
               bitpay_invoice_id = None):
     
     donation = {'amount_in_cents':amount_cents,
-		'email':'email',
+		'email':email,
+		'succeeded_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		}
     donation['billing_address'] = {}
 
@@ -96,7 +98,7 @@ def nation_builder_add_donation(email,
     if state:
 	donation['billing_address']['state'] = state
     if zipCode:
-	donation['billing_address']['zip'] = zipcode
+	donation['billing_address']['zip'] = zipCode
     if bitpay_invoice_id:
 	donation['bitpay_invoice_id'] = bitpay_invoice_id
     nationbuilder_token = model.Secrets.get().nationbuilder_token
@@ -111,11 +113,13 @@ def nation_builder_add_donation(email,
     	access_token_url = access_token_url,
     	base_url = nation_slug + ".nationbuilder.com")
     session = service.get_session(nationbuilder_token)
-
-  response = session.post('https://' + nation_slug +".nationbuilder.com/api/v1/donations",
-    data=json.dumps({'donation':donation}),
-    headers={"content-type":"application/json"}
-  )
+    
+    response = session.post('https://' + nation_slug +".nationbuilder.com/api/v1/donations",
+      data=json.dumps({'donation':donation}),
+      headers={"content-type":"application/json"}
+    )
+    print donation
+    print response.content
     
 
 class PaymentError(Exception):
