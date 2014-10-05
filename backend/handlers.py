@@ -49,6 +49,74 @@ Environment = namedtuple(
     'mail_sender',
   ])
 
+def nation_builder_add_donation(email,
+              amount_cents, pledge_type,
+              first_name, last_name, occupation, employer, phone,
+              target, team, mail_list_optin, anonymous, surveyResult=None,
+              stripe_customer_id=None, stripe_charge_id=None,
+              paypal_txn_id=None, paypal_payer_id=None,
+              address=None, city=None, state=None, zipCode=None,
+              bitpay_invoice_id = None):
+    
+    donation = {'amount_in_cents':amount_cents,
+		'email':'email',
+		}
+    donation['billing_address'] = {}
+
+    if first_name:
+	donation['first_name'] = first_name
+    if last_name:
+	donation['last_name'] = last_name
+    if occupation:
+	pass
+    if employer:
+	donation['employer'] = employer
+    if phone:
+	pass
+    if anonymous:
+	pass
+    if target:
+	pass
+    if team:
+	pass
+    if surveyResult:
+	pass
+    if stripe_customer_id:
+	donation['stripe_customer_id'] = stripe_customer_id
+    if stripe_charge_id:
+	donation['stripe_charge_id'] = stripe_charge_id
+    if paypal_txn_id:
+	donation['paypal_txn_id'] = paypal_txn_id
+    if paypal_payer_id:
+	donation['paypal_payer_id'] = paypal_payer_id
+    if address:
+	donation['billing_address']['address1'] = address
+    if city:
+	donation['billing_address']['city'] = city
+    if state:
+	donation['billing_address']['state'] = state
+    if zipCode:
+	donation['billing_address']['zip'] = zipcode
+    if bitpay_invoice_id:
+	donation['bitpay_invoice_id'] = bitpay_invoice_id
+    nationbuilder_token = model.Secrets.get().nationbuilder_token
+    nation_slug = "mayday"
+    access_token_url = "http://" + nation_slug + ".nationbuilder.com/oauth/token"
+    authorize_url = nation_slug + ".nationbuilder.com/oauth/authorize"
+    service = OAuth2Service(
+        client_id = "", 
+    	client_secret = "", 
+    	name = "anyname",
+    	authorize_url = authorize_url,
+    	access_token_url = access_token_url,
+    	base_url = nation_slug + ".nationbuilder.com")
+    session = service.get_session(nationbuilder_token)
+
+  response = session.post('https://' + nation_slug +".nationbuilder.com/api/v1/donations",
+    data=json.dumps({'donation':donation}),
+    headers={"content-type":"application/json"}
+  )
+    
 
 class PaymentError(Exception):
   pass
@@ -183,7 +251,31 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
                              zipCode=data['zipCode'],
                              bitpay_invoice_id = data['bitpay_invoice_id']
                              )
-
+    
+    nation_builder_add_donation(email=data['email'],
+                             stripe_customer_id=stripe_customer_id,
+                             stripe_charge_id=stripe_charge_id,
+                             paypal_payer_id=paypal_payer_id,
+                             paypal_txn_id=paypal_txn_id,
+                             amount_cents=amountCents,
+                             first_name=first_name,
+                             last_name=last_name,
+                             occupation=data['occupation'],
+                             employer=data['employer'],
+                             phone=data['phone'],
+                             target=data['target'],
+                             surveyResult=data['surveyResult'],
+                             pledge_type=data.get(
+                               'pledgeType', model.Pledge.TYPE_CONDITIONAL),
+                             team=data['team'],
+                             mail_list_optin=data['subscribe'],
+                             anonymous=data.get('anonymous', False),
+                             address=str(data['address']),
+                             city=data['city'],
+                             state=data['state'],
+                             zipCode=data['zipCode'],
+                             bitpay_invoice_id = data['bitpay_invoice_id']
+                             )
     if data['subscribe']:
       env.mailing_list_subscriber.Subscribe(
         email=data['email'],
