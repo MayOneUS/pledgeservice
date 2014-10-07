@@ -211,7 +211,7 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
     if merge13 != '':
       person['fundraising_email_subscription'] = merge13
     else:
-      person['fundraising_email_subscription'] = True
+      person['fundraising_email_subscription'] = 'Yes'
   else: person['fundraising_email_subscription'] = 'Yes'
   
   response = session.put('https://' + nation_slug +".nationbuilder.com/api/v1/people/push",
