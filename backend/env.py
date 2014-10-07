@@ -197,7 +197,6 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
 
   if zipcode:
     person['home_address'] = {'zip':zipcode}
-
   if skills:
     person['skills'] = skills
 
@@ -211,7 +210,10 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
     merge13 = otherVars.get('MERGE13', '')
     if merge13 != '':
       person['fundraising_email_subscription'] = merge13
-
+    else:
+      person['fundraising_email_subscription'] = True
+  else: person['fundraising_email_subscription'] = 'Yes'
+  
   response = session.put('https://' + nation_slug +".nationbuilder.com/api/v1/people/push",
     data=json.dumps({'person':person}),
     headers={"content-type":"application/json"}

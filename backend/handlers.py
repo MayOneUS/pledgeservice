@@ -50,77 +50,6 @@ Environment = namedtuple(
     'mail_sender',
   ])
 
-def nation_builder_add_donation(email,
-              amount_cents, pledge_type,
-              first_name, last_name, occupation, employer, phone,
-              target, team, mail_list_optin, anonymous, surveyResult=None,
-              stripe_customer_id=None, stripe_charge_id=None,
-              paypal_txn_id=None, paypal_payer_id=None,
-              address=None, city=None, state=None, zipCode=None,
-              bitpay_invoice_id = None):
-    
-    donation = {'amount_in_cents':amount_cents,
-		'email':email,
-		'succeeded_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-		}
-    donation['billing_address'] = {}
-
-    if first_name:
-	donation['first_name'] = first_name
-    if last_name:
-	donation['last_name'] = last_name
-    if occupation:
-	pass
-    if employer:
-	donation['employer'] = employer
-    if phone:
-	pass
-    if anonymous:
-	pass
-    if target:
-	pass
-    if team:
-	pass
-    if surveyResult:
-	pass
-    if stripe_customer_id:
-	donation['stripe_customer_id'] = stripe_customer_id
-    if stripe_charge_id:
-	donation['stripe_charge_id'] = stripe_charge_id
-    if paypal_txn_id:
-	donation['paypal_txn_id'] = paypal_txn_id
-    if paypal_payer_id:
-	donation['paypal_payer_id'] = paypal_payer_id
-    if address:
-	donation['billing_address']['address1'] = address
-    if city:
-	donation['billing_address']['city'] = city
-    if state:
-	donation['billing_address']['state'] = state
-    if zipCode:
-	donation['billing_address']['zip'] = zipCode
-    if bitpay_invoice_id:
-	donation['bitpay_invoice_id'] = bitpay_invoice_id
-    nationbuilder_token = model.Secrets.get().nationbuilder_token
-    nation_slug = "mayday"
-    access_token_url = "http://" + nation_slug + ".nationbuilder.com/oauth/token"
-    authorize_url = nation_slug + ".nationbuilder.com/oauth/authorize"
-    service = OAuth2Service(
-        client_id = "", 
-    	client_secret = "", 
-    	name = "anyname",
-    	authorize_url = authorize_url,
-    	access_token_url = access_token_url,
-    	base_url = nation_slug + ".nationbuilder.com")
-    session = service.get_session(nationbuilder_token)
-    
-    response = session.post('https://' + nation_slug +".nationbuilder.com/api/v1/donations",
-      data=json.dumps({'donation':donation}),
-      headers={"content-type":"application/json"}
-    )
-    print donation
-    print response.content
-    
 
 class PaymentError(Exception):
   pass
@@ -255,8 +184,8 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
                              zipCode=data['zipCode'],
                              bitpay_invoice_id = data['bitpay_invoice_id']
                              )
-    
-    nation_builder_add_donation(email=data['email'],
+
+    model.addNationBuilderDonation(email=data['email'],
                              stripe_customer_id=stripe_customer_id,
                              stripe_charge_id=stripe_charge_id,
                              paypal_payer_id=paypal_payer_id,
@@ -290,7 +219,6 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
         source='pledge',
         phone=data['phone'],
         nonce=user.url_nonce)
-
     # Add to the total.
     model.ShardedCounter.increment('TOTAL-5', amountCents)
 
@@ -367,7 +295,8 @@ class PledgeHandler(webapp2.RequestHandler):
       try:
         logging.info('Trying to create stripe customer %s' % data['email'])
         stripe_customer = env.stripe_backend.CreateCustomer(
-          email=data['email'], card_token=data['payment']['STRIPE']['token'])
+          email=data['email'], card_token=data['payment']['STRIPE']['token']
+	)
         stripe_customer_id = stripe_customer.id
         logging.info('Trying to extract address for %s' % data['email'])
         if len(stripe_customer.cards.data) > 0:
