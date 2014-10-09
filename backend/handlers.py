@@ -284,6 +284,10 @@ class PledgeHandler(webapp2.RequestHandler):
       validictory.validate(data, PLEDGE_SCHEMA)
     except ValueError, e:
       logging.warning('Schema check failed: %s', e)
+      try:
+	logging.warning('referer: ' + self.request.referer)
+      except:
+        pass
       self.error(400)
       self.response.write('Invalid request')
       return
