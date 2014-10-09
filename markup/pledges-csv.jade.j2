@@ -1,0 +1,127 @@
+doctype html
+html
+  head
+    include includes/head
+    link(rel="stylesheet", href="/static/admin/pickadate.js/default.css")
+    link(rel="stylesheet", href="/static/admin/pickadate.js/default.date.css")
+    script(src="//code.jquery.com/jquery-1.11.0.min.js")
+    script(src="/static/admin/pickadate.js/picker.js")
+    script(src="/static/admin/pickadate.js/picker.date.js")
+    script(src="/static/admin/pickadate.js/legacy.js")
+    script(type='text/javascript').
+      var PARALLELISM = 10;
+      // we could just iterate over the keys, but we want a specific order
+      var headers = [
+        'Source',
+        'Donation Date',
+        'Amount ($)',
+        'Plege url_nonce',
+        'Payer Identifier',
+        'Email',
+        'User url_nonce', 
+        'First Name',
+        'Last Name',
+        'Address',
+        'Address 2',
+        'City',
+        'State',
+        'ZIP Code',
+        'Country',
+        'Occupation',
+        'Employer',
+        'Targeting'
+      ];
+      function escapeValue(v){
+        if (v === null) {
+          return "";
+        }
+        if (typeof(v) === 'string'){
+          // escape quotes with a double
+          v = v.replace(/"/g, '""');
+          // quote string if it contains a quote, comma, or newline
+          var hasComma = v.indexOf(',') > -1;
+          var hadQuote = v.indexOf('"') > -1;
+          var hasNewline = v.indexOf('\n') > -1;
+          if (hasComma || hadQuote || hasNewline) {
+            v = '"' + v + '"';
+          }
+        }
+        return v;
+      }
+      function outputCSV(pledges){
+        $('.status').html('Done downloading ' + pledges.length + ' pledges!')
+        var header = '"' + headers.join('","') + '"';
+        var body = $.map(pledges, function(pledge){
+          return $.map(headers, function(header){
+            return escapeValue(pledge[header]);
+          }).join();
+        }).join('\r\n');
+        var csv = [header, body].join('\r\n');
+        a = $('<a>Download CSV</a>');
+        $('#csv-download').append(a);
+        var href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+        a.attr("href", href).attr("download", "pledges.csv");
+        $('#csv-download').append('<pre>'+csv+'</pre>');
+      }
+
+      var pledges = [];
+      function getChunk(startDate, endDate, cursor){
+        $('.status').html('Exported ' + pledges.length + ' pledges...')
+        options = {};
+        if (!!startDate){
+          options.start_date = startDate;
+        }
+        if (!!endDate){
+          options.end_date = endDate;
+        }
+        if (!!cursor){
+          options.cursor = cursor;
+        }
+        $.getJSON("/admin/pledges_export/pledges.json", options, function(data) {
+          $.each(data.pledges, function(i, pledge){
+            pledges.push(pledge);
+          });
+          if (data.pledges.length){
+            getChunk(startDate, endDate, data.next_cursor);
+          } else {
+            outputCSV(pledges);
+          }
+        });
+      }
+
+      $(function(){
+        $('#csv-download button').one('click', function(){
+          $(this).remove();
+          this.disabled = true;
+          $('#start-date').hide();
+          $('#end-date').hide();
+          var startDate = $('#start-date_hidden').val();
+          var endDate = $('#end-date_hidden').val();
+          getChunk(startDate, endDate);
+        });
+        var pickadateOptions = {
+          formatSubmit: 'yyyy-mm-dd',
+          hiddenName: true
+        };
+        $('#start-date').pickadate(pickadateOptions);
+        $('#end-date').pickadate(pickadateOptions);
+      });
+
+  body#user-update
+    .container
+      .page-header
+        h1 Generate CSV Downlaod
+
+      .row
+        .col-md-8.col-md-offset-2
+          h2 CSV
+          #csv-download
+            .row
+              .col-md-6
+                input#start-date(placeholder="Start date (optional)")
+              .col-md-6
+                input#end-date(placeholder="End date (optional)")
+            button Start Generating CSV Download
+            .status
+            
+          

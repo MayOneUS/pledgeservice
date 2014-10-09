@@ -4,6 +4,8 @@ import json
 import logging
 import datetime
 
+from rauth import OAuth2Service
+
 from google.appengine.api import mail
 from google.appengine.ext import deferred
 from mailchimp import mailchimp
@@ -119,7 +121,11 @@ class MailchimpSubscriber(handlers.MailingListSubscriber):
                    amount_cents, ip_addr, source, phone, zipcode,
                    volunteer, skills, rootstrikers, 
                    nonce, pledgePageSlug, otherVars)
-
+    deferred.defer(_subscribe_to_nationbuilder,
+                   email, first_name, last_name,
+                   amount_cents, ip_addr, source, phone, zipcode,
+                   volunteer, skills, rootstrikers,
+                   nonce, pledgePageSlug, otherVars)
 
 class FakeSubscriber(handlers.MailingListSubscriber):
   def Subscribe(self, **kwargs):
@@ -152,6 +158,71 @@ def _send_mail(to, subject, text_body, html_body, reply_to=None):
     message.reply_to = 'info@mayday.us'
   message.send()
 
+def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
+                            amount, request_ip, source, phone=None, zipcode=None,
+                            volunteer=None, skills=None, rootstrikers=None,
+                            nonce=None, pledgePageSlug=None, otherVars=None):
+  nationbuilder_token = model.Secrets.get().nationbuilder_token
+  nation_slug = "mayday"
+  access_token_url = "http://" + nation_slug + ".nationbuilder.com/oauth/token"
+  authorize_url = nation_slug + ".nationbuilder.com/oauth/authorize"
+  service = OAuth2Service(
+    client_id = "",
+    client_secret = "",
+    name = "anyname",
+    authorize_url = authorize_url,
+    access_token_url = access_token_url,
+    base_url = nation_slug + ".nationbuilder.com")
+  session = service.get_session(nationbuilder_token)
+  person = {'email':email_to_subscribe, 
+        'first_name':first_name,
+        'last_name':last_name,
+        'request_ip':request_ip
+  }
+  if rootstrikers:
+    if rootstrikers == "Yes":
+	person["rootstrikers_subscription"] = True
+    else:
+	person["rootstrikers_subscription"] = False
+
+  
+  if volunteer:
+    if volunteer == "Yes":
+	person["is_volunteer"] = True
+    else:
+	person["is_volunteer"] = False
+
+  if phone:
+    person["phone"] = phone
+
+  if zipcode:
+    person['home_address'] = {'zip':zipcode}
+  if skills:
+    person['skills'] = skills
+
+  if nonce:
+    person['uuid'] = nonce
+
+  if pledgePageSlug:
+    person['pledge_page_slug'] = pledge_page_slug
+
+  if otherVars:
+    merge13 = otherVars.get('MERGE13', '')
+    if merge13 != '':
+      person['fundraising_email_subscription'] = merge13
+    else:
+      person['fundraising_email_subscription'] = 'Yes'
+  else: person['fundraising_email_subscription'] = 'Yes'
+  
+  response = session.put('https://' + nation_slug +".nationbuilder.com/api/v1/people/push",
+    data=json.dumps({'person':person}),
+    headers={"content-type":"application/json"}
+  )
+  id = json.loads(response.content)["person"]["id"]
+  response = session.put('https://' + nation_slug + ".nationbuilder.com/api/v1/people/" + str(id) + "/taggings",
+    data=json.dumps({"tagging":{"tag":"source: " + source}}),
+    headers={"content-type":"application/json"}
+  )
 
 def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
                             amount, request_ip, source, phone=None, zipcode=None,
@@ -159,8 +230,9 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
                             nonce=None, pledgePageSlug=None, otherVars=None):
   mailchimp_api_key = model.Config.get().mailchimp_api_key
   mailchimp_list_id = model.Config.get().mailchimp_list_id
-  mc = mailchimp.Mailchimp(mailchimp_api_key)
 
+
+  mc = mailchimp.Mailchimp(mailchimp_api_key)
   merge_vars = {
     'FNAME': first_name,
     'LNAME': last_name,

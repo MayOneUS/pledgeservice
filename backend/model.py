@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import random
+from rauth import OAuth2Service
 
 from collections import namedtuple
 
@@ -130,7 +131,7 @@ class Secrets(db.Model):
 
   bitpay_api_key = db.StringProperty(default='')
 
-
+  nationbuilder_token = db.StringProperty(default='')
   @staticmethod
   def get():
     return Secrets.get_or_insert(key_name=Secrets.SINGLETON_KEY)
@@ -636,3 +637,70 @@ class MissingDataUsersSecondary(db.Model):
   # change is to go up, and if it does, it means the user pledged
   # again, so they must have filled in their missing data.
   amountCents = db.IntegerProperty(required=True)
+  
+
+def addNationBuilderDonation(email,
+              amount_cents, pledge_type,
+              first_name, last_name, occupation, employer, phone,
+              target, team, mail_list_optin, anonymous, surveyResult=None,
+              stripe_customer_id=None, stripe_charge_id=None,
+              paypal_txn_id=None, paypal_payer_id=None,
+              address=None, city=None, state=None, zipCode=None,
+              bitpay_invoice_id = None ):
+    nationbuilder_token = Secrets.get().nationbuilder_token
+    donation = {'amount_in_cents':amount_cents,
+                'email':email,
+                'succeeded_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }    
+    donation['billing_address'] = {} 
+    if first_name:
+        donation['first_name'] = first_name
+    if last_name:
+        donation['last_name'] = last_name
+    if occupation:
+	donation['occupation'] = occupation
+    if employer:
+        donation['employer'] = employer
+    if phone:
+        pass 
+    if anonymous:
+        pass 
+    if target:
+        pass 
+    if team:
+        pass 
+    if surveyResult:
+        pass 
+    if stripe_customer_id:
+        donation['stripe_customer_id'] = stripe_customer_id
+    if stripe_charge_id:
+        donation['stripe_charge_id'] = stripe_charge_id
+    if paypal_txn_id:
+        donation['paypal_txn_id'] = paypal_txn_id
+    if paypal_payer_id:
+        donation['paypal_payer_id'] = paypal_payer_id
+    if address:
+        donation['billing_address']['address1'] = address
+    if city:
+        donation['billing_address']['city'] = city 
+    if state:
+        donation['billing_address']['state'] = state
+    if zipCode:
+        donation['billing_address']['zip'] = zipCode
+    if bitpay_invoice_id:
+        donation['bitpay_invoice_id'] = bitpay_invoice_id
+    nation_slug = "mayday"
+    access_token_url = "http://" + nation_slug + ".nationbuilder.com/oauth/token"
+    authorize_url = nation_slug + ".nationbuilder.com/oauth/authorize"
+    service = OAuth2Service(
+        client_id = "",
+        client_secret = "",
+        name = "anyname",
+        authorize_url = authorize_url,
+        access_token_url = access_token_url,
+        base_url = nation_slug + ".nationbuilder.com")
+    session = service.get_session(nationbuilder_token)
+    response = session.post('https://' + nation_slug +".nationbuilder.com/api/v1/donations",
+      data=json.dumps({'donation':donation}),
+      headers={"content-type":"application/json"}
+    )

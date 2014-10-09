@@ -7,6 +7,7 @@ import logging
 import cgi
 import base64
 import urllib
+import datetime
 
 from google.appengine.api import mail
 from google.appengine.ext import db
@@ -26,7 +27,7 @@ import util
 import pprint
 import urlparse
 import paypal
-
+from rauth import OAuth2Service
 
 # Immutable environment with both configuration variables, and backends to be
 # mocked out in tests.
@@ -184,6 +185,30 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
                              bitpay_invoice_id = data['bitpay_invoice_id']
                              )
 
+    model.addNationBuilderDonation(email=data['email'],
+                             stripe_customer_id=stripe_customer_id,
+                             stripe_charge_id=stripe_charge_id,
+                             paypal_payer_id=paypal_payer_id,
+                             paypal_txn_id=paypal_txn_id,
+                             amount_cents=amountCents,
+                             first_name=first_name,
+                             last_name=last_name,
+                             occupation=data['occupation'],
+                             employer=data['employer'],
+                             phone=data['phone'],
+                             target=data['target'],
+                             surveyResult=data['surveyResult'],
+                             pledge_type=data.get(
+                               'pledgeType', model.Pledge.TYPE_CONDITIONAL),
+                             team=data['team'],
+                             mail_list_optin=data['subscribe'],
+                             anonymous=data.get('anonymous', False),
+                             address=str(data['address']),
+                             city=data['city'],
+                             state=data['state'],
+                             zipCode=data['zipCode'],
+                             bitpay_invoice_id = data['bitpay_invoice_id']
+                             )
     if data['subscribe']:
       env.mailing_list_subscriber.Subscribe(
         email=data['email'],
@@ -194,7 +219,6 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
         source='pledge',
         phone=data['phone'],
         nonce=user.url_nonce)
-
     # Add to the total.
     model.ShardedCounter.increment('TOTAL-5', amountCents)
 
@@ -271,7 +295,8 @@ class PledgeHandler(webapp2.RequestHandler):
       try:
         logging.info('Trying to create stripe customer %s' % data['email'])
         stripe_customer = env.stripe_backend.CreateCustomer(
-          email=data['email'], card_token=data['payment']['STRIPE']['token'])
+          email=data['email'], card_token=data['payment']['STRIPE']['token']
+	)
         stripe_customer_id = stripe_customer.id
         logging.info('Trying to extract address for %s' % data['email'])
         if len(stripe_customer.cards.data) > 0:
