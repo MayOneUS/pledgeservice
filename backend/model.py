@@ -662,7 +662,7 @@ def addNationBuilderDonation(email,
               paypal_txn_id=None, paypal_payer_id=None,
               address=None, city=None, state=None, zipCode=None,
               bitpay_invoice_id = None, recurring = None, enddate = None,
-	      recurrencePeriod = None):
+	      recurrencePeriod = None, nationBuilderVars = None):
     nationbuilder_token = Secrets.get().nationbuilder_token
     donation = {'amount_in_cents':amount_cents,
                 'email':email,
@@ -711,6 +711,9 @@ def addNationBuilderDonation(email,
 	donation['enddate'] = enddate
     if recurrencePeriod:
 	donation['recurrence_period'] = recurrencePeriod
+    if nationBuilderVars:
+	donation.update(nationBuilderVars)
+
     nation_slug = "mayday"
     access_token_url = "http://" + nation_slug + ".nationbuilder.com/oauth/token"
     authorize_url = nation_slug + ".nationbuilder.com/oauth/authorize"
