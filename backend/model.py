@@ -307,11 +307,19 @@ class Pledge(db.Model):
   url_nonce = db.StringProperty(required=True)
 
   thank_you_sent_at = db.DateTimeProperty(required=False)
+  
+  # implementing recurring payment support! this is just recording if the
+  # payment is intended to be recurring
+  recurring = db.BooleanProperty(default=False)
+  end_date = db.DateTimeProperty(required=False)
+  recurrence_period = db.StringProperty(required=False) 
 
   @staticmethod
   def create(email, stripe_customer_id, stripe_charge_id,
              paypal_payer_id, paypal_txn_id,
-             amount_cents, pledge_type, team, anonymous, bitpay_invoice_id):
+             amount_cents, pledge_type, team, anonymous, bitpay_invoice_id,
+	     recurring, recurrence_period, enddate
+	     ):
     assert pledge_type in Pledge.TYPE_VALUES
     pledge = Pledge(model_version=MODEL_VERSION,
                     email=email,
@@ -324,7 +332,10 @@ class Pledge(db.Model):
                     team=team,
                     url_nonce=os.urandom(32).encode("hex"),
                     anonymous=anonymous,
-                    bitpay_invoice_id=bitpay_invoice_id)
+                    bitpay_invoice_id=bitpay_invoice_id,
+		    recurring=recurring,
+		    end_date=enddate,
+		    recurrence_period=recurrence_period)
     pledge.put()
     if team:
       TeamTotal.add(team, amount_cents)
@@ -396,7 +407,8 @@ def addPledge(email,
               stripe_customer_id=None, stripe_charge_id=None,
               paypal_txn_id=None, paypal_payer_id=None,
               address=None, city=None, state=None, zipCode=None,
-              bitpay_invoice_id = None ):
+              bitpay_invoice_id = None, recurring = None,
+	      recurrencePeriod = None, enddate = None):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
@@ -424,7 +436,10 @@ def addPledge(email,
                        pledge_type=pledge_type,
                        team=team,
                        anonymous=anonymous,
-                       bitpay_invoice_id = bitpay_invoice_id)
+                       bitpay_invoice_id = bitpay_invoice_id,
+		       recurring = recurring,
+		       enddate = enddate,
+		       recurrence_period = recurrencePeriod)
 
 
 class WpPledge(db.Model):
@@ -646,7 +661,8 @@ def addNationBuilderDonation(email,
               stripe_customer_id=None, stripe_charge_id=None,
               paypal_txn_id=None, paypal_payer_id=None,
               address=None, city=None, state=None, zipCode=None,
-              bitpay_invoice_id = None ):
+              bitpay_invoice_id = None, recurring = None, enddate = None,
+	      recurrencePeriod = None):
     nationbuilder_token = Secrets.get().nationbuilder_token
     donation = {'amount_in_cents':amount_cents,
                 'email':email,
@@ -689,6 +705,12 @@ def addNationBuilderDonation(email,
         donation['billing_address']['zip'] = zipCode
     if bitpay_invoice_id:
         donation['bitpay_invoice_id'] = bitpay_invoice_id
+    if recurring:
+	donation['recurring'] = recurring
+    if enddate:
+	donation['enddate'] = enddate
+    if recurrencePeriod:
+	donation['recurrence_period'] = recurrencePeriod
     nation_slug = "mayday"
     access_token_url = "http://" + nation_slug + ".nationbuilder.com/oauth/token"
     authorize_url = nation_slug + ".nationbuilder.com/oauth/authorize"
