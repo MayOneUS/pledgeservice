@@ -260,7 +260,10 @@ var createPledge = function(name, payment) {
   if (state) {
     data['state'] = state;
   }
-  
+  $("input[name='thingname']").each(function(index) {
+    data[$(this).data()['nationbuildername']] =  $(this).val();
+  });
+
   $.ajax({
       type: 'POST',
       url: request_url,
