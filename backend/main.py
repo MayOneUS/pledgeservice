@@ -205,6 +205,33 @@ class DonationTypeUpdateHandler(webapp2.RequestHandler):
     template = templates.GetTemplate('donation-update.html')    
     self.response.write(template.render(template_vars))    
 
+
+class UptonUpdateHandler(webapp2.RequestHandler):
+  def get(self, url_nonce):
+    util.EnableCors(self)
+    user = model.User.all().filter('url_nonce =', url_nonce).get()
+    if user is None:
+      self.error(404)
+      self.response.write('user not found')
+      return
+
+    num_donations = 0
+    amount_donations = 0
+    
+    for pledge in model.Pledge.all().filter('email =', user.email):             
+        num_donations += 1
+        amount_donations += pledge.amountCents
+        pledge.allowUpton = True
+        pledge.put()
+        
+    template_vars = {
+      'num_donations':num_donations,
+      'amount_donations':amount_donations/100,   
+      'email':user.email
+    }
+    template = templates.GetTemplate('upton-update.html')    
+    self.response.write(template.render(template_vars))    
+    
 class RootRedirectHandler(webapp2.RequestHandler):
   def get(self):  
     self.redirect('/pledge')
@@ -212,7 +239,8 @@ class RootRedirectHandler(webapp2.RequestHandler):
 HANDLERS = [
   ('/', RootRedirectHandler),
   ('/total', GetTotalHandler),
-  (r'/donation-update/(\w+)', DonationTypeUpdateHandler),  
+  (r'/donation-update/(\w+)', DonationTypeUpdateHandler), 
+  (r'/upton-update/(\w+)', UptonUpdateHandler),     
   (r'/user-update/(\w+)', UserUpdateHandler),
   (r'/user-info/(\w+)', UserInfoHandler),
   ('/campaigns/may-one/?', EmbedHandler),

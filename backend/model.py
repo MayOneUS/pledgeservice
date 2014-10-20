@@ -41,8 +41,10 @@ class Error(Exception): pass
 #  11: Paypal support
 #  12: TeamTotal.num_pledges added. This is a live total of completed pledges for
 #       that team.
+#  13: Added 'Use for Upton' value to Pledge.  This allows the pledge to be used 
+#       for Upton campaign, if true
 #
-MODEL_VERSION = 12
+MODEL_VERSION = 13
 
 
 # Config singleton. Loaded once per instance and never modified. It's
@@ -314,6 +316,9 @@ class Pledge(db.Model):
   end_date = db.DateTimeProperty(required=False)
   recurrence_period = db.StringProperty(required=False) 
 
+  # Allow donation to be used for Upton campaign
+  allowUpton = db.BooleanProperty(default=False)
+  
   @staticmethod
   def create(email, stripe_customer_id, stripe_charge_id,
              paypal_payer_id, paypal_txn_id,
@@ -674,7 +679,7 @@ def addNationBuilderDonation(email,
     if last_name:
         donation['last_name'] = last_name
     if occupation:
-	donation['occupation'] = occupation
+        donation['occupation'] = occupation
     if employer:
         donation['employer'] = employer
     if phone:
