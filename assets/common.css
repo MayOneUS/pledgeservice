@@ -1,0 +1,299 @@
+html,body {font: normal 1em/1.4 'Merriweather', Georgia, "Times New Roman", Times, serif;background-color:#f9fbfc;font-size:16px;}
+html{background-color:#000;}
+body {padding-top: 20px;color: #333;}
+
+.default-body {padding-top: 70px;}
+#candidate {padding-top: 90px;}
+
+/* START HEADER */
+.navbar-toggle .icon-bar {background-color: #000}
+.navbar-brand {background: transparent url('/static/mayday-pac-logo.png') no-repeat 0 0;background-size: cover;width: 272px;height: 87px !important;position: absolute;z-index: 10000;}
+.navbar-social {z-index: 100;position: fixed;right: 15px}
+  .navbar-social .navbar-nav>li>a {padding-top: 0px;padding-bottom: 0px;}
+  .navbar-social a.social {width: 106px;height: 26px;background-position: 0 -10px;}
+    .navbar-social a.social.facebook-share {background-image: url('/static/share-facebook.png')}
+    .navbar-social a.social.twitter-share {background-image: url('/static/share-twitter.png')}
+    .navbar-social a.social.email-share {background-image: url('/static/share-email.png')}
+
+.navbar-primary {padding-left: 272px;position: absolute;z-index: 100;top: 26px;width: 100%;}
+  .navbar-primary .navbar-nav{padding-left:10px;width:100%;}
+  .navbar-primary .navbar-nav>li:after{content:""; background: black; position: absolute; bottom: 14px; right: 0; height: 16px; width: 1px;}
+  .navbar-primary .navbar-nav>li:last-child:after{width:0px}
+
+  .navbar-primary .navbar-nav>li>a {padding: 13px 20px;text-transform: uppercase;color: #444;font-weight: 400;letter-spacing:90%;height: 45px;}
+
+    .jumbotron .btn {
+      background-color: #cc3333;
+      border: 0;
+      border-radius: 0;
+      margin: 0;
+      position: relative;
+      padding-left: 18px;
+      padding-right: 22px;
+      font-weight: 700;
+      color: #fff;
+      text-transform: uppercase;
+      box-shadow: 0 0 3px rgba(0,0,0,0.3);
+      font-family:'Roboto', Helvetica, Arial, sans-serif;
+    }
+    .jumbotron .btn:after{
+      content: "";
+      position: absolute;
+      top: 5px; /* move it down because of rounded corners */
+      width: 22px; /* same as height */
+      height: 22px; /* button_outer_height / sqrt(2) */
+      background: #fff; /* use parent background */
+      border: inherit; /* use parent border */
+      border-left-color: transparent; /* hide left border */
+      border-bottom-color: transparent; /* hide bottom border */
+      transform: rotate(45deg);
+      -webkit-transform: rotate(45deg);
+      -moz-transform: rotate(45deg);
+      -o-transform: rotate(45deg);
+      -ms-transform: rotate(45deg);
+      right: -11px;
+      z-index: 1;
+      background-color:inherit;
+    }
+    .jumbotron .btn#pledgeButton:after{content:"";display:none;}
+
+    .navbar-primary .navbar-nav>li>a.btn.ribbon{padding: 7px 40px 0; height: 33px; color: #fff; font-weight: 700; margin-top: 5px; margin-right: 20px; text-transform: uppercase; background: transparent url(/static/donate-button.png) 0 0 no-repeat;/*142x33*/ }
+    .btn.ribbon:hover{text-shadow: 0 0 3px rgba(0,0,0,0.8); }
+
+  .navbar-primary .navbar-nav .fa.fa-caret-down{padding-left:5px;}
+
+  .navbar-toggle .menu-text {text-transform: uppercase;color: #444;font-weight: 700;letter-spacing:90%}
+  .navbar-primary .in .navbar-nav>li {background-color: rgba(255,255,255,0.8);}
+  .navbar-primary .navbar-nav>li>a small {vertical-align: top;padding-left:5px;border-right: solid 1px #333;padding-right:20px ;}
+  .dropdown-menu {border: 0;border-radius: 0;margin: 0;}
+  .dropdown-menu>li>a {padding: 10px 20px;}
+  .dropdown-menu>li>a:before {content: '» ';}
+.header-bg-1, .header-bg-2 {position: absolute;z-index: 1;width: 100%;}
+  .header-bg-1 {background: #000;height: 26px;top: 0}
+  .header-bg-2 {background: rgba(255,255,255,0.9);height: 45px;top: 26px;border-bottom:solid 1px #cccccc;}
+
+.navbar-primary a {font-family:'Roboto', Helvetica;font-weight:100;}
+.navbar-nav a {font-family:'Roboto', sans-serif;font-weight:100;letter-spacing: .1em;}
+
+/* FOOTER SECTION */
+footer {color: #999;background-color:black;}
+  .donate-wrap {background: #444;text-align: center;padding: 5px 0;margin: 0 0 20px;}
+    .donate-wrap hr {border-color: #666;margin:0;}
+    .donate-wrap .container {padding-top: 20px;padding-bottom: 20px}
+    .donate-wrap a {color: #fff;font-weight: 700;text-transform: uppercase;}
+    .donate-wrap a.ir {background: transparent url('/images/btn-donate.png') center center no-repeat;width: 289px;height: 47px;display: block;margin: 0 auto;}
+  .social-link {float: right;width: 55px;height: 54px;background: transparent 0 0 no-repeat;margin-left: 10px;}
+    .social-link.facebook {background-image: url('/images/link-facebook.png');}
+    .social-link.twitter {background-image: url('/images/link-twitter.png');}
+  .safeharbor{font: normal 1em/1.4 'Merriweather', Georgia, "Times New Roman", Times, serif;display: inline-block;color: #aaa;text-align: center;font-size: 16px;padding: 10px 10px 0 10px;border: 2px solid #aaa;font-variant: small-caps;margin-bottom:10px;}
+/* END FOOTER SECTION */
+
+.ir/* Image replacement: header social share, footer FB/Twitter */ {background-color: transparent;border: 0;overflow: hidden;text-indent: -9999px}
+.text-red {color: #cc3333 !important;}
+.float-right{float:right !important;}
+.float-left{float:left !important;}
+.cross-stitched {width: 100%;background: transparent url('/images/bg-crossstitch.jpg');padding-bottom: 60px}
+
+@media (max-width: 1201px) {
+  .navbar-primary .navbar-nav>li>a.btn.ribbon{margin-left:10px;}
+  .navbar-primary .navbar-nav>li.pull-right.btn-wrap{float:left !important;}
+  .navbar-primary .navbar-nav{padding-left:5px}
+  .navbar-primary .navbar-nav>li>a {padding: 13px 10px;}
+  .navbar-primary .navbar-nav .fa.fa-caret-down{padding-left:1px;}
+}
+@media (min-width: 992px) {
+  .navbar-primary .navbar-nav>li.no-border:after{width:0}
+}
+
+@media (max-width: 992px) {
+  .navbar-primary .navbar-nav .fa.fa-caret-down{display:none;}
+  .navbar-primary .navbar-nav>li>a {letter-spacing:0;}
+  .navbar-primary .navbar-nav>li>a.btn.ribbon:before, .navbar-primary .navbar-nav>li>a.btn.ribbon:after{display:none;}
+  .navbar-primary .navbar-nav>li>a.btn.ribbon{padding: 13px 0 13px 10px;height: 45px;background: transparent;color: #444;border: none;margin: 0;font-weight: 400;box-shadow: none;float: left;font-size:16px;}
+  .navbar-primary .navbar-nav{/*padding-left:0;*/}
+  .navbar-primary {padding-left: 252px}
+  .navbar-brand {background-size: contain;width: 258px;}}
+
+/* For iPad and smaller screens */
+@media (max-width: 768px) {
+  .navbar-collapse.in {overflow-y: auto;min-width:290px;margin-left: -130px;}
+  .navbar-primary .in .navbar-nav>li {background-color: rgba(255,255,255,0.9);}
+  .navbar-primary .navbar-nav>li:after{display:none;}
+  .navbar-primary .navbar-nav>li.btn-wrap{width:100%;}
+}
+
+/* For iPhone and smaller screens */
+@media (max-width: 320px) {
+  .navbar-primary {padding-left:100px;}
+  .navbar-brand {width: 222px;height: 70px;top:10px;}
+}
+
+/*EEEEEEEEEEEEEEEEEEEND COMMON.CSS*/
+
+/*Hero Area*/
+
+.pledgebutton{background-color: #9e0b0f;color: #ffffcc;margin-left:auto;margin-right:auto;margin:10px 50px;padding:10px 20px;text-align: center;font-size:50px;border: 3px solid white;z-index:20;}
+.pledgebutton:hover{z-index:20;box-shadow: 0px 0px 10px #fff;text-shadow: 0px 0px 5px #fff;text-decoration:none;}
+
+
+#index a {color:white;text-decoration:underline;}
+#index a:hover {color:#AAAAFF;text-decoration:underline;}
+
+#subscribe label, #join_form label {padding-top: 15px;}
+
+/*Share Options*/
+.donation-share{text-align:center;}
+.donation-share-text {color:white;text-align:center;font-size:28px;font-style:italic;}
+.donation-share-text a{color:white;}
+.donation-share-text a:hover{text-shadow: 0px 0px 8px #66ccff, 0px 0px 13px #66ccff ;text-decoration:none;}
+
+.socialmenu{background-color:black;}
+.sign-up {color:white;text-align:center;font-size:16px;padding:10px;border: 1px solid white;background-color:#000000;height:50px;}
+.sign-up-pledge{color:#ffffcc;text-align:center;font-size:24px;padding:6px;border: 1px solid white;background-color:#FF0000;height:50px;}
+.sign-up:hover {background-color: #222222;color:#ffffcc;}
+.arrowdown{width: 0;height: 0;border-left: 20px solid transparent;border-right: 20px solid transparent;border-top: 20px solid rgba(255,255,255,0.8);}
+.halfcircle{position:absolute;top:0;margin-left:50%;left:-50px;z-index:4;height:50px;width:100px;}
+
+.widget1{position:relative;background-image:url('../images/dark_capitol.jpg');background-size:cover;background-repeat:no-repeat;background-position:center center;padding:40px;border-bottom:4px solid white;}
+.widget2{position:relative;background-image:url('../images/blue_franklin.jpg');background-size:cover;background-repeat:no-repeat;background-position:center center;padding:40px;border-bottom:4px solid white;}
+.widget3{position:relative;background-image:url('../images/green_yorktown.jpg');background-size:cover;background-repeat:no-repeat;background-position:top center;padding:40px;border-bottom:4px solid white;}
+.widget4{position:relative;background-image:url('../images/naval_battle.jpg');background-size:cover;background-repeat:no-repeat;background-position:bottom center;padding:40px;border-bottom:4px solid white;}
+
+.widgettext h1, .widgettext h2, .widgettext h3, .widgettext h4, .widgettext h5, .widgettext h6 {color:#FFFF99;text-align:center;font-size:35px;padding-bottom:10px;}
+.widgettext p {color:white;text-align:center;font-size:20px;}
+
+.copyright{color:#ccc;}
+
+/*Subpages*/
+
+#embed .subpage-content {text-align:center;font-size:125%;}
+#embed .subpage-content pre {text-align:left;}
+#embed .subpage-content img {border: 1px solid black;padding: 1px;}
+#about .subpage-content img {float:left;width:150px;border:solid #ccc 2px;padding: 2px;margin: 5px 15px 15px 0;}
+
+.subpage-content a{color:#003366;}
+.subpage-content a:hover{text-decoration:underline;color:#003366;}
+.subpage-content {color:black;font-size:16px;padding:30px 30px 50px;line-height: 1.61em;}
+
+.subpage-content h1,
+.subpage-content h2,
+.subpage-content h3,
+.subpage-content h4,
+.subpage-content h5,
+.subpage-content h6{padding: 0 0 1em;margin: 0;line-height: 140%;}
+.subpage-content h2 {font-size: 1.9em;}
+.subpage-content h1 {margin-top: 0;padding-top: 0;}
+
+.sidebar {font-size:14px;padding: 10px 40px 40px;margin-top: 40px;background: #EEE;}
+.sidebar .hide-mobile,
+.sidebar .about-page-only {display:none;}
+.sidebar .btn-primary {padding: 5px 10px;margin-left:3px;background: #005983;font-size: .8em;border: none;position: relative;top: -2px;}
+.sidebar .pledge {width: 100%;margin: 0 auto;position: relative;height: 60px;line-height: 60px;font-size: 1.5em;display: block;}
+.pledge, .pledge:visited {background-color: #d53a38;border-radius: 5px;color: #FFF;font-weight: bold;text-align: center;border: none;display: inline-block;}
+.pledge:hover {background: #b73230;text-decoration: none;color: #fff;}
+
+.sidebar .block {padding-top: 30px;}
+
+.sidebar h1,
+.sidebar h2,
+.sidebar h3,
+.sidebar h4,
+.sidebar h5,
+.sidebar h6{text-align: center;padding-bottom: 10px;color: #555;border-bottom: 2px solid #555;margin-bottom: 30px;}
+
+#sidesocial {margin-bottom:40px;overflow:hidden;}
+  #sidesocial a span {display: none; }
+  #sidesocial a {width: 32%; height: 45px; float: left; display: inline-block; background: url('../images/social_facebook.png') no-repeat center center; }
+    #sidesocial .facebook a {background-image: url('../images/social_facebook.png')}
+    #sidesocial .twitter a {background-image: url('../images/social_twitter.png');}
+    #sidesocial .email a {background-image: url('../images/social_email.png');background-size: contain; }
+
+
+/* This comment reserved for someone who knows what the heck #login_modal is */
+#login_modal .modal-header {color: black;}
+#login_modal #login_inputs {text-align: center;margin-left: auto;margin-right: auto;width: 370px;height: 70px;}
+#login_modal #login_inputs i {font-size: 55px;}
+#login_modal #login_inputs > div.login-service {padding-right: 20px;text-align: center;}
+#login_modal #login_inputs > div.login-service:last-child {padding-right: 0px;}
+
+/*Responsive Tweaks*/
+
+.mobileonly {display:none;}
+.mobilehidden{display:inline;}
+
+@media (max-width: 1200px) {
+  .pledgebutton{margin:25px 20px;padding:5px 10px;text-align: center;font-size:40px;border: 3px solid white;z-index:20;}
+}
+@media (max-width: 992px) {.donation-progress-bar{padding:0 25px;}
+  .sidebar .pledge {width: 400px;}
+}
+@media (max-width: 600px) {.donation-progress-bar{padding:0 5px;}
+  .sidebar .pledge {width: 100%;}
+}
+
+/* Contact Form */
+#subscribe .checkbox input {box-shadow: none;width: auto;position: relative}
+#skills_section input {width: 100%;display: block;}
+
+#subscribe #content form {max-width: 500px;margin: 0 auto;}
+#subscribe #content #submitButton, #join_form #submitButton {border-radius: 5px;padding: 15px 40px;background-color: #d53a38;border: none;margin-top: 20px;font-weight: bold;text-transform: uppercase;}
+
+.input-group, .input-group-lg {display:block;width:75%;margin-left: 12%;margin-right: 13%;}
+.input-group-btn{display:block;width:75%;margin-left: 12%;margin-right: 13%;text-align: center;}
+
+label.error{color:#d53a38;}
+input.error{border: 1px solid #d53a38;background: rgba(213,58,56,0.1);}
+
+.social-icons{margin: 25px 0 0 0;text-align:center;}
+
+.social-icons a.twitter {width: 270px;height: 60px;line-height: 58px;font-size: 20px;display: inline-block;color: #fff;margin: 0 0 20px 0;border-radius: 5px;text-align: center;background: rgb(145,208,247); /* Old browsers */
+  background: -moz-linear-gradient(top, rgba(145,208,247,1) 0%, rgba(64,151,204,1) 68%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(145,208,247,1)), color-stop(68%,rgba(64,151,204,1))); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, rgba(145,208,247,1) 0%,rgba(64,151,204,1) 68%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, rgba(145,208,247,1) 0%,rgba(64,151,204,1) 68%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, rgba(145,208,247,1) 0%,rgba(64,151,204,1) 68%); /* IE10+ */
+  background: linear-gradient(to bottom, rgba(145,208,247,1) 0%,rgba(64,151,204,1) 68%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#91d0f7', endColorstr='#4097cc',GradientType=0 ); /* IE6-9 */}
+
+.social-icons a.twitter:hover{-moz-box-shadow: inset 0 0 10px #FFFF99;-webkit-box-shadow: inset 0 0 10px #FFFF99;box-shadow: inset 0 0 10px #FFFF99;}
+.social-icons a.facebook {width: 270px;height: 60px;line-height: 58px;font-size: 20px;display: inline-block;background: #3664a2;color: #fff;margin: 0 0 20px 0;border-radius: 5px;text-align: center;}
+.social-icons a.facebook:hover{-moz-box-shadow: inset 0 0 10px #FFFF99;-webkit-box-shadow: inset 0 0 10px #FFFF99;box-shadow: inset 0 0 10px #FFFF99;}
+
+
+#pledgecol-sidebar .panel {margin: 40px 10px;border: 1px solid #5990a9;border-radius: 0;}
+#pledgecol-sidebar .panel .panel-heading {background: #d9e6ec;}
+#pledgecol-sidebar .panel .panel-heading h3 {color: #005982;text-transform: uppercase;font-size: 20px;text-align: center;padding: 10px 0;}
+#pledgecol-sidebar .panel .control-label {text-align: center;text-transform: uppercase;color: #888;font-weight: 700;}
+
+#pledgecol-sidebar .panel .panel-body h6 {margin-bottom: 0;}
+#pledgecol-sidebar .panel .panel-body h5.amount {font-size: 45px;margin-top: 0;color: #000000;}
+#pledgecol-sidebar .panel .panel-body h5.pledges {font-size: 36px;margin-top: 0;}
+
+#pledgecol-sidebar form button {margin-top: 0px;height: 63px;width: 100%;font-size: 30px;font-weight: 700;background: #d2393c;color: #fff;transition: background 0.15s;}
+#pledgecol-sidebar form button:hover {background: #db6365;}
+
+.subscribeButton {margin-top: 20px;font-size: 60px;font-weight: 700;border-radius: 2px;}
+.videoEmbed {max-width:640px;max-height:360px;}
+
+
+#rules {padding:10px;}
+
+
+/*EEEEEEEEEEEEND SYTLE.CSS*/
+
+/* v9green
+======================================================================== */
+/*a {color: #15405e;outline: none !important;}*/
+a:hover {text-decoration: none;}
+p {font-size: 18px;margin: 0 0 1.2em;}
+h2 {font-size: 41px;color: #313945;margin: 0 0 .5em;}
+h3{color: #313945;}
+.row-centered {text-align:center;}
+.clear-modern{overflow:hidden;}
+
+.button {font: 400 22px/50px 'Questrial', Arial, sans-serif;text-transform: uppercase;text-decoration: none;color: #fff;letter-spacing: 1px;display: inline-block;background: #c33 no-repeat 100% 50%;height: 50px;padding: 0 30px;border-radius: 30px;overflow: hidden; -webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;}
+.button:hover {background-color: #b01a1a;}
+.button.arrow {padding-right: 54px;background-image: url(../images/button-array.png);}
+.btn-group {text-align: center;margin: 77px auto 0;}
+  .btn-group .button {margin: 0 17px;}
+
