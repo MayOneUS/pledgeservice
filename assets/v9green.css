@@ -557,7 +557,6 @@ display:inline;
 @media screen and (max-width: 768px) {
 	body,
 	#subnav {
-		min-width: 768px;
 	}
 
 	h2 {
