@@ -232,6 +232,11 @@ class UptonUpdateHandler(webapp2.RequestHandler):
     template = templates.GetTemplate('upton-update.html')    
     self.response.write(template.render(template_vars))    
     
+class UptonUpdateNoNonceHandler(webapp2.RequestHandler):
+    def get(self):
+	template = templates.GetTemplate('upton-update-no-nonce.html')
+	self.response.write(template.render(template_vars))
+
 class RootRedirectHandler(webapp2.RequestHandler):
   def get(self):  
     self.redirect('/pledge')
@@ -241,6 +246,7 @@ HANDLERS = [
   ('/total', GetTotalHandler),
   (r'/donation-update/(\w+)', DonationTypeUpdateHandler), 
   (r'/upton-update/(\w+)', UptonUpdateHandler),     
+  (r'/upton-update/', UptonUpdateNoNonceHandler),
   (r'/user-update/(\w+)', UserUpdateHandler),
   (r'/user-info/(\w+)', UserInfoHandler),
   ('/campaigns/may-one/?', EmbedHandler),
