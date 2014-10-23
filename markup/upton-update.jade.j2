@@ -6,7 +6,7 @@ html
         function SetTweet(){
            var tweets = ["I%20support%20ending%20@RepFredUpton's%20corruption%20in%20DC%20with%20my%20%24{{amount_donations}}%20for%20@MADAYUS.%20Uncover%20the%20%23MI06%20scandal%20@HPMatuszak%20@HeraldPalladium",
                 ".@runkdavi%20cover%20the%20corruption!%20Political%20bullying%20has%20got%20to%20go%20-%20I’m%20earmarking%20my%20%24{{amount_donations}}%20for%20@MAYDAYUS%20to%20beat%20Upton%20in%20%23MI06",
-                "Stop%20@RepFredUpton’s%20intimidation%20-%20I%20support%20@MAYDAYUS%20using%20my%20%24{{amount_donations}}%20in%20%23MI06%20to%20end%20corruption%20check%20out%20the%20story%20@DarrenGoode",
+                "Stop%20@RepFredUpton’s%20intimidation%20-%20I%20support%20@MAYDAYUS%20using%20my%20%24{{amount_donations}}%20in%20%23MI06%20to%20end%20corruption.%20check%20out%20the%20story%20@DarrenGoode",
                 "I’m%20a%20@MAYDAYUS%20donor%20too%20@RepFredUpton%20and%20my%20%24{{amount_donations}}%20is%20going%20to%20%23MI06%20uncover%20the%20intimidation%20tactics%20@Kzoo_Gazette"]
             var tweet = tweets[Math.random()*tweets.length|0]
             document.getElementsByClassName('twitter')[0].href = "https://twitter.com/home?status=" + tweet;
@@ -19,12 +19,9 @@ html
         h1 Thanks – just one more step for fighting corruption 
       .row
         .col-md-12
-          if amount_donations == 1
-            p Thanks for allowing us to use the ${{amount_donations}} contribution you have already in Michigan. 
+            p Thanks for allowing us to use {{num_donations}} contribution(s) you have already made, totaling ${{amount_donations}}, for Michigan. 
               b Now, help us stir up some buzz by Tweeting your support at Michigan reporters and let's make Fred Upton feel the heat in the media.
-          else if amount_donations > 1
-            p Thanks for allowing us to use X contributions you have already made, totaling $XXX, for Michigan. Now, help us stir up some buzz by Tweeting your support at Michigan reporters – let's make Fred Upton feel the heat in the media.
-          p Click on the button below to Tweet your support. We've written one for you (you can change it, of course!) that tags specific reporters and papers in Michigan so they'll cover the story.
+            p Click on the button below to Tweet your support. We've written one for you (you can change it, of course!) that tags specific reporters and papers in Michigan so they'll cover the story.
     .spacing
       .row
         .col-md-12
