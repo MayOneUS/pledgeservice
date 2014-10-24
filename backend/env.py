@@ -204,7 +204,7 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
     person['uuid'] = nonce
 
   if pledgePageSlug:
-    person['pledge_page_slug'] = pledge_page_slug
+    person['pledge_page_slug'] = pledgePageSlug 
 
   if otherVars:
     merge13 = otherVars.get('MERGE13', '')
