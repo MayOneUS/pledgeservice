@@ -235,7 +235,7 @@ class UptonUpdateHandler(webapp2.RequestHandler):
 class UptonUpdateNoNonceHandler(webapp2.RequestHandler):
     def get(self):
 	template = templates.GetTemplate('upton-update-no-nonce.html')
-	self.response.write(template.render(template_vars))
+	self.response.write(template.render())
 
 class RootRedirectHandler(webapp2.RequestHandler):
   def get(self):  
