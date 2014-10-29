@@ -369,6 +369,12 @@ class SubscribeHandler(webapp2.RequestHandler):
       logging.warning("Bad Request: required field (email) missing.")
       self.error(400)
       return
+    
+    dont_redirect = cgi.escape(self.request.get('dont_redirect'))
+    if dont_redirect == True:
+      dont_redirect = False
+    else:
+      dont_redirect = True
 
     first_name = cgi.escape(self.request.get('first_name'))
     if len(first_name) == 0:
@@ -438,11 +444,15 @@ class SubscribeHandler(webapp2.RequestHandler):
       )
 
     redirect_input = cgi.escape(self.request.get('redirect'))
-    if len(redirect_input)>0:
-      redirect_url = '%s?email=%s&source=%s' % (redirect_input, email_input, source_input)
+    if dont_redirect == False:
+      if len(redirect_input)>0:
+        redirect_url = '%s?email=%s&source=%s' % (redirect_input, email_input, source_input)
+      else:
+        redirect_url = '/pledge?email=%s' % email_input
+      self.redirect(str(redirect_url))
     else:
-      redirect_url = '/pledge?email=%s' % email_input
-    self.redirect(str(redirect_url))
+      pass
+
   options = util.EnableCors
     
     
