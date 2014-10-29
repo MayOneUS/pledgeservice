@@ -359,6 +359,7 @@ class SubscribeHandler(webapp2.RequestHandler):
   # https://www.pivotaltracker.com/s/projects/1075614/stories/71725060
 
   def post(self):
+    util.EnableCors(self)
     env = self.app.config['env']
 
     logging.info('body: %s' % self.request.body)
@@ -436,14 +437,15 @@ class SubscribeHandler(webapp2.RequestHandler):
       otherVars=otherVars
       )
 
-    util.EnableCors(self)
     redirect_input = cgi.escape(self.request.get('redirect'))
     if len(redirect_input)>0:
       redirect_url = '%s?email=%s&source=%s' % (redirect_input, email_input, source_input)
     else:
       redirect_url = '/pledge?email=%s' % email_input
     self.redirect(str(redirect_url))
-
+  options = util.EnableCors
+    
+    
 class ReceiptHandler(webapp2.RequestHandler):
   def get(self, id):
     try:
