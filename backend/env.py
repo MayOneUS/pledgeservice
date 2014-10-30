@@ -190,6 +190,7 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
 
   if is_supporter:
     person["is_supporter"] = True
+    person["is_prospect"] = False
 
   if volunteer:
     if volunteer == "Yes":

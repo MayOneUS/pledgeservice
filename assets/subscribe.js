@@ -3,7 +3,7 @@ function SubscribeEmail(email) {
         'email':email,
 	'dont_redirect':'true',
 	'source':'one-click subscribe',
-	'is_supporter': true
+	'is_supporter':'true'
     }   
     $.ajax('/r/subscribe', {data:data, type:'POST'}).done(function() {
     }).fail(function() {
