@@ -237,6 +237,11 @@ class UptonUpdateNoNonceHandler(webapp2.RequestHandler):
 	template = templates.GetTemplate('upton-update-no-nonce.html')
 	self.response.write(template.render())
 
+class SubscribeEmailPage(webapp2.RequestHandler):
+    def get(self):
+	template = templates.GetTemplate('auto-email-subscribe.html')
+	self.response.write(template.render())
+
 class RootRedirectHandler(webapp2.RequestHandler):
   def get(self):  
     self.redirect('/pledge')
@@ -247,6 +252,7 @@ HANDLERS = [
   (r'/donation-update/(\w+)', DonationTypeUpdateHandler), 
   (r'/upton-update/(\w+)', UptonUpdateHandler),     
   (r'/upton-update/', UptonUpdateNoNonceHandler),
+  (r'/subscribe-email/', SubscribeEmailPage),
   (r'/user-update/(\w+)', UserUpdateHandler),
   (r'/user-info/(\w+)', UserInfoHandler),
   ('/campaigns/may-one/?', EmbedHandler),

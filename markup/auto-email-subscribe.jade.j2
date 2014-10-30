@@ -1,0 +1,23 @@
+doctype html
+html
+  head
+    include includes/upton-head
+    script(type='text/javascript', src='/static/subscribe.js')
+    script(type='text/javascript', src='//code.jquery.com/jquery-1.11.0.min.js')
+    script(type='text/javascript')
+      $(document).ready(SendEmail);
+  body(id="donation_update", onload="SetTweet()")
+    .container
+      .page-header
+        br  
+        h2 Thanks for joining the MAYDAY movement!
+        p Thanks for helping us end corruption in Washington. We'll keep you in the loop about our latest campaigns and ways that you can help the movement to decrease moeny's corrupting influence on politics. Check out Lessig's new 
+          a(href="https://mayday.us/campaigns/20141025-time-inc-lessig-video/") inspirational video!
+        div(id="result")
+      .row
+        .col-md-12
+    .spacing
+      .row
+        .col-md-12
+          div(class="social-icons")
+    include includes/footer
