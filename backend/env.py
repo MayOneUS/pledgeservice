@@ -115,7 +115,8 @@ class FakeStripe(handlers.StripeBackend):
 class MailchimpSubscriber(handlers.MailingListSubscriber):
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,
                 source, phone=None, zipcode=None, volunteer=None, skills=None, rootstrikers=None,
-                nonce=None, pledgePageSlug=None, otherVars = None):
+                nonce=None, pledgePageSlug=None, otherVars = None,
+		is_supporter=None):
     deferred.defer(_subscribe_to_mailchimp,
                    email, first_name, last_name,
                    amount_cents, ip_addr, source, phone, zipcode,
@@ -125,7 +126,8 @@ class MailchimpSubscriber(handlers.MailingListSubscriber):
                    email, first_name, last_name,
                    amount_cents, ip_addr, source, phone, zipcode,
                    volunteer, skills, rootstrikers,
-                   nonce, pledgePageSlug, otherVars)
+                   nonce, pledgePageSlug, otherVars,
+		   is_supporter)
 
 class FakeSubscriber(handlers.MailingListSubscriber):
   def Subscribe(self, **kwargs):
@@ -161,7 +163,8 @@ def _send_mail(to, subject, text_body, html_body, reply_to=None):
 def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
                             amount, request_ip, source, phone=None, zipcode=None,
                             volunteer=None, skills=None, rootstrikers=None,
-                            nonce=None, pledgePageSlug=None, otherVars=None):
+                            nonce=None, pledgePageSlug=None, otherVars=None,
+			    is_supporter=None):
   nationbuilder_token = model.Secrets.get().nationbuilder_token
   nation_slug = "mayday"
   access_token_url = "http://" + nation_slug + ".nationbuilder.com/oauth/token"
@@ -185,7 +188,9 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
     else:
 	person["rootstrikers_subscription"] = False
 
-  
+  if is_supporter:
+    person["is_supporter"] = True
+
   if volunteer:
     if volunteer == "Yes":
 	person["is_volunteer"] = True

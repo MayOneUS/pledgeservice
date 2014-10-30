@@ -1,9 +1,11 @@
 function SubscribeEmail(email) {
     var data = { 
         'email':email,
-	'dont_redirect':'true'
+	'dont_redirect':'true',
+	'source':'one-click subscribe',
+	'is_supporter': true
     }   
-    $.ajax('//pledge.mayday.us/r/subscribe', {data:data, type:'POST'}).done(function() {
+    $.ajax('/r/subscribe', {data:data, type:'POST'}).done(function() {
     }).fail(function() {
 	window.location.replace('https://mayday.us/subscribe/');
     }) 

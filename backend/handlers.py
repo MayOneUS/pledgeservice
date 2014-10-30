@@ -375,6 +375,10 @@ class SubscribeHandler(webapp2.RequestHandler):
       dont_redirect = False
     else:
       dont_redirect = True
+    
+    is_supporter = cgi.escape(self.request.get('is_supporter'))
+    if type(is_supporter) != bool:
+	is_supporter = False
 
     first_name = cgi.escape(self.request.get('first_name'))
     if len(first_name) == 0:
@@ -440,7 +444,8 @@ class SubscribeHandler(webapp2.RequestHandler):
       skills=skills_input,
       rootstrikers=rootstrikers_input,
       pledgePageSlug=pledgePageSlug_input,
-      otherVars=otherVars
+      otherVars=otherVars,
+      is_supporter=is_supporter
       )
 
     redirect_input = cgi.escape(self.request.get('redirect'))
