@@ -430,7 +430,12 @@ class SubscribeHandler(webapp2.RequestHandler):
       if argName.startswith('MERGE'):
         arg = self.request.get(argName)
         otherVars[argName] = arg    
-    
+    NationBuilderVars = {}
+    for argName in self.request.arguments():
+      if argName.startswith('NationBuilder'):
+        arg = self.request.get(argName)
+	NationBuilderVars[argName[13:]] = arg
+
     env.mailing_list_subscriber.Subscribe(
       email=email_input,
       first_name=first_name, last_name=last_name,
@@ -445,7 +450,8 @@ class SubscribeHandler(webapp2.RequestHandler):
       rootstrikers=rootstrikers_input,
       pledgePageSlug=pledgePageSlug_input,
       otherVars=otherVars,
-      is_supporter=is_supporter
+      is_supporter=is_supporter,
+      nationBuilderVars=NationBuilderVars
       )
 
     redirect_input = cgi.escape(self.request.get('redirect'))

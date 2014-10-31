@@ -127,7 +127,7 @@ class MailchimpSubscriber(handlers.MailingListSubscriber):
                    amount_cents, ip_addr, source, phone, zipcode,
                    volunteer, skills, rootstrikers,
                    nonce, pledgePageSlug, otherVars,
-		   is_supporter)
+		   is_supporter, nationBuilderVars)
 
 class FakeSubscriber(handlers.MailingListSubscriber):
   def Subscribe(self, **kwargs):
@@ -164,7 +164,7 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
                             amount, request_ip, source, phone=None, zipcode=None,
                             volunteer=None, skills=None, rootstrikers=None,
                             nonce=None, pledgePageSlug=None, otherVars=None,
-			    is_supporter=None):
+			    is_supporter=None, nationBuilderVars=None):
   nationbuilder_token = model.Secrets.get().nationbuilder_token
   nation_slug = "mayday"
   access_token_url = "http://" + nation_slug + ".nationbuilder.com/oauth/token"
@@ -219,7 +219,12 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
     else:
       person['fundraising_email_subscription'] = 'Yes'
   else: person['fundraising_email_subscription'] = 'Yes'
-  
+  print "nationbuilervar"
+  print nationBuilderVars
+  if nationBuilderVars:
+    for key in nationBuilderVars.keys():
+      person[key] = nationBuilderVars[key]
+  print person
   response = session.put('https://' + nation_slug +".nationbuilder.com/api/v1/people/push",
     data=json.dumps({'person':person}),
     headers={"content-type":"application/json"}
