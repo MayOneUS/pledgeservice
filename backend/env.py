@@ -219,12 +219,9 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
     else:
       person['fundraising_email_subscription'] = 'Yes'
   else: person['fundraising_email_subscription'] = 'Yes'
-  print "nationbuilervar"
-  print nationBuilderVars
   if nationBuilderVars:
     for key in nationBuilderVars.keys():
       person[key] = nationBuilderVars[key]
-  print person
   response = session.put('https://' + nation_slug +".nationbuilder.com/api/v1/people/push",
     data=json.dumps({'person':person}),
     headers={"content-type":"application/json"}
