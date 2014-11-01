@@ -281,9 +281,12 @@ def _subscribe_to_mailchimp(email_to_subscribe, first_name, last_name,
 
   # list ID and email struct
   logging.info('Subscribing: %s. Merge_vars: %s', email_to_subscribe, str(merge_vars))
-  mc.lists.subscribe(id=mailchimp_list_id,
+  try:
+    mc.lists.subscribe(id=mailchimp_list_id,
                      email=dict(email=email_to_subscribe),
                      merge_vars=merge_vars,
                      double_optin=False,
                      update_existing=True,
                      send_welcome=False)
+  except mailchimp.ListInvalidImportError as e:
+    logging.info("ListInvalidImportError: %s", e.message)
