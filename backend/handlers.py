@@ -372,17 +372,12 @@ class SubscribeHandler(webapp2.RequestHandler):
     
     redirect_input = cgi.escape(self.request.get('redirect'))    
     dont_redirect = cgi.escape(self.request.get('dont_redirect'))
+
+    if dont_redirect != '':
+      dont_redirect = True
     if redirect_input != '':
-      logging.info('REDIRECT param exists. Setting don\'t redirect to false ')      
       dont_redirect = False
-    else:
-      if dont_redirect == True:
-        logging.info('Setting don\'t redirect to false')
-        dont_redirect = False
-      else:
-        logging.info('Setting don\'t redirect to TRUE')
-        dont_redirect = True
-        
+    
     is_supporter = cgi.escape(self.request.get('is_supporter'))
     if type(is_supporter) != bool:
       is_supporter = False
