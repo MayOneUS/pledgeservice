@@ -177,11 +177,17 @@ def _subscribe_to_nationbuilder(email_to_subscribe, first_name, last_name,
     access_token_url = access_token_url,
     base_url = nation_slug + ".nationbuilder.com")
   session = service.get_session(nationbuilder_token)
-  person = {'email':email_to_subscribe, 
-        'first_name':first_name,
-        'last_name':last_name,
-        'request_ip':request_ip
+  person = {
+    'email':email_to_subscribe 
   }
+
+  if first_name:
+    person['first_name'] = first_name
+  if last_name:
+    person['last_name'] = last_name
+  if request_ip:
+    person['request_ip'] = request_ip
+
   if rootstrikers:
     if rootstrikers == "Yes":
 	person["rootstrikers_subscription"] = True
