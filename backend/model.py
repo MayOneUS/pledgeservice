@@ -413,7 +413,7 @@ def addPledge(email,
               paypal_txn_id=None, paypal_payer_id=None,
               address=None, city=None, state=None, zipCode=None,
               bitpay_invoice_id = None, recurring = None,
-	      recurrencePeriod = None, enddate = None):
+	      recurrence_period = None, enddate = None):
   """Creates a User model if one doesn't exist, finding one if one already
   does, using the email as a user key. Then adds a Pledge to the User with
   the given card token as a new credit card.
@@ -444,7 +444,7 @@ def addPledge(email,
                        bitpay_invoice_id = bitpay_invoice_id,
 		       recurring = recurring,
 		       enddate = enddate,
-		       recurrence_period = recurrencePeriod)
+		       recurrence_period = recurrence_period)
 
 
 class WpPledge(db.Model):
@@ -667,7 +667,7 @@ def addNationBuilderDonation(email,
               paypal_txn_id=None, paypal_payer_id=None,
               address=None, city=None, state=None, zipCode=None,
               bitpay_invoice_id = None, recurring = None, enddate = None,
-	      recurrencePeriod = None, nationBuilderVars = None):
+	      recurrence_period = None, nationBuilderVars = None):
     nationbuilder_token = Secrets.get().nationbuilder_token
     donation = {'amount_in_cents':amount_cents,
                 'email':email,
@@ -713,9 +713,9 @@ def addNationBuilderDonation(email,
     if recurring:
 	donation['recurring'] = recurring
     if enddate:
-	donation['enddate'] = enddate
-    if recurrencePeriod:
-	donation['recurrence_period'] = recurrencePeriod
+	donation['end_date'] = enddate
+    if recurrence_period:
+	donation['recurrence_period'] = recurrence_period
     if nationBuilderVars:
 	donation.update(nationBuilderVars)
 

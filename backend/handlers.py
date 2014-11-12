@@ -157,13 +157,13 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
 
     if not 'bitpay_invoice_id' in data:
       data['bitpay_invoice_id'] = None
-    
+    print data
     if not 'recurring' in data:
       data['recurring'] = False
     if not 'enddate' in data:
       data['enddate'] = ''
-    if not 'recurrencePeriod' in data:
-      data['recurrencePeriod'] = ''
+    if not 'recurrence_period' in data:
+      data['recurrence_period'] = ''
     if not 'nationBuilderVars' in data:
       data['nationBuilderVars'] = None
 
@@ -191,7 +191,10 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
                              city=data['city'],
                              state=data['state'],
                              zipCode=data['zipCode'],
-                             bitpay_invoice_id = data['bitpay_invoice_id']
+                             bitpay_invoice_id = data['bitpay_invoice_id'],
+                             recurring=data['recurring'],
+                             recurrence_period=data['recurrence_period'],
+                             enddate=data['enddate']
                              )
 
     model.addNationBuilderDonation(email=data['email'],
@@ -219,7 +222,7 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
                              bitpay_invoice_id = data['bitpay_invoice_id'],
 			     recurring = data['recurring'],
 			     enddate = data['enddate'],
-			     recurrencePeriod = data['recurrencePeriod'],
+			     recurrence_period = data['recurrence_period'],
 			     nationBuilderVars = data['nationBuilderVars']
                              )
     if data['subscribe']:

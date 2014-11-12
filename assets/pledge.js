@@ -212,7 +212,9 @@ var createPledge = function(name, payment) {
   var city = $('#city_input').val() || null;
   var state = $('#state_input').val() || null;
   var zip = $('#zip_input').val() || null;
-  
+  var recurring = $('#recurring_input').is(':checked') ? true : false;
+  var recurrence_period = $('#recurrence_period_input').val() || null;
+  var enddate = $('enddate_input').val() || null;
   if (($("#requiredConfirmation").is(':checked') == false ) && ('BITCOIN' in payment) ) {
     console.log('Trying to pay with BITCOIN without a confirmation') 
     return;
@@ -232,7 +234,15 @@ var createPledge = function(name, payment) {
     team: urlParams['team'] || readCookie("last_team_key") || '',
     payment: payment
   };
-  
+  if (recurring) {
+    data['recurring'] = recurring;
+  }
+  if(recurrence_period) {
+    data['recurrence_period'] = recurrence_period;
+  }
+  if(enddate) {
+    data['enddate'] = enddate;
+  }
   if ($("#requiredConfirmation").is(':checked')) {
     data['bitcoinConfirm'] = true;
   }  
