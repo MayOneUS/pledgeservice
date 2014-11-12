@@ -523,11 +523,11 @@ class NumPledgesHandler(webapp2.RequestHandler):
     util.EnableCors(self)
 
     WP_PLEDGES = 4099
-    VERSION_11_AND_UNDER = 11743
+    VERSION_12_AND_UNDER = 59009 
 
     count = memcache.get('TOTAL-PLEDGES')
     if not count:
-      query = model.Pledge.all(keys_only=True).filter('model_version >', 11)
+      query = model.Pledge.all(keys_only=True).filter('model_version >', 12)
       i = 0
       while True:
           result = query.fetch(1000)
@@ -536,7 +536,7 @@ class NumPledgesHandler(webapp2.RequestHandler):
               break
           cursor = query.cursor()
           query.with_cursor(cursor)
-      count = i + WP_PLEDGES + VERSION_11_AND_UNDER
+      count = i + WP_PLEDGES + VERSION_12_AND_UNDER
       memcache.set('TOTAL-PLEDGES', count, 120)
 
     self.response.headers['Content-Type'] = 'application/json'
