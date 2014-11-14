@@ -250,9 +250,12 @@ def pledge_helper(handler, data, stripe_customer_id, stripe_charge_id, paypal_pa
       'total': totalStr,
       'user_url_nonce': user.url_nonce
     }
-
-    text_body = open('email/thank-you.txt').read().format(**format_kwargs)
-    html_body = open('email/thank-you.html').read().format(**format_kwargs)
+    if data['recurring'] == True:
+      text_body = open('email/thank-you-recurring.txt').read().format(**format_kwargs)
+      html_body = open('email/thank-you-recurring.html').read().format(**format_kwargs)
+    else:
+      text_body = open('email/thank-you.txt').read().format(**format_kwargs)
+      html_body = open('email/thank-you.html').read().format(**format_kwargs)
 
     env.mail_sender.Send(to=data['email'].encode('utf-8'),
                          subject='Thank you for your pledge',
