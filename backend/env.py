@@ -63,6 +63,25 @@ class ProdStripe(handlers.StripeBackend):
       logging.info('Stripe returned error for customer: %s ' % customer_id)
       raise handlers.PaymentError(str(e))
     return charge.id
+    
+  def CreateCustomerWithPlan(self, email, card_token, amount_dollars,
+    recurrence_period):
+    stripe.api_key = self.stripe_private_key
+    if recurrence_period == "monthly":
+      plan = "one_dollar_monthly"
+    elif recurrence_period == "weekly":
+      plan = "one_dollar_weekly"
+    else:
+      plan = "one_dollar_monthly"
+      
+    customer = stripe.Customer.create(
+      card=card_token,
+      email=email,
+      plan=plan,
+      quantity=amount_dollars
+    )
+
+    return customer
 
 
 class FakeStripe(handlers.StripeBackend):
@@ -111,6 +130,18 @@ class FakeStripe(handlers.StripeBackend):
     logging.error('CHARGED CUSTOMER %s %d cents', customer_id, amount_cents)
     return 'fake_charge_1234'
 
+  def CreateCustomerWithPlan(self, email, card_token, amount_dollars,
+    recurrence_period):
+    logging.warning('USING FAKE STRIPE')
+    cus = stripe.Customer()
+    cus.cards = stripe.ListObject()
+    if email == 'failure@failure.biz':
+      cus.id = 'doomed_customer'
+      cus.cards.data = []
+    else:
+      cus.id = 'fake_1234'
+      cus.cards.data = [self.RetrieveCardData(id)]
+    return cus
 
 class MailchimpSubscriber(handlers.MailingListSubscriber):
   def Subscribe(self, email, first_name, last_name, amount_cents, ip_addr, time,

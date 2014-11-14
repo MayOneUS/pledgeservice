@@ -88,6 +88,7 @@ class MailingListSubscriber(object):
 _STR = dict(type='string')
 _STR_optional = dict(type='string', required=False)
 
+valid_recurrence_periods = ["monthly", "weekly", "yearly", ""]
 PLEDGE_SCHEMA = dict(
   type='object',
   properties=dict(
@@ -103,7 +104,7 @@ PLEDGE_SCHEMA = dict(
     amountCents=dict(type='integer', minimum=100),
     pledgeType=dict(enum=model.Pledge.TYPE_VALUES, required=False),
     team=dict(type='string', blank=True),
-
+    recurrence_period=dict(type='string', required=False, enum=valid_recurrence_periods),
     payment=dict(type='object',
                  properties=dict(
                    STRIPE=dict(type='object',
@@ -311,7 +312,36 @@ class PledgeHandler(webapp2.RequestHandler):
     # Do any server-side processing the payment processor needs.
     stripe_customer_id = None
     stripe_charge_id = None
-    if 'STRIPE' in data['payment']:
+    print type(data.get('recurring', None))
+    if 'STRIPE' in data['payment'] and data.get('recurring', '') == True:
+      try:
+        logging.info('Trying to create a stripe customer enrolled in a plan with recurring subscription')
+        stripe_customer  = env.stripe_backend.CreateCustomerWithPlan(
+          email=data['email'], 
+          card_token=data['payment']['STRIPE']['token'], 
+          recurrence_period=data['recurrence_period'],
+          amount_dollars=data['amountCents']/100
+        )
+        logging.info('Trying to extract address for %s' % data['email'])
+        if len(stripe_customer.cards.data) > 0:
+          card_data = stripe_customer.cards.data[0]
+          if 'address_line1' in card_data:
+            data['address'] = card_data['address_line1']
+            if card_data['address_line2']:
+              data['address'] += ', %s' % card_data['address_line2']
+          if 'address_city' in card_data:
+            data['city'] = card_data['address_city']
+          if 'address_state' in card_data:
+            data['state'] = card_data['address_state']
+          if 'address_zip' in card_data:
+            data['zipCode'] = card_data['address_zip']
+
+      except Exception as e:
+        print e.message
+        self.error(400)
+        json.dump(dict(paymentError=str(e)), self.response)
+        return
+    elif 'STRIPE' in data['payment']:
       try:
         logging.info('Trying to create stripe customer %s' % data['email'])
         stripe_customer = env.stripe_backend.CreateCustomer(
