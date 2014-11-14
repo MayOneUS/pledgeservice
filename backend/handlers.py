@@ -88,7 +88,7 @@ class MailingListSubscriber(object):
 _STR = dict(type='string')
 _STR_optional = dict(type='string', required=False)
 
-valid_recurrence_periods = ["monthly", "weekly", "yearly", ""]
+valid_recurrence_periods = ["monthly", "weekly", ""]
 PLEDGE_SCHEMA = dict(
   type='object',
   properties=dict(
@@ -312,10 +312,11 @@ class PledgeHandler(webapp2.RequestHandler):
     # Do any server-side processing the payment processor needs.
     stripe_customer_id = None
     stripe_charge_id = None
-    print type(data.get('recurring', None))
     if 'STRIPE' in data['payment'] and data.get('recurring', '') == True:
       try:
         logging.info('Trying to create a stripe customer enrolled in a plan with recurring subscription')
+        if data.get('recurrence_period', None) == None:
+          data['recurrence_period'] = 'monthly'
         stripe_customer  = env.stripe_backend.CreateCustomerWithPlan(
           email=data['email'], 
           card_token=data['payment']['STRIPE']['token'], 
