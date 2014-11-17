@@ -11,7 +11,8 @@ def convert_to_stripe_object(resp, api_key):
              'plan': Plan, 'coupon': Coupon, 'token': Token, 'event': Event,
              'transfer': Transfer, 'list': ListObject, 'recipient': Recipient,
              'card': Card, 'application_fee': ApplicationFee,
-             'subscription': Subscription}
+             'subscription': Subscription, 'refund': Refund,
+             'fee_refund': ApplicationFeeRefund}
 
     if isinstance(resp, list):
         return [convert_to_stripe_object(i, api_key) for i in resp]
@@ -290,7 +291,8 @@ class UpdateableAPIResource(APIResource):
             # the metadata object has been reassigned
             # i.e. as object.metadata = {key: val}
             metadata_update = self.metadata
-            keys_to_unset = set(self._previous_metadata.keys()) - \
+            previous = self._previous_metadata or {}
+            keys_to_unset = set(previous.keys()) - \
                 set(self.metadata.keys())
             for key in keys_to_unset:
                 metadata_update[key] = ""
@@ -338,19 +340,33 @@ class Card(UpdateableAPIResource, DeletableAPIResource):
 
     def instance_url(self):
         self.id = util.utf8(self.id)
-        self.customer = util.utf8(self.customer)
-
-        base = Customer.class_url()
-        cust_extn = urllib.quote_plus(self.customer)
         extn = urllib.quote_plus(self.id)
+        if (hasattr(self, 'customer')):
+            self.customer = util.utf8(self.customer)
 
-        return "%s/%s/cards/%s" % (base, cust_extn, extn)
+            base = Customer.class_url()
+            owner_extn = urllib.quote_plus(self.customer)
+
+        elif (hasattr(self, 'recipient')):
+            self.recipient = util.utf8(self.recipient)
+
+            base = Recipient.class_url()
+            owner_extn = urllib.quote_plus(self.recipient)
+
+        else:
+            raise error.InvalidRequestError(
+                "Could not determine whether card_id %s is "
+                "attached to a customer "
+                "or a recipient." % self.id, 'id')
+
+        return "%s/%s/cards/%s" % (base, owner_extn, extn)
 
     @classmethod
     def retrieve(cls, id, api_key=None, **params):
         raise NotImplementedError(
-            "Can't retrieve a card without a customer ID. Use "
-            "customer.cards.retrieve('card_id') instead.")
+            "Can't retrieve a card without a customer or recipient"
+            "ID. Use customer.cards.retrieve('card_id') or "
+            "recipient.cards.retrieve('card_id') instead.")
 
 
 class Charge(CreateableAPIResource, ListableAPIResource,
@@ -474,12 +490,29 @@ class Subscription(UpdateableAPIResource, DeletableAPIResource):
         self.refresh_from({'discount': None}, api_key, True)
 
 
+class Refund(UpdateableAPIResource):
+
+    def instance_url(self):
+        self.id = util.utf8(self.id)
+        self.charge = util.utf8(self.charge)
+        base = Charge.class_url()
+        cust_extn = urllib.quote_plus(self.charge)
+        extn = urllib.quote_plus(self.id)
+        return "%s/%s/refunds/%s" % (base, cust_extn, extn)
+
+    @classmethod
+    def retrieve(cls, id, api_key=None, **params):
+        raise NotImplementedError(
+            "Can't retrieve a refund without a charge ID. "
+            "Use charge.refunds.retrieve('refund_id') instead.")
+
+
 class Token(CreateableAPIResource):
     pass
 
 
-class Coupon(CreateableAPIResource, DeletableAPIResource,
-             ListableAPIResource):
+class Coupon(CreateableAPIResource, UpdateableAPIResource,
+             DeletableAPIResource, ListableAPIResource):
     pass
 
 
@@ -489,7 +522,10 @@ class Event(ListableAPIResource):
 
 class Transfer(CreateableAPIResource, UpdateableAPIResource,
                ListableAPIResource):
-    pass
+
+    def cancel(self):
+        self.refresh_from(self.request('post',
+                          self.instance_url() + '/cancel'))
 
 
 class Recipient(CreateableAPIResource, UpdateableAPIResource,
@@ -510,3 +546,20 @@ class ApplicationFee(ListableAPIResource):
         url = self.instance_url() + '/refund'
         self.refresh_from(self.request('post', url, params))
         return self
+
+
+class ApplicationFeeRefund(UpdateableAPIResource):
+
+    def instance_url(self):
+        self.id = util.utf8(self.id)
+        self.fee = util.utf8(self.fee)
+        base = ApplicationFee.class_url()
+        cust_extn = urllib.quote_plus(self.fee)
+        extn = urllib.quote_plus(self.id)
+        return "%s/%s/refunds/%s" % (base, cust_extn, extn)
+
+    @classmethod
+    def retrieve(cls, id, api_key=None, **params):
+        raise NotImplementedError(
+            "Can't retrieve a refund without an application fee ID. "
+            "Use application_fee.refunds.retrieve('refund_id') instead.")

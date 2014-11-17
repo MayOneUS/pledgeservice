@@ -2,14 +2,12 @@ import calendar
 import datetime
 import platform
 import time
-import ssl
-import socket
 import urllib
 import urlparse
 import warnings
 
 import stripe
-from stripe import error, http_client, version, util, certificate_blacklist
+from stripe import error, http_client, version, util
 
 
 def _encode_datetime(dttime):
@@ -52,8 +50,6 @@ def _build_api_url(url, query):
 
 
 class APIRequestor(object):
-
-    _CERTIFICATE_VERIFIED = False
 
     def __init__(self, key=None, client=None):
         self.api_key = key
@@ -123,7 +119,6 @@ class APIRequestor(object):
         return _build_api_url(url, cls.encode(params))
 
     def request(self, method, url, params=None):
-        self._check_ssl_cert()
         rbody, rcode, my_api_key = self.request_raw(
             method.lower(), url, params)
         resp = self.interpret_response(rbody, rcode)
@@ -207,6 +202,9 @@ class APIRequestor(object):
             'Authorization': 'Bearer %s' % (my_api_key,)
         }
 
+        if method == 'post':
+            headers['Content-Type'] = 'application/x-www-form-urlencoded'
+
         if api_version is not None:
             headers['Stripe-Version'] = api_version
 
@@ -232,21 +230,6 @@ class APIRequestor(object):
         if not (200 <= rcode < 300):
             self.handle_api_error(rbody, rcode, resp)
         return resp
-
-    def _check_ssl_cert(self):
-        from stripe import verify_ssl_certs
-
-        if verify_ssl_certs and not self._CERTIFICATE_VERIFIED:
-            uri = urlparse.urlparse(stripe.api_base)
-            try:
-                certificate = ssl.get_server_certificate(
-                    (uri.hostname, uri.port or 443))
-                der_cert = ssl.PEM_cert_to_DER_cert(certificate)
-            except socket.error, e:
-                raise error.APIConnectionError(e)
-
-            self._CERTIFICATE_VERIFIED = certificate_blacklist.verify(
-                uri.hostname, der_cert)
 
     # Deprecated request handling.  Will all be removed in 2.0
     def _deprecated_request(self, impl, method, url, headers, params):
