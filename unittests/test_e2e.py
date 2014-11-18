@@ -1,4 +1,5 @@
 import unittest
+import copy
 import urllib2
 import logging
 import datetime
@@ -54,11 +55,7 @@ class BaseTest(unittest.TestCase):
 class StripeTest(BaseTest):
   def setUp(self):
     super(StripeTest, self).setUp()
-  def testStripePayment(self):
     stripe_lib.api_key = "sk_test_sm4iLzUFCeEE4l8uKe4KNDU7"
-    token = stripe_lib.Token.create( card={ "number":'4242424242424242', "exp_month": 12, "exp_year": 15, "cvc": '123'
-      })
-    print token
     self.pledge = dict(
       email='pika@pokedex.biz',
       phone='212-234-5432',
@@ -73,21 +70,37 @@ class StripeTest(BaseTest):
       thank_you_sent_at=None,
       payment=dict(
         STRIPE=dict(
-          token=token.id,
         )
       ))
-
-    req = urllib2.Request('http://localhost:8080/r/pledge')
-    req.add_header('Content-Type', 'application/json')
-    response = urllib2.urlopen(req, json.dumps(self.pledge))
-    assert("id" in json.loads(response.read()))
-    token = stripe_lib.Token.create( card={ "number":'4242424242424242', "exp_month": 12, "exp_year": 15, "cvc": '123'
+  def testStripeRecurring(self):
+    token = stripe_lib.Token.create( 
+      card={ 
+      "number":'4242424242424242', 
+      "exp_month": 12, 
+      "exp_year": 25, 
+      "cvc": '123'
       })
-    pledge["recurring"] = True
+    recurring_pledge = copy.deepcopy(self.pledge)
+    recurring_pledge["recurring"] = True
+    recurring_pledge["payment"]["STRIPE"]["token"] = token.id
     req = urllib2.Request('http://localhost:8080/r/pledge')
     req.add_header('Content-Type', 'application/json')
-    response = urllib2.urlopen(req, json.dumps(self.pledge))
+    response = urllib2.urlopen(req, json.dumps(recurring_pledge))
     assert("id" in json.loads(response.read()))   
+
+  def testStripePayment(self):
+    token = stripe_lib.Token.create( 
+      card={ "number":'4242424242424242', 
+        "exp_month": 12, 
+        "exp_year": 25, 
+        "cvc": '123'
+      })
+    single_payment = copy.deepcopy(self.pledge)
+    single_payment["payment"]["STRIPE"]["token"] = token.id
+    req = urllib2.Request('http://localhost:8080/r/pledge')
+    req.add_header('Content-Type', 'application/json')
+    response = urllib2.urlopen(req, json.dumps(single_payment))
+    assert("id" in json.loads(response.read()))
 
 class PledgeTest(BaseTest):
   def setUp(self):
