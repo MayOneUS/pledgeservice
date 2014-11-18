@@ -22,7 +22,7 @@ def get_env():
   stripe_backend = None
   mailing_list_subscriber = None
   if j['appName'] == 'local':
-    stripe_backend = FakeStripe()
+    stripe_backend = ProdStripe(model.Config.get().stripe_private_key)
     mailing_list_subscriber = FakeSubscriber()
   else:
     stripe_backend = ProdStripe(model.Config.get().stripe_private_key)

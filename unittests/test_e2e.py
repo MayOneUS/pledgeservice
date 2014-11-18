@@ -1,4 +1,5 @@
 import unittest
+import urllib2
 import logging
 import datetime
 import json
@@ -13,7 +14,7 @@ import webtest
 import handlers
 import model
 import env
-
+import stripe as stripe_lib
 
 class BaseTest(unittest.TestCase):
   def setUp(self):
@@ -50,10 +51,48 @@ class BaseTest(unittest.TestCase):
     self.mockery.VerifyAll()
     self.testbed.deactivate()
 
+class StripeTest(BaseTest):
+  def setUp(self):
+    super(StripeTest, self).setUp()
+  def testStripePayment(self):
+    stripe_lib.api_key = "sk_test_sm4iLzUFCeEE4l8uKe4KNDU7"
+    token = stripe_lib.Token.create( card={ "number":'4242424242424242', "exp_month": 12, "exp_year": 15, "cvc": '123'
+      })
+    print token
+    self.pledge = dict(
+      email='pika@pokedex.biz',
+      phone='212-234-5432',
+      name=u'Pik\u00E1 Chu',
+      occupation=u'Pok\u00E9mon',
+      employer='Nintendo',
+      target='Republicans Only',
+      subscribe=True,
+      amountCents=4200,
+      pledgeType='CONDITIONAL',
+      team='rocket',
+      thank_you_sent_at=None,
+      payment=dict(
+        STRIPE=dict(
+          token=token.id,
+        )
+      ))
+
+    req = urllib2.Request('http://localhost:8080/r/pledge')
+    req.add_header('Content-Type', 'application/json')
+    response = urllib2.urlopen(req, json.dumps(self.pledge))
+    assert("id" in json.loads(response.read()))
+    token = stripe_lib.Token.create( card={ "number":'4242424242424242', "exp_month": 12, "exp_year": 15, "cvc": '123'
+      })
+    pledge["recurring"] = True
+    req = urllib2.Request('http://localhost:8080/r/pledge')
+    req.add_header('Content-Type', 'application/json')
+    response = urllib2.urlopen(req, json.dumps(self.pledge))
+    assert("id" in json.loads(response.read()))   
 
 class PledgeTest(BaseTest):
   def setUp(self):
     super(PledgeTest, self).setUp()
+
     self.pledge = dict(
       email='pika@pokedex.biz',
       phone='212-234-5432',
